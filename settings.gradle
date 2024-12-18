@@ -1,0 +1,13 @@
+pluginManagement {
+    repositories {
+        maven {
+            url 'https://repo.huaweicloud.com/repository/maven/'
+        }
+        maven {
+            url 'https://maven.aliyun.com/nexus/content/groups/public'
+        }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'apidoc-center'
