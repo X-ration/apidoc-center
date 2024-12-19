@@ -16,6 +16,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 import org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver;
@@ -30,7 +31,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebMvc
-public class WebConfig implements WebMvcConfigurer{
+public class WebConfig implements WebMvcConfigurer {
 
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -38,6 +39,13 @@ public class WebConfig implements WebMvcConfigurer{
 
     @Autowired
     private Jackson2ObjectMapperBuilder builder;
+
+    //继承自WebMvcConfigurer的配置使得WebMvcAutoConfigurationAdapter失效，所以需要手动重新配置
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        //将所有/resources/** 访问都映射到classpath:/static/ 目录下
+        registry.addResourceHandler("/resources/**").addResourceLocations("classpath:/static/");
+    }
 
     /**
      * 解决Jackson日期格式因为配置拦截器继承自WebMvcConfigurer失效的问题

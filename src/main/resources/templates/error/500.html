@@ -1,0 +1,9 @@
+<html lang="zh" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <title>服务器错误！</title>
+</head>
+<body>
+<h1>500 Internal Server Error</h1>
+<p th:if="${err}" th:text="${err}">this is error message</p>
+</body>
+</html>
