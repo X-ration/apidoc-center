@@ -7,9 +7,9 @@ DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user`(
     `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
     `email` VARCHAR(256) NOT NULL UNIQUE,
-    `username` VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `username` VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL UNIQUE,
     `password` CHAR(60) NOT NULL,
-    `avatar_url` VARCHAR(256) DEFAULT NULL,
+    `avatar_url` VARCHAR(256) NOT NULL,
     `description` VARCHAR(100) DEFAULT NULL,
     `user_type` ENUM('NORMAL','OAUTH2_GITHUB','OAUTH2_HUAWEI') NOT NULL,
     `is_enabled` BOOL NOT NULL DEFAULT TRUE,
@@ -26,3 +26,13 @@ CREATE TABLE `user_authority` (
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `remember_me_token`;
+CREATE TABLE `remember_me_token` (
+    `id` bigint(64) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `username` varchar(64) NOT NULL,
+    `series` varchar(64) NOT NULL,
+    `token` varchar(64) NOT NULL,
+    `last_used` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;

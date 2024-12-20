@@ -20,6 +20,7 @@ public class User {
     private String username;
     private String password;
     private String avatarUrl;
+    private String description;
     @Enumerated(EnumType.STRING)
     private UserType userType;
     private boolean isEnabled;

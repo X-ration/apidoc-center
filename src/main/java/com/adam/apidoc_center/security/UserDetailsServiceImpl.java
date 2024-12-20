@@ -4,6 +4,7 @@ import com.adam.apidoc_center.domain.User;
 import com.adam.apidoc_center.domain.UserAuthority;
 import com.adam.apidoc_center.repository.UserAuthorityRepository;
 import com.adam.apidoc_center.repository.UserRepository;
+import com.adam.apidoc_center.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -34,7 +35,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("=======执行自定义登录逻辑====");
-        User user = userRepository.findByUsername(username);
+        User user;
+        if(StringUtil.isNumber(username)) {
+            long userId = Long.parseLong(username);
+            user = userRepository.findById(userId);
+        } else if(StringUtil.isEmail(username)) {
+            user = userRepository.findByEmail(username);
+        } else {
+            user = userRepository.findByUsername(username);
+        }
         if(user == null) {
             throw new UsernameNotFoundException("用户不存在");
         }
@@ -44,7 +53,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         List<GrantedAuthority> grantedAuthorities = userAuthorities.stream()
                 .map(userAuthority -> new SimpleGrantedAuthority(userAuthority.getAuthority().name()))
                 .collect(Collectors.toList());
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(), user.getPassword(), grantedAuthorities);
+        return new ExtendedUser(user.getUsername(), user.getPassword(), grantedAuthorities, user);
     }
 }

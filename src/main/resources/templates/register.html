@@ -12,7 +12,7 @@ charset=UTF-8"/>
     <br><br><br>
     <h1 class="text-center">用户注册</h1>
     <br><br>
-    <div class="col-12 col-md-10 offset-md-1 col-xl-8 offset-xl-2">
+    <div class="col-12 col-md-8 offset-md-2">
         <div id="errorMsg" class="alert alert-warning" role="alert" th:if="${error}" th:text="${error}">
             A simple warning alert—check it out!
         </div>
@@ -40,7 +40,7 @@ charset=UTF-8"/>
             <div class="form-row">
                 <div class="col-12 col-md-8 offset-md-2">
                     <label for="password">密码</label>
-                    <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="密码长度不超过32位">
+                    <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="只能由字母、数字、下划线组成，密码长度不超过32位">
                     <div class="invalid-feedback">密码长度不超过32位</div>
                 </div>
             </div>
@@ -53,6 +53,15 @@ charset=UTF-8"/>
             </div>
             <div class="form-row">
                 <div class="col-12 col-md-8 offset-md-2">
+                    <label for="avatarUrl">头像</label>
+                    <div class="d-flex justify-content-center">
+                        <img src="/resources/default_user.png" alt="默认头像">
+                    </div>
+                    <small class="form-text text-muted">注册使用默认头像，登录后可在个人主页修改</small>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-12 col-md-8 offset-md-2">
                     <label for="description">个人介绍</label>
                     <textarea class="form-control" id="description" th:field="*{description}" placeholder="个人介绍不超过100字符"></textarea>
                     <div class="invalid-feedback">个人介绍不能超过100个字符</div>
@@ -60,7 +69,9 @@ charset=UTF-8"/>
             </div>
             <br>
             <div class="form-row">
-                <button type="submit" class="btn btn-primary btn-block">注册</button>
+                <div class="col-12 col-md-8 offset-md-2">
+                    <button type="submit" class="btn btn-primary btn-block">注册</button>
+                </div>
             </div>
         </form>
     </div>
@@ -78,16 +89,13 @@ charset=UTF-8"/>
             } else {
                 errorMsg.text(errorMsgObject.message);
                 var errorMsgDataObject = errorMsgObject.data;
-                var nickname = $('#nickname'), email = $('#email'), password = $('#password'),
-                    verifyPassword = $('#verifyPassword'), birthDate = $('#birthDate'),
-                    hobby = $('#hobby'), autograph = $('#autograph');
-                processErrorMsgItem(errorMsgDataObject.nickname, nickname);
+                var username = $('#username'), email = $('#email'), password = $('#password'),
+                    verifyPassword = $('#verifyPassword'), description = $('#description');
+                processErrorMsgItem(errorMsgDataObject.username, username);
                 processErrorMsgItem(errorMsgDataObject.email, email);
                 processErrorMsgItem(errorMsgDataObject.password, password);
                 processErrorMsgItem(errorMsgDataObject.verifyPassword, verifyPassword);
-                processErrorMsgItemOptional(errorMsgDataObject.birthDate, birthDate);
-                processErrorMsgItemOptional(errorMsgDataObject.hobby, hobby);
-                processErrorMsgItemOptional(errorMsgDataObject.autograph, autograph);
+                processErrorMsgItemOptional(errorMsgDataObject.description, description);
             }
         } catch (e) {
         }

@@ -31,7 +31,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebMvc
-public class WebConfig implements WebMvcConfigurer {
+public class WebConfig implements WebMvcConfigurer{
 
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -47,13 +47,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/resources/**").addResourceLocations("classpath:/static/");
     }
 
-    /**
-     * 解决Jackson日期格式因为配置拦截器继承自WebMvcConfigurer失效的问题
-     * @param converters the list of configured converters to be extended
-     */
-    @Override
-    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
-        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+    @Bean
+    public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = builder.createXmlMapper(false)
                 .serializerByType(LocalDateTime.class, new LocalDateTimeSerializer(DATE_TIME_FORMATTER))
                 .deserializerByType(LocalDateTime.class, new LocalDateTimeDeserializer(DATE_TIME_FORMATTER))
@@ -64,7 +59,17 @@ public class WebConfig implements WebMvcConfigurer {
                 .build();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
-        converter.setObjectMapper(objectMapper);
+        return objectMapper;
+    }
+
+    /**
+     * 解决Jackson日期格式因为配置拦截器继承自WebMvcConfigurer失效的问题
+     * @param converters the list of configured converters to be extended
+     */
+    @Override
+    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setObjectMapper(objectMapper());
         converters.add(0, converter);
     }
 
