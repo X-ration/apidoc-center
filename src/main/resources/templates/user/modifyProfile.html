@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/default}">
+      layout:decorate="~{layout/default_with_navbar_and_fileinput}">
 <head>
-    <title>用户注册</title>
+    <title>修改资料</title>
 </head>
 <body>
 <div class="container-fluid" layout:fragment="content">
     <br><br><br>
-    <h1 class="text-center">用户注册</h1>
+    <h1 class="text-center">修改资料</h1>
     <br><br>
-    <div class="col-12 col-md-8 offset-md-2">
-        <div id="errorMsg" class="alert alert-warning" role="alert" th:if="${error}" th:text="${error}">
+    <div>
+        <div id="successMsg" class="alert alert-success col-12 col-md-8 offset-md-2" role="alert" th:if="${success}">
+            修改资料成功。
+        </div>
+        <div id="errorMsg" class="alert alert-warning col-12 col-md-8 offset-md-2" role="alert" th:if="${error}" th:text="${error}">
             A simple warning alert—check it out!
         </div>
-        <form id="registerForm" th:object="${registerForm}" th:action="@{/user/register}" method="post">
+        <form id="ProfileForm" th:object="${user}" th:action="@{/user/modifyProfile}" method="post">
             <div class="form-row">
                 <div class="col-12 col-md-8 offset-md-2">
                     <label for="id">用户id</label>
-                    <input type="text" readonly class="form-control" id="id" value="自动生成">
+                    <input type="text" readonly class="form-control" id="id" th:field="*{id}">
                 </div>
             </div>
             <div class="form-row">
@@ -31,21 +34,21 @@
             <div class="form-row">
                 <div class="col-12 col-md-8 offset-md-2">
                     <label for="email">电子邮件地址</label>
-                    <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="someone@example.com">
+                    <input type="email" class="form-control" readonly id="email" th:field="*{email}" placeholder="someone@example.com">
                     <div class="invalid-feedback">必须是合法的电子邮件地址</div>
                 </div>
             </div>
             <div class="form-row">
                 <div class="col-12 col-md-8 offset-md-2">
                     <label for="password">密码</label>
-                    <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="只能由字母、数字、下划线组成，密码长度不超过32位">
+                    <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="（未更改）">
                     <div class="invalid-feedback">密码长度不超过32位</div>
                 </div>
             </div>
             <div class="form-row">
                 <div class="col-12 col-md-8 offset-md-2">
                     <label for="verifyPassword">确认密码</label>
-                    <input type="password" class="form-control" id="verifyPassword" th:field="*{verifyPassword}" placeholder="再输入一次密码">
+                    <input type="password" class="form-control" id="verifyPassword" th:field="*{verifyPassword}" placeholder="（未更改）">
                     <div class="invalid-feedback">两次输入的密码不一致</div>
                 </div>
             </div>
@@ -53,9 +56,10 @@
                 <div class="col-12 col-md-8 offset-md-2">
                     <label for="avatarUrl">头像</label>
                     <div class="d-flex justify-content-center">
-                        <img src="/resources/default_user.png" alt="默认头像">
+                        <img width="200px" height="200px" th:src="*{avatarUrl}" alt="头像">
                     </div>
-                    <small class="form-text text-muted">注册使用默认头像，登录后可在个人主页修改</small>
+                    <input type="file" id="avatarInput" class="file">
+                    <input type="hidden" id="avatarUrl" name="avatarUrl" th:field="*{avatarUrl}">
                 </div>
             </div>
             <div class="form-row">
@@ -68,14 +72,37 @@
             <br>
             <div class="form-row">
                 <div class="col-12 col-md-8 offset-md-2">
-                    <button type="submit" class="btn btn-primary btn-block">注册</button>
+                    <button type="submit" class="btn btn-primary btn-block">确定修改</button>
                 </div>
             </div>
         </form>
     </div>
 </div>
 </body>
-<script layout:fragment="script">
+<script layout:fragment="script" th:inline="javascript">
+    //文件上传组件，官网https://plugins.krajee.com/file-input#usage
+    $('#avatarInput').fileinput({
+        theme: 'fa5',
+        language: 'zh',
+        dropZoneEnabled: true,
+        dropZoneTitle: '将图片拖拽到此处',
+        uploadUrl: '/file/upload',
+        allowedFileExtensions: ['jpg', 'png', 'jpeg'],
+        maxFileSize: 2048,   //kb
+        maxFileCount: 1,
+        uploadAsync: true,
+        uploadExtraData: {
+            [[${_csrf.parameterName}]]: [[${_csrf.token}]]
+        }
+    }).on("fileuploaded", function (event,data) {
+        // console.log(event);
+        // console.log(data);
+        var response = data.response;
+        if(response.success) {
+            var url = response.data.downloadUrl;
+            $('#avatarUrl').val(url);
+        }
+    });
     processErrorMsg();
     function processErrorMsg() {
         var errorMsg = $('#errorMsg');
@@ -87,8 +114,9 @@
             } else {
                 errorMsg.text(errorMsgObject.message);
                 var errorMsgDataObject = errorMsgObject.data;
-                var username = $('#username'), email = $('#email'), password = $('#password'),
+                var id=$('#id'), username = $('#username'), email = $('#email'), password = $('#password'),
                     verifyPassword = $('#verifyPassword'), description = $('#description');
+                processErrorMsgItem(errorMsgDataObject.id, id);
                 processErrorMsgItem(errorMsgDataObject.username, username);
                 processErrorMsgItem(errorMsgDataObject.email, email);
                 processErrorMsgItem(errorMsgDataObject.password, password);

@@ -10,9 +10,11 @@ public class StringConstants {
     public static final String UPLOAD_FAIL = "上传失败";
     public static final String FILE_NOT_FOUND = "找不到对应的文件，文件可能已被删除或移动";
 
-    //注册相关
+    //注册,修改资料相关
     public static final String REGISTER_FAIL_CHECK_INPUTS = "注册失败，请检查输入";
+    public static final String MODIFY_FAIL_CHECK_INPUTS = "修改失败，请检查输入";
     public static final String REGISTER_FAIL_SERVER_ERROR = "注册服务器出现异常，请稍候再试";
+    public static final String MODIFY_FAIL_SERVER_ERROR = "修改过程出现异常，请稍候再试";
     public static final String USERNAME_INPUT_BLANK = "用户名输入为空";
     public static final String USERNAME_LENGTH_EXCEEDED = "用户名不能超过32个字符";
     public static final String USERNAME_NUMBER_NOT_ALLOWED = "用户名不允许是纯数字";

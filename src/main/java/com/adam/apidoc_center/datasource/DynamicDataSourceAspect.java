@@ -1,5 +1,6 @@
 package com.adam.apidoc_center.datasource;
 
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
  */
 @Aspect
 @Component
+@Slf4j
 public class DynamicDataSourceAspect {
 
     @Pointcut("execution(public * com.adam.apidoc_center.repository..*.save*(..))")
@@ -25,13 +27,13 @@ public class DynamicDataSourceAspect {
 
     @Before("savePointcut() || deletePointcut()")
     public void masterMethods(JoinPoint joinPoint) {
-        System.out.println(joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName() + ",using master");
+        log.debug(joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName() + ",using master");
         DynamicDataSourceKeyHolder.useMaster();
     }
 
     @Before("anyPointcut() && !savePointcut() && !deletePointcut()")
     public void anyMethods(JoinPoint joinPoint) {
-        System.out.println(joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName() + ",using slave");
+        log.debug(joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName() + ",using slave");
         DynamicDataSourceKeyHolder.useSlave();
     }
 

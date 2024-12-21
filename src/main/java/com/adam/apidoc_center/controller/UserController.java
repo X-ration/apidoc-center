@@ -3,17 +3,21 @@ package com.adam.apidoc_center.controller;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.dto.RegisterForm;
 import com.adam.apidoc_center.dto.RegisterSuccessData;
+import com.adam.apidoc_center.dto.UserDTO;
+import com.adam.apidoc_center.security.ExtendedUser;
 import com.adam.apidoc_center.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
@@ -67,6 +71,37 @@ public class UserController {
                 model.addAttribute("error", "注册失败：服务器出现异常");
             }
             return "user/register";
+        }
+    }
+
+    @GetMapping("/modifyProfile")
+    public String modifyProfilePage(Model model, @RequestParam(required = false) boolean success) {
+        ExtendedUser extendedUser = (ExtendedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        //隐藏密码
+        UserDTO userDTO = new UserDTO(extendedUser.getUser());
+        model.addAttribute("user", userDTO);
+        if(success) {
+            model.addAttribute("success", true);
+        }
+        return "user/modifyProfile";
+    }
+
+    @PostMapping("/modifyProfile")
+    public String modifyProfile(UserDTO userDTO, Model model) {
+        Assert.notNull(userDTO, "modifyProfile userDTO null");
+        Response<?> registerResponse = userService.checkAndModify(userDTO);
+        if(registerResponse.isSuccess()) {
+            return "redirect:/user/modifyProfile?success=true";
+        } else {
+            try {
+                String json = objectMapper.writeValueAsString(registerResponse);
+                model.addAttribute("error", json);
+            } catch (JsonProcessingException e) {
+                log.error("register Jackson processing exception", e);
+                model.addAttribute("error", "注册失败：服务器出现异常");
+            }
+            model.addAttribute("user", userDTO);
+            return "user/modifyProfile";
         }
     }
 

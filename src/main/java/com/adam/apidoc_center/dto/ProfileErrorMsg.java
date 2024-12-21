@@ -3,7 +3,7 @@ package com.adam.apidoc_center.dto;
 import lombok.Data;
 
 @Data
-public class RegisterErrorMsg {
+public class ProfileErrorMsg {
     private String username;
     private String email;
     private String password;

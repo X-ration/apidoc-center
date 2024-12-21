@@ -1,5 +1,6 @@
 package com.adam.apidoc_center.domain;
 
+import com.adam.apidoc_center.config.WebConfig;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.Getter;
@@ -32,8 +33,24 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "user")
     private List<UserAuthority> userAuthorities;
 
+    public String getCreateTimeDesc() {
+        return createTime.format(WebConfig.DATE_TIME_FORMATTER);
+    }
+
     public enum UserType {
-        NORMAL, OAUTH2_GITHUB, OAUTH2_HUAWEI
+        NORMAL("普通"), OAUTH2_GITHUB("GitHub"), OAUTH2_HUAWEI("华为");
+        private String desc;
+        UserType(String desc) {
+            this.desc = desc;
+        }
+
+        public String getDesc() {
+            return desc;
+        }
+
+        public String getFullDesc() {
+            return desc + "用户";
+        }
     }
 
 }

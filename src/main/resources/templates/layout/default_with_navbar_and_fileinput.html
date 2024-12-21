@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta http-equiv="Content-Type" content="text/html;
+charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="/resources/bootstrap.min.css">
+    <link rel="stylesheet" href="/resources/docs.min.css">
+    <link rel="stylesheet" href="/resources/fileinput.min.css">
+    <link rel="stylesheet" href="/resources/fontawesome-all.css">
+    <title>Default Layout with Navbar and Fileinput</title>
+</head>
+<body>
+
+<div class="col-12 col-md-8 offset-md-2">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/">接口文档中心</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="/">所有项目 <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">我的关注 <span class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0" method="post" th:action="@{/search}">
+                <input class="form-control mr-sm-2" name="searchParam" type="search" placeholder="搜索项目和接口" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">搜索</button>
+            </form>
+            <div class="navbar-nav mr-0">
+                <div class="nav-item dropdown">
+                    <a sec:authentication="principal.username" class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Username
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown" style="min-width: 300px">
+                        <div class="ml-2">
+                            <img width="200px" height="200px" id="avatarImg" alt="头像">
+                            <span id="avatarUrlHidden" class="d-none" sec:authentication="principal.user.avatarUrl">avatarUrl</span>
+                            <h5 sec:authentication="principal.username">username</h5>
+                            <span sec:authentication="principal.user.email">email</span><br>
+                            <small class="text-muted" sec:authentication="principal.user.userType.fullDesc">user type</small>
+                            <div class="dropdown-divider"></div>
+                            注册时间：<span sec:authentication="principal.user.createTimeDesc">createTime</span>
+                            <p sec:authentication="principal.user.description"></p>
+                            <a class="btn btn-primary" href="/user/modifyProfile">修改资料</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+</div>
+
+<section layout:fragment="content">
+    <p>Page content goes here</p>
+</section>
+
+</body>
+<script src="/resources/jquery-3.7.1.min.js"></script>
+<script src="/resources/bootstrap.bundle.min.js"></script>
+<script src="/resources/docs.min.js"></script>
+<script src="/resources/fileinput-buffer.min.js"></script>
+<script src="/resources/fileinput-filetype.min.js"></script>
+<script src="/resources/fileinput-piexif.min.js"></script>
+<script src="/resources/fileinput.min.js"></script>
+<script src="/resources/fileinput-zh.js"></script>
+<script src="/resources/fileinput-fa5-theme.min.js"></script>
+<script type="text/javascript">
+    var avatarUrlHidden = $('#avatarUrlHidden');
+    var avatarUrl = avatarUrlHidden.html();
+    avatarUrl = avatarUrl.replaceAll('&amp;','&');
+    if(avatarUrl !== null && avatarUrl !== '') {
+        $('#avatarImg').attr('src', avatarUrl);
+    }
+    avatarUrlHidden.remove();
+</script>
+<script type="text/javascript" layout:fragment="script">
+</script>
+</html>
