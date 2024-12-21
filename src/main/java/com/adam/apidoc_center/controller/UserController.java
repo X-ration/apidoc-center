@@ -2,7 +2,6 @@ package com.adam.apidoc_center.controller;
 
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.dto.RegisterForm;
-import com.adam.apidoc_center.dto.RegisterErrorMsg;
 import com.adam.apidoc_center.dto.RegisterSuccessData;
 import com.adam.apidoc_center.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,7 +31,7 @@ public class UserController {
 
     @GetMapping("/login")
     public ModelAndView login(HttpServletRequest request) {
-        ModelAndView modelAndView = new ModelAndView("login");
+        ModelAndView modelAndView = new ModelAndView("user/login");
         Map<String,String[]> parameterMap = request.getParameterMap();
         if(parameterMap.containsKey("error")) {
             modelAndView.addObject("error", "");
@@ -46,7 +45,7 @@ public class UserController {
     @GetMapping("/register")
     public String registerPage(Model model) {
         model.addAttribute("registerForm", new RegisterForm());
-        return "register";
+        return "user/register";
     }
 
     @PostMapping("/register")
@@ -58,7 +57,7 @@ public class UserController {
             model.addAttribute("userId", registerSuccessData.getUserId());
             model.addAttribute("username", registerSuccessData.getUsername());
             model.addAttribute("email", registerSuccessData.getEmail());
-            return "registerSuccess";
+            return "user/registerSuccess";
         } else {
             try {
                 String json = objectMapper.writeValueAsString(registerResponse);
@@ -67,7 +66,7 @@ public class UserController {
                 log.error("register Jackson processing exception", e);
                 model.addAttribute("error", "注册失败：服务器出现异常");
             }
-            return "register";
+            return "user/register";
         }
     }
 
