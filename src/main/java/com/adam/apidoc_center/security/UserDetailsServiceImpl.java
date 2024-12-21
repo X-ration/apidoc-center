@@ -44,7 +44,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         } else {
             user = userRepository.findByUsername(username);
         }
-        if(user == null) {
+        if(user == null || !user.isEnabled()) {
             throw new UsernameNotFoundException("用户不存在");
         }
 //        List<UserAuthority> userAuthorities = userAuthorityRepository.findByUserId(user.getId());
