@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default_with_navbar}">
+<head>
+    <title>所有项目</title>
+</head>
+<body>
+<div class="container-fluid" layout:fragment="content">
+    <div id="container" class="col-12 col-md-8 offset-md-2">
+        <div th:each="project:${pagedData.data}">
+            <div class="card" style="width: 18rem;">
+                <img src="/resources/default_project.jpg" width="200px" height="200px" class="card-img-top" alt="项目图像">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${project.name}">项目名</h5>
+                    <span class="card-text" th:text="${project.accessMode}">访问模式</span>
+                    <p class="card-text" th:text="${project.description}">项目介绍</p>
+                    <a th:href="|/projects/view/${project.id}|" class="btn btn-primary">查看</a>
+                </div>
+            </div>
+        </div>
+        <div id="pageDescription" class="text-center">
+            <span th:text="|当前第${pagedData.pageNum}页，共${pagedData.totalPage}页|">分页信息</span><br>
+            <span th:text="|当前页共${pagedData.curPageSize}条数据，总计${pagedData.totalSize}条数据|">分页数据信息</span>
+        </div>
+    </div>
+</div>
+</body>
+<script layout:fragment="script">
+</script>
+</html>

@@ -1,5 +1,6 @@
 package com.adam.apidoc_center.config;
 
+import com.adam.apidoc_center.common.AuditorAwareImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateProperties;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateSettings;
@@ -9,6 +10,8 @@ import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -26,6 +29,7 @@ import java.util.Map;
         basePackages = {"com.adam.apidoc_center.repository"}
 )
 @EnableConfigurationProperties(JpaProperties.class)
+@EnableJpaAuditing
 public class JpaConfig {
 
     @Autowired
@@ -34,6 +38,11 @@ public class JpaConfig {
     private JpaProperties jpaProperties;
     @Autowired
     private HibernateProperties hibernateProperties;
+
+    @Bean
+    public AuditorAware<Long> auditorAware() {
+        return new AuditorAwareImpl();
+    }
 
     @Bean
     @Primary

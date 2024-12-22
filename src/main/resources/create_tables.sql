@@ -25,7 +25,7 @@ CREATE TABLE `user_authority` (
     `authority` enum('ROLE_USER','ROLE_ADMIN') NOT NULL,
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `remember_me_token`;
 CREATE TABLE `remember_me_token` (
@@ -35,4 +35,45 @@ CREATE TABLE `remember_me_token` (
     `token` varchar(64) NOT NULL,
     `last_used` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- 项目相关
+DROP TABLE IF EXISTS `project`;
+CREATE TABLE `project` (
+    `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(32) NOT NULL,
+    `description` VARCHAR(100) DEFAULT NULL,
+    `access_mode` ENUM('PUBLIC', 'PRIVATE') COMMENT '访问模式-公开还是私有',
+    `create_user_id` BIGINT(64) NOT NULL,
+    `update_user_id` BIGINT(64) NOT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `project_deployment`;
+CREATE TABLE `project_deployment` (
+    `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
+    `project_id` BIGINT(64) NOT NULL,
+    `environment` ENUM('DEV', 'TEST', 'PROD', 'CUSTOM') NOT NULL,
+    `deployment_url` VARCHAR(256) NOT NULL,
+    `is_enabled` BOOL NOT NULL DEFAULT TRUE,
+    `create_user_id` BIGINT(64) NOT NULL,
+    `update_user_id` BIGINT(64) NOT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='项目环境部署地址表';
+
+DROP TABLE IF EXISTS `project_allowed_user`;
+CREATE TABLE `project_allowed_user` (
+    `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
+    `project_id` BIGINT(64) NOT NULL,
+    `user_id` BIGINT(64) NOT NULL,
+    `is_allow` BOOL NOT NULL DEFAULT TRUE,
+    `create_user_id` BIGINT(64) NOT NULL,
+    `update_user_id` BIGINT(64) NOT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='私有项目允许访问的用户列表表';
