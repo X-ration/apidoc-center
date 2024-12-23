@@ -30,5 +30,8 @@ public class StringConstants {
     public static final String VERIFY_PASSWORD_NOT_EQUAL = "两次输入的密码不一致";
     public static final String DESCRIPTION_LENGTH_EXCEEDED = "个人介绍不能超过100个字符";
 
+    //用户相关
+    public static final String QUERY_USER_CORE_PARAM_BLANK = "参数为空";
+    public static final String QUERY_USER_CORE_NOT_FOUND = "未找到用户";
 
 }

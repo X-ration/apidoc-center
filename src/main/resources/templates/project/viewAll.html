@@ -1,20 +1,79 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/default_with_navbar}">
+      layout:decorate="~{layout/default_with_navbar_and_tagsinput}">
 <head>
     <title>所有项目</title>
 </head>
 <body>
 <div class="container-fluid" layout:fragment="content">
     <div id="container" class="col-12 col-md-8 offset-md-2">
-        <div class="d-flex justify-content-end align-items-center">
-            <span>每页数量：</span>
-            <select class="col-2 form-control" id="pageSizeSelect">
-                <option>10</option>
-                <option>20</option>
-                <option>30</option>
-            </select>
+        <div id="alert" class="d-none alert alert-warning" role="alert">
+            A simple warning alert—check it out!
+        </div>
+        <div class="d-flex justify-content-between">
+            <div>
+                <!-- Button trigger modal -->
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createProjectModal">
+                    创建项目
+                </button>
+
+                <!-- Modal -->
+                <div class="modal fade" id="createProjectModal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="createProjectModalTitle">创建项目</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="projectName">项目名称</label>
+                                    <input type="text" class="form-control" id="projectName" placeholder="不超过32个字符">
+                                </div>
+                                <div class="form-group">
+                                    <label for="projectDescription">项目介绍</label>
+                                    <textarea class="form-control" id="projectDescription" placeholder="不超过100个字符">
+                                    </textarea>
+                                </div>
+                                <div class="form-group" id="projectAccessModeDiv">
+                                    <label for="projectAccessModeContent">访问模式</label>
+                                    <div id="projectAccessModeContent">
+                                        <div class="form-check form-check-inline">
+                                            <input checked class="form-check-input" type="radio" name="projectAccessModeRadio" id="publicRadio" value="PUBLIC">
+                                            <label class="form-check-label" for="publicRadio">公开</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="projectAccessModeRadio" id="privateRadio" value="PRIVATE">
+                                            <label class="form-check-label" for="privateRadio">私有</label>
+                                        </div>
+                                        <input type="hidden" id="projectAccessMode" value="PUBLIC">
+                                    </div>
+                                </div>
+                                <div id="shareUserDiv" class="d-none">
+                                    <label for="shareUserTagsInput">授权用户访问</label>
+                                    <input id="shareUserTagsInput" data-role="tagsinput">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary">创建</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div></div>
+            <div class="row align-items-center" style="width: 200px">
+                <span>每页数量：</span>
+                <select class="form-control" id="pageSizeSelect" style="width: 100px">
+                    <option>10</option>
+                    <option>20</option>
+                    <option>30</option>
+                </select>
+            </div>
         </div>
         <br>
         <div class="row">
@@ -52,6 +111,54 @@
 </div>
 </body>
 <script layout:fragment="script" th:inline="javascript">
+    var tagsinput = $('input[data-role="tagsinput"]');
+    tagsinput.tagsinput({
+        tagClass: 'label label-primary',
+        itemValue: 'id',
+        itemText: 'username'
+    });
+    tagsinput.prev().addClass("col-12");
+    $("input[name=projectAccessModeRadio]").change(function() {
+        var accessMode = $(this).val();
+        if(accessMode === 'PUBLIC' || accessMode === 'PRIVATE') {
+            $('#projectAccessMode').val(accessMode);
+        }
+        var shareUserDiv = $('#shareUserDiv');
+        if(accessMode === 'PUBLIC') {
+            shareUserDiv.addClass('d-none');
+        } else if(accessMode === 'PRIVATE') {
+            shareUserDiv.removeClass('d-none');
+        }
+    });
+    function updateTagsBgColor(tagsinput, color) {
+        var tags = tagsinput.prev().find("span.tag");
+        for(var i=0;i<tags.length;i++) {
+            var tag = $(tags[i]);
+            tag.attr('style','background-color: ' + color);
+        }
+    }
+    var taginput = tagsinput.prev().find("input");
+    taginput.keydown(function (event) {
+        //监听回车键
+        if(event.which === 13) {
+            var userQueryParam = taginput.val();
+            taginput.val('');
+            // tagsinput.tagsinput('remove', userQueryParam);
+            ajaxGetJsonFull('/user/queryUserCore', {queryParam: userQueryParam},
+                function (response) {
+                    console.log(response);
+                    if (response.success) {
+                        tagsinput.tagsinput('add', response.data);
+                        updateTagsBgColor(tagsinput, 'green');
+                    }
+                },
+                function (xhr) {
+                    console.error("请求出错", xhr.status, xhr.statusText);
+                }
+            );
+        }
+    });
+    $('#projectDescription').val('');
     var pageSizeSelect = $('#pageSizeSelect');
     var pageSize = parseInt([[${pagedData.pageSize}]]);
     const totalPage=[[${pagedData.totalPage}]];

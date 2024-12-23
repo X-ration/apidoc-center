@@ -25,7 +25,7 @@ public class ProjectService {
 
     public PagedData<ProjectDTO> getProjectsPaged(int pageNum, int pageSize) {
         Assert.isTrue(pageNum >= 0 && pageSize > 0, "getProjectsPaged param invalid");
-        PageRequest pageRequest = PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.ASC, "id"));
+        PageRequest pageRequest = PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.DESC, "id"));
         Page<Project> page = projectRepository.findAll(pageRequest);
         PagedData<Project> pagedData = PagedData.convert(page, pageRequest);
         return pagedData.map(ProjectDTO::convert);

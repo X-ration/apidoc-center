@@ -1,23 +1,23 @@
 package com.adam.apidoc_center.controller;
 
 import com.adam.apidoc_center.common.Response;
+import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.dto.RegisterForm;
 import com.adam.apidoc_center.dto.RegisterSuccessData;
+import com.adam.apidoc_center.dto.UserCoreDTO;
 import com.adam.apidoc_center.dto.UserDTO;
 import com.adam.apidoc_center.security.ExtendedUser;
 import com.adam.apidoc_center.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
@@ -102,6 +102,20 @@ public class UserController {
             }
             model.addAttribute("user", userDTO);
             return "user/modifyProfile";
+        }
+    }
+
+    @GetMapping("/queryUserCore")
+    @ResponseBody
+    public Response<UserCoreDTO> queryUserCore(@RequestParam String queryParam) {
+        if(StringUtils.isBlank(queryParam)) {
+            return Response.fail(StringConstants.QUERY_USER_CORE_PARAM_BLANK);
+        }
+        UserCoreDTO userCoreDTO = userService.queryUserCore(queryParam);
+        if(userCoreDTO != null) {
+            return Response.success(userCoreDTO);
+        } else {
+            return Response.fail(StringConstants.QUERY_USER_CORE_NOT_FOUND);
         }
     }
 

@@ -97,19 +97,6 @@
             }
         } catch (e) {
         }
-        function processErrorMsgItem(errorMsgItem, selector) {
-            if(errorMsgItem != null) {
-                selector.addClass('is-invalid');
-                selector.next().text(errorMsgItem);
-            } else {
-                selector.addClass('is-valid');
-            }
-        }
-        function processErrorMsgItemOptional(errorMsgItem, selector) {
-            if(selector.val() !== null && selector.val() !== '') {
-                processErrorMsgItem(errorMsgItem, selector);
-            }
-        }
     }
 </script>
 </html>

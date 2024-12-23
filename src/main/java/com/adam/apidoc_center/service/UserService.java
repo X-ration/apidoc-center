@@ -5,10 +5,7 @@ import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.common.SystemConstants;
 import com.adam.apidoc_center.domain.User;
 import com.adam.apidoc_center.domain.UserAuthority;
-import com.adam.apidoc_center.dto.RegisterForm;
-import com.adam.apidoc_center.dto.ProfileErrorMsg;
-import com.adam.apidoc_center.dto.RegisterSuccessData;
-import com.adam.apidoc_center.dto.UserDTO;
+import com.adam.apidoc_center.dto.*;
 import com.adam.apidoc_center.repository.UserAuthorityRepository;
 import com.adam.apidoc_center.repository.UserRepository;
 import com.adam.apidoc_center.security.ExtendedUser;
@@ -111,6 +108,24 @@ public class UserService {
     public boolean userExistsByUsername(String username) {
         Assert.notNull(username, "userExistsByUsername username null");
         return userRepository.countByUsername(username) > 0;
+    }
+
+    public UserCoreDTO queryUserCore(String queryParam) {
+        Assert.isTrue(StringUtils.isNotBlank(queryParam), "queryUserCore queryParam blank");
+        User user;
+        if(StringUtil.isNumber(queryParam)) {
+            long userId = Long.parseLong(queryParam);
+            user = userRepository.findById(userId);
+        } else if(StringUtil.isEmail(queryParam)) {
+            user = userRepository.findByEmail(queryParam);
+        } else {
+            user = userRepository.findByUsername(queryParam);
+        }
+        if(user == null) {
+            return null;
+        } else {
+            return new UserCoreDTO(user);
+        }
     }
 
     private ProfileErrorMsg checkModifyParams(UserDTO userDTO) {
