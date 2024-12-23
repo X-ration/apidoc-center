@@ -22,7 +22,9 @@ public class ProjectController {
     public String viewAll(@RequestParam(required = false) Integer pageNum, @RequestParam(required = false) Integer pageSize, Model model) {
         if(pageNum == null || pageSize == null) {
             pageNum = 0;
-            pageSize = 20;
+            pageSize = 10;
+        } else if(pageNum < 0) {
+            pageNum = 0;
         }
         PagedData<ProjectDTO> pagedData = projectService.getProjectsPaged(pageNum, pageSize);
         model.addAttribute("pagedData", pagedData);
