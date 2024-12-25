@@ -1,4 +1,4 @@
-function ajaxGetJsonFull(url,paramObject,successFunction,errorFunction) {
+function ajaxGetJsonFull(url,paramObject,successFunction) {
     var paramEntries = Object.entries(paramObject);
     for(var i=0;i<paramEntries.length;i++) {
         var paramEntry = paramEntries[i];
@@ -16,14 +16,33 @@ function ajaxGetJsonFull(url,paramObject,successFunction,errorFunction) {
         type: 'GET',
         dataType: 'json',
         success: successFunction,
-        error: errorFunction
+        error: function (xhr) {
+            console.error("请求出错", xhr.status, xhr.statusText);
+        }
+    });
+}
+function ajaxPostJsonFull(url,paramObject,csrfToken,successFunction) {
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: paramObject,
+        beforeSend: function (request) {
+            request.setRequestHeader('Content-Type','application/json;charset=UTF-8');
+            request.setRequestHeader('X-CSRF-TOKEN',csrfToken);
+        },
+        success: successFunction,
+        error: function (xhr) {
+            console.error("请求出错", xhr.status, xhr.statusText);
+        }
     });
 }
 function processErrorMsgItem(errorMsgItem, selector) {
     if(errorMsgItem != null) {
+        selector.removeClass('is-valid');
         selector.addClass('is-invalid');
         selector.next().text(errorMsgItem);
     } else {
+        selector.removeClass('is-invalid');
         selector.addClass('is-valid');
     }
 }

@@ -55,7 +55,7 @@ DROP TABLE IF EXISTS `project_deployment`;
 CREATE TABLE `project_deployment` (
     `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
     `project_id` BIGINT(64) NOT NULL,
-    `environment` ENUM('DEV', 'TEST', 'PROD', 'CUSTOM') NOT NULL,
+    `environment` VARCHAR(32) NOT NULL,
     `deployment_url` VARCHAR(256) NOT NULL,
     `is_enabled` BOOL NOT NULL DEFAULT TRUE,
     `create_user_id` BIGINT(64) NOT NULL,

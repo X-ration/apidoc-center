@@ -20,7 +20,7 @@
 
                 <!-- Modal -->
                 <div class="modal fade" id="createProjectModal" tabindex="-1" role="dialog" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
+                    <div class="modal-dialog" role="document" style="min-width: 800px">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="createProjectModalTitle">创建项目</h5>
@@ -29,14 +29,22 @@
                                 </button>
                             </div>
                             <div class="modal-body">
+                                <div id="modalAlertWarning" class="d-none alert alert-warning" role="alert">
+                                    A simple warning alert—check it out!
+                                </div>
+                                <div id="modalAlertSuccess" class="d-none alert alert-success" role="alert">
+                                    A simple warning alert—check it out!
+                                </div>
                                 <div class="form-group">
                                     <label for="projectName">项目名称</label>
                                     <input type="text" class="form-control" id="projectName" placeholder="不超过32个字符">
+                                    <div class="invalid-feedback">项目名称不超过32个字符</div>
                                 </div>
                                 <div class="form-group">
                                     <label for="projectDescription">项目介绍</label>
                                     <textarea class="form-control" id="projectDescription" placeholder="不超过100个字符">
                                     </textarea>
+                                    <div class="invalid-feedback">项目介绍不超过100个字符</div>
                                 </div>
                                 <div class="form-group" id="projectAccessModeDiv">
                                     <label for="projectAccessModeContent">访问模式</label>
@@ -49,17 +57,57 @@
                                             <input class="form-check-input" type="radio" name="projectAccessModeRadio" id="privateRadio" value="PRIVATE">
                                             <label class="form-check-label" for="privateRadio">私有</label>
                                         </div>
-                                        <input type="hidden" id="projectAccessMode" value="PUBLIC">
                                     </div>
+                                    <div class="invalid-feedback">访问模式必选</div>
+                                    <input type="hidden" id="projectAccessMode" value="PUBLIC">
                                 </div>
                                 <div id="shareUserDiv" class="d-none">
                                     <label for="shareUserTagsInput">授权用户访问</label>
+                                    <div class="invalid-feedback">授权用户访问参数非法</div>
                                     <input id="shareUserTagsInput" data-role="tagsinput">
+                                </div>
+                                <div>
+                                    <label for="projectDeploymentDiv">项目部署地址</label>
+                                    <div id="projectDeploymentDiv">
+                                        <div class="d-flex align-items-center">
+                                            <select class="form-control d-inline ml-1 mr-1" id="projectDeploymentSelect" style="width: 140px">
+                                                <option>开发环境</option>
+                                                <option>测试环境</option>
+                                                <option>生产环境</option>
+                                                <option>自定义环境</option>
+                                            </select>
+                                            <button class="btn btn-primary ml-1" onclick="addProjectDeployment()"><i class="fa fa-plus"></i> 新增地址</button>
+                                        </div>
+                                        <table id="projectDeploymentTable" class="table">
+                                            <thead><tr>
+                                                <th>环境</th>
+                                                <th>部署地址</th>
+                                                <th>操作</th>
+                                            </tr></thead>
+                                            <tbody>
+                                            <tr id="projectDeploymentTrTemplate" class="d-none">
+                                                <td>
+                                                    <input class="form-control" style="width: 140px" type="text" placeholder="环境名">
+                                                    <div class="invalid-feedback">项目部署环境名不超过32个字符</div>
+                                                </td>
+                                                <td>
+                                                    <input class="form-control" style="width: 300px" type="text" placeholder="项目部署地址，以http/https开头">
+                                                    <div class="invalid-feedback">项目部署地址不超过256个字符</div>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-primary" type="button" onclick="$(this).parent().parent().remove()">
+                                                        <i class="fa fa-trash-alt"></i> 删除
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-primary">创建</button>
+                                <button type="button" class="btn btn-primary" onclick="createProject()">创建</button>
                             </div>
                         </div>
                     </div>
@@ -111,6 +159,21 @@
 </div>
 </body>
 <script layout:fragment="script" th:inline="javascript">
+    var projectDeploymentSelect = $('#projectDeploymentSelect');
+    var projectDeploymentTable = $('#projectDeploymentTable');
+    function addProjectDeployment() {
+        var environmentType = projectDeploymentSelect.val();
+        if(environmentType === '开发环境' || environmentType === '测试环境' || environmentType === '生产环境' || environmentType === '自定义环境') {
+            var projectDeploymentTr = $('#projectDeploymentTrTemplate').clone();
+            projectDeploymentTr.removeClass('d-none');
+            projectDeploymentTr.removeAttr('id');
+            if(environmentType === '自定义环境') {
+                environmentType = '';
+            }
+            projectDeploymentTr.find("input").eq(0).val(environmentType);
+            projectDeploymentTable.find("tbody").append(projectDeploymentTr);
+        }
+    }
     var tagsinput = $('input[data-role="tagsinput"]');
     tagsinput.tagsinput({
         tagClass: 'label label-primary',
@@ -118,10 +181,11 @@
         itemText: 'username'
     });
     tagsinput.prev().addClass("col-12");
+    var projectAccessMode = $('#projectAccessMode');
     $("input[name=projectAccessModeRadio]").change(function() {
         var accessMode = $(this).val();
         if(accessMode === 'PUBLIC' || accessMode === 'PRIVATE') {
-            $('#projectAccessMode').val(accessMode);
+            projectAccessMode.val(accessMode);
         }
         var shareUserDiv = $('#shareUserDiv');
         if(accessMode === 'PUBLIC') {
@@ -151,14 +215,80 @@
                         tagsinput.tagsinput('add', response.data);
                         updateTagsBgColor(tagsinput, 'green');
                     }
-                },
-                function (xhr) {
-                    console.error("请求出错", xhr.status, xhr.statusText);
                 }
             );
         }
     });
-    $('#projectDescription').val('');
+    var projectName = $('#projectName');
+    var projectDescription = $('#projectDescription');
+    projectDescription.val('');
+    var modalAlertWarning = $('#modalAlertWarning'), modalAlertSuccess = $('#modalAlertSuccess');
+    function createProject() {
+        var paramObject = {
+            name: projectName.val(),
+            description: projectDescription.val(),
+            accessMode: projectAccessMode.val()
+        }
+        if(paramObject.accessMode === 'PRIVATE') {
+            paramObject.allowUserIds = tagsinput.val();
+        }
+        var deploymentArray = [];
+        var trs = projectDeploymentTable.find("tr");
+        for(var i=1;i<trs.length;i++) {
+            var tr = $(trs[i]);
+            if(!tr.hasClass('d-none')) {
+                var environment = tr.find("input").eq(0).val(),
+                    deploymentUrl = tr.find("input").eq(1).val();
+                var deployment = {
+                    environment: environment,
+                    deploymentUrl: deploymentUrl
+                };
+                deploymentArray.push(deployment);
+            }
+        }
+        paramObject.deploymentList = deploymentArray;
+        var paramJson = JSON.stringify(paramObject);
+        console.log(paramObject);
+        console.log(paramJson);
+        var csrfToken = [[${_csrf.token}]];
+        ajaxPostJsonFull('/projects/create',paramJson,csrfToken,
+            function (response) {
+                console.log(response);
+                if(response.success) {
+                    modalAlertSuccess.removeClass("d-none");
+                    modalAlertWarning.addClass("d-none");
+                    modalAlertSuccess.html("项目创建成功，3秒后刷新页面");
+                    setTimeout(function () {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    modalAlertWarning.removeClass('d-none');
+                    modalAlertSuccess.addClass('d-none');
+                    modalAlertWarning.html(response.message);
+                    processErrorMsg(response.data);
+                }
+            }
+        );
+    }
+    function processErrorMsg(data) {
+        var projectAccessModeContent = $('#projectAccessModeContent');
+        processErrorMsgItem(data.name, projectName);
+        processErrorMsgItemOptional(data.description, projectDescription);
+        processErrorMsgItem(data.accessMode, projectAccessModeContent);
+        var deploymentArray = data.deploymentList;
+        if(deploymentArray !== null) {
+            for (var i = 0; i < deploymentArray.length; i++) {
+                var deployment = deploymentArray[i];
+                var tr = projectDeploymentTable.find("tr").eq(i + 2);
+                if (tr.length === 0) {
+                    break;
+                }
+                processErrorMsgItem(deployment.environment, tr.find("input").eq(0));
+                processErrorMsgItem(deployment.deploymentUrl, tr.find("input").eq(1));
+            }
+        }
+    }
+
     var pageSizeSelect = $('#pageSizeSelect');
     var pageSize = parseInt([[${pagedData.pageSize}]]);
     const totalPage=[[${pagedData.totalPage}]];

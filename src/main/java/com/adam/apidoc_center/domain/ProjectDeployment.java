@@ -17,23 +17,11 @@ public class ProjectDeployment extends AbstractAuditable {
     private long id;
     @Column(name = "project_id")
     private long projectId;
-    @Enumerated(EnumType.STRING)
-    private Environment environment;
+    private String environment;
     private String deploymentUrl;
     private boolean isEnabled;
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "project_id", insertable = false, updatable = false)
     private Project project;
 
-    @Getter
-    public enum Environment {
-        DEV("开发"), TEST("测试"), PROD("生产"), CUSTOM("自定义");
-        private String desc;
-        Environment(String desc) {
-            this.desc = desc;
-        }
-        public String getFullDesc() {
-            return desc + "环境";
-        }
-    }
 }

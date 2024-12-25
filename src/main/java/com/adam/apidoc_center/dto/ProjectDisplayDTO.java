@@ -5,7 +5,7 @@ import com.adam.apidoc_center.util.LocalDateTimeUtil;
 import lombok.Data;
 
 @Data
-public class ProjectDTO {
+public class ProjectDisplayDTO {
 
     private long id;
     private String name;
@@ -14,8 +14,8 @@ public class ProjectDTO {
     private String createTime;
     private String updateTime;
 
-    public static ProjectDTO convert(Project project) {
-        ProjectDTO dto = new ProjectDTO();
+    public static ProjectDisplayDTO convert(Project project) {
+        ProjectDisplayDTO dto = new ProjectDisplayDTO();
         dto.setId(project.getId());
         dto.setName(project.getName());
         dto.setDescription(project.getDescription());
