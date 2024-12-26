@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @Controller
-@RequestMapping("/projects")
+@RequestMapping("/project")
 @Slf4j
 public class ProjectController {
 

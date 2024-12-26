@@ -9,7 +9,7 @@ public class IndexController {
 
     @RequestMapping("")
     public String indexPage() {
-        return "redirect:/projects/viewAll";
+        return "redirect:/project/viewAll";
     }
 
 }

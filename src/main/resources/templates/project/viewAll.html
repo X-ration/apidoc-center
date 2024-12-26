@@ -131,7 +131,7 @@
                     <h5 class="card-title" th:text="${project.name}">项目名</h5>
                     <span class="card-text" th:text="${project.accessMode}">访问模式</span>
                     <p class="card-text" th:text="${project.description}">项目介绍</p>
-                    <a th:href="|/projects/view/${project.id}|" class="btn btn-primary">查看</a>
+                    <a th:href="|/project/view/${project.id}|" class="btn btn-primary">查看</a>
                 </div>
                 <div class="card-footer">
                     <span class="card-text" th:text="|创建于${project.createTime}|">创建时间</span><br>
@@ -143,11 +143,11 @@
         <div id="pagination" class="d-flex justify-content-center">
             <nav aria-label="分页导航">
                 <ul class="pagination">
-                    <li class="page-item"><a id="paginationFirst" class="page-link" th:href="|/projects/viewAll?pageNum=0&pageSize=20|">首页</a></li>
-                    <li class="page-item"><a id="paginationPrevious" class="page-link" th:href="|/projects/viewAll?pageNum=|+(${pagedData.pageNum}-1)+|&pageSize=20|">上一页</a></li>
-                    <li class="page-item"><a id="paginationCurrent" class="page-link" th:href="|/projects/viewAll?pageNum=${pagedData.pageNum}&pageSize=20|" th:text="${pagedData.pageNum}+1">0</a></li>
-                    <li class="page-item"><a id="paginationNext" class="page-link" th:href="|/projects/viewAll?pageNum=|+(${pagedData.pageNum}+1)+|&pageSize=20|">下一页</a></li>
-                    <li class="page-item"><a id="paginationLast" class="page-link" th:href="|/projects/viewAll?pageNum=|+(${pagedData.totalPage}-1)+|&pageSize=20|">末页</a></li>
+                    <li class="page-item"><a id="paginationFirst" class="page-link" th:href="|/project/viewAll?pageNum=0&pageSize=20|">首页</a></li>
+                    <li class="page-item"><a id="paginationPrevious" class="page-link" th:href="|/project/viewAll?pageNum=|+(${pagedData.pageNum}-1)+|&pageSize=20|">上一页</a></li>
+                    <li class="page-item"><a id="paginationCurrent" class="page-link" th:href="|/project/viewAll?pageNum=${pagedData.pageNum}&pageSize=20|" th:text="${pagedData.pageNum}+1">0</a></li>
+                    <li class="page-item"><a id="paginationNext" class="page-link" th:href="|/project/viewAll?pageNum=|+(${pagedData.pageNum}+1)+|&pageSize=20|">下一页</a></li>
+                    <li class="page-item"><a id="paginationLast" class="page-link" th:href="|/project/viewAll?pageNum=|+(${pagedData.totalPage}-1)+|&pageSize=20|">末页</a></li>
                 </ul>
             </nav>
         </div>
@@ -251,7 +251,7 @@
         console.log(paramObject);
         console.log(paramJson);
         var csrfToken = [[${_csrf.token}]];
-        ajaxPostJsonFull('/projects/create',paramJson,csrfToken,
+        ajaxPostJsonFull('/project/create',paramJson,csrfToken,
             function (response) {
                 console.log(response);
                 if(response.success) {
