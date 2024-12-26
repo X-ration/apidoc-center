@@ -4,7 +4,8 @@ import com.adam.apidoc_center.common.PagedData;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.dto.ProjectCreateOrUpdateDTO;
-import com.adam.apidoc_center.dto.ProjectDisplayDTO;
+import com.adam.apidoc_center.dto.ProjectDetailDisplayDTO;
+import com.adam.apidoc_center.dto.ProjectListDisplayDTO;
 import com.adam.apidoc_center.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +30,20 @@ public class ProjectController {
         } else if(pageNum < 0) {
             pageNum = 0;
         }
-        PagedData<ProjectDisplayDTO> pagedData = projectService.getProjectsPaged(pageNum, pageSize);
+        PagedData<ProjectListDisplayDTO> pagedData = projectService.getProjectsPaged(pageNum, pageSize);
         model.addAttribute("pagedData", pagedData);
         return "project/viewAll";
     }
 
     @GetMapping("/view/{projectId}")
-    public String viewProject(@PathVariable long projectId) {
-        return "project/viewProject";
+    public String viewProject(@PathVariable long projectId, Model model) {
+        ProjectDetailDisplayDTO projectDetailDisplayDTO = projectService.getProjectDetail(projectId);
+        if(projectDetailDisplayDTO != null) {
+            model.addAttribute("project", projectDetailDisplayDTO);
+            return "project/viewProject";
+        } else {
+            return "error/404";
+        }
     }
 
     @PostMapping(value = "/create")
@@ -47,6 +54,12 @@ public class ProjectController {
         }
         log.debug("createProject dto={}", projectCreateOrUpdateDTO);
         return projectService.checkAndCreate(projectCreateOrUpdateDTO);
+    }
+
+    @PostMapping("/delete/{projectId}")
+    @ResponseBody
+    public Response<Void> deleteProject(@PathVariable long projectId) {
+        return projectService.deleteProject(projectId);
     }
 
 }

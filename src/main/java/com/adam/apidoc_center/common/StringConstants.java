@@ -49,5 +49,8 @@ public class StringConstants {
     public static final String PROJECT_DEPLOYMENT_URL_BLANK = "项目部署地址为空";
     public static final String PROJECT_DEPLOYMENT_URL_LENGTH_EXCEEDED = "项目部署地址不超过256个字符";
     public static final String PROJECT_DEPLOYMENT_URL_INVALID = "项目部署地址不是有效的http(s)地址";
+    public static final String PROJECT_NOT_EXISTS = "项目不存在";
+    public static final String PROJECT_ONLY_OWNER_CAN_DELETE = "只有项目创建者才能删除项目";
+    public static final String PROJECT_DELETE_FAIL = "删除失败，请稍候再试";
 
 }

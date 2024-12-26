@@ -7,17 +7,21 @@ import com.adam.apidoc_center.domain.Project;
 import com.adam.apidoc_center.domain.ProjectAllowedUser;
 import com.adam.apidoc_center.domain.ProjectDeployment;
 import com.adam.apidoc_center.dto.ProjectCreateOrUpdateDTO;
-import com.adam.apidoc_center.dto.ProjectDisplayDTO;
+import com.adam.apidoc_center.dto.ProjectDetailDisplayDTO;
+import com.adam.apidoc_center.dto.ProjectListDisplayDTO;
 import com.adam.apidoc_center.dto.ProjectErrorMsg;
 import com.adam.apidoc_center.repository.ProjectAllowedUserRepository;
 import com.adam.apidoc_center.repository.ProjectDeploymentRepository;
 import com.adam.apidoc_center.repository.ProjectRepository;
+import com.adam.apidoc_center.security.ExtendedUser;
 import com.adam.apidoc_center.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -25,9 +29,11 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class ProjectService {
 
     @Autowired
@@ -37,12 +43,38 @@ public class ProjectService {
     @Autowired
     private ProjectAllowedUserRepository projectAllowedUserRepository;
 
-    public PagedData<ProjectDisplayDTO> getProjectsPaged(int pageNum, int pageSize) {
+    public PagedData<ProjectListDisplayDTO> getProjectsPaged(int pageNum, int pageSize) {
         Assert.isTrue(pageNum >= 0 && pageSize > 0, "getProjectsPaged param invalid");
         PageRequest pageRequest = PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.DESC, "id"));
         Page<Project> page = projectRepository.findAll(pageRequest);
         PagedData<Project> pagedData = PagedData.convert(page, pageRequest);
-        return pagedData.map(ProjectDisplayDTO::convert);
+        return pagedData.map(ProjectListDisplayDTO::convert);
+    }
+
+    public ProjectDetailDisplayDTO getProjectDetail(long projectId) {
+        Assert.isTrue(projectId > 0, "getProjectDetail projectId<=0");
+        Optional<Project> project = projectRepository.findById(projectId);
+        return project.map(ProjectDetailDisplayDTO::convert).orElse(null);
+    }
+
+    public Response<Void> deleteProject(long projectId) {
+        Assert.isTrue(projectId > 0, "deleteProject projectId<=0");
+        Optional<Project> projectOptional = projectRepository.findById(projectId);
+        if(projectOptional.isEmpty()) {
+            return Response.fail(StringConstants.PROJECT_NOT_EXISTS);
+        }
+        Project project = projectOptional.get();
+        ExtendedUser extendedUser = (ExtendedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(project.getCreateUserId() != extendedUser.getUser().getId()) {
+            return Response.fail(StringConstants.PROJECT_ONLY_OWNER_CAN_DELETE);
+        }
+        try {
+            projectRepository.deleteById(projectId);
+            return Response.success();
+        } catch (Exception e) {
+            log.error("deleteProjectError", e);
+            return Response.fail(StringConstants.PROJECT_DELETE_FAIL);
+        }
     }
 
     @Transactional

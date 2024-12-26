@@ -1,15 +1,118 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/default_with_navbar}">
+      layout:decorate="~{layout/default_with_navbar_and_tagsinput_and_docs}">
 <head>
     <title>查看项目</title>
 </head>
 <body>
 <div class="container-fluid" layout:fragment="content">
-
+    <div class="row">
+        <div class="col-12 col-md-4 col-xl-3 bd-sidebar">
+            <form class="bd-search d-flex align-items-center">
+                <input type="search" class="form-control" id="search-input" placeholder="搜索接口" aria-label="Search for..." autocomplete="off" data-docs-version="4.3">
+                <button class="btn btn-link bd-search-docs-toggle d-md-none p-0 ml-3" type="button" data-toggle="collapse" data-target="#bd-docs-nav" aria-controls="bd-docs-nav" aria-expanded="false" aria-label="Toggle docs navigation"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" role="img" focusable="false"><title>菜单</title><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"/></svg></button>
+            </form>
+            <nav class="collapse bd-links" id="bd-docs-nav">
+                <div class="bd-toc-item active">
+                    <a class="bd-toc-link" th:href="|/project/view/${project.id}|">
+                        项目管理
+                    </a>
+                </div>
+                <div class="d-none bd-toc-item active">
+                    <a class="bd-toc-link" th:href="|/project/view/${project.id}|">
+                        项目管理
+                    </a>
+                    <ul class="nav bd-sidenav">
+                        <li class="active bd-sidenav-active">
+                            <a href="introduction_2.htm">Introduction</a>
+                        </li>
+                        <li>
+                            <a href="../download/download.htm">Download</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        <main class="col-12 col-md-8 col-xl-9 py-md-3 pl-md-5 bd-content" role="main">
+            <h1 class="bd-title" th:text="${project.name}">项目名称</h1>
+            <span class="bd-lead" th:if="${project.accessMode} == '公开'">
+                <i class="fa fa-unlock"></i> 公开
+            </span>
+            <span class="bd-lead" th:if="${project.accessMode} == '私有'">
+                <i class="fa fa-lock"></i> 私有
+            </span>
+            <br>
+            <p class="bd-lead" th:text="${project.description}" th:if="${project.description}">项目介绍</p>
+            <small class="text-muted" th:text="|创建于${project.createTime}|">创建时间</small>
+            <small class="text-muted" th:text="|更新于${project.updateTime}|">更新时间</small>
+            <br><br>
+            <div class="row">
+                <button type="button" class="btn btn-primary">修改项目信息</button>
+                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#deleteProjectModal">删除项目</button>
+            </div>
+        </main>
+        <div class="modal fade" id="deleteProjectModal" tabindex="-1" role="dialog" aria-labelledby="deleteProjectModal" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">删除项目</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="deleteProjectSuccessAlert" class="d-none alert alert-success" role="alert">
+                            A simple success alert—check it out!
+                        </div>
+                        <div id="deleteProjectWarningAlert" class="d-none alert alert-warning" role="alert">
+                            A simple success alert—check it out!
+                        </div>
+                        您真的要删除这个项目吗？
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-warning" onclick="deleteProject()">确认删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
-<script layout:fragment="script">
+<script layout:fragment="script" th:inline="javascript">
+    var csrfToken = [[${_csrf.token}]];
+    var projectId = [[${project.id}]];
+    function deleteProject() {
+        var deleteProjectSuccessAlert = $('#deleteProjectSuccessAlert'),
+            deleteProjectWarningAlert = $('#deleteProjectWarningAlert');
+        if(isNaN(projectId)) {
+            deleteProjectSuccessAlert.addClass('d-none');
+            deleteProjectWarningAlert.removeClass('d-none');
+            deleteProjectWarningAlert.html("页面存在错误，请刷新重试");
+            return;
+        }
+        ajaxPostJsonFull('/project/delete/' + projectId,null,csrfToken,
+            function (response) {
+                if(response.success) {
+                    deleteProjectSuccessAlert.removeClass('d-none');
+                    deleteProjectWarningAlert.addClass('d-none');
+                    deleteProjectSuccessAlert.html("删除成功，3秒后返回所有项目页面");
+                    setTimeout(function () {
+                        location.href = "/project/viewAll";
+                    }, 3000);
+                } else {
+                    deleteProjectSuccessAlert.addClass('d-none');
+                    deleteProjectWarningAlert.removeClass('d-none');
+                    deleteProjectWarningAlert.html("删除失败：" + response.message);
+                }
+            },
+            function (xhr) {
+                deleteProjectSuccessAlert.addClass('d-none');
+                deleteProjectWarningAlert.removeClass('d-none');
+                deleteProjectWarningAlert.html("删除失败，状态码：" + xhr.status);
+            }
+        )
+    }
 </script>
 </html>
