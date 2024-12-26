@@ -42,9 +42,9 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="projectDescription">项目介绍</label>
-                                    <textarea class="form-control" id="projectDescription" placeholder="不超过100个字符">
+                                    <textarea class="form-control" id="projectDescription" placeholder="不超过200个字符">
                                     </textarea>
-                                    <div class="invalid-feedback">项目介绍不超过100个字符</div>
+                                    <div class="invalid-feedback">项目介绍不超过200个字符</div>
                                 </div>
                                 <div class="form-group" id="projectAccessModeDiv">
                                     <label for="projectAccessModeContent">访问模式</label>
@@ -131,11 +131,11 @@
                     <h5 class="card-title" th:text="${project.name}">项目名</h5>
                     <span class="card-text" th:text="${project.accessMode}">访问模式</span>
                     <p class="card-text" th:text="${project.description}">项目介绍</p>
-                    <a th:href="|/project/view/${project.id}|" class="btn btn-primary">查看</a>
+                    <small class="card-text text-muted" th:text="|创建于${project.createTime}|">创建时间</small><br>
+                    <small class="card-text text-muted" th:text="|更新于${project.updateTime}|">更新时间</small><br>
                 </div>
                 <div class="card-footer">
-                    <span class="card-text" th:text="|创建于${project.createTime}|">创建时间</span><br>
-                    <span class="card-text" th:text="|更新于${project.updateTime}|">更新时间</span><br>
+                    <a th:href="|/project/view/${project.id}|" class="btn btn-primary btn-block">查看</a>
                 </div>
             </div>
         </div>
@@ -208,7 +208,7 @@
             var userQueryParam = taginput.val();
             taginput.val('');
             // tagsinput.tagsinput('remove', userQueryParam);
-            ajaxGetJsonFull('/user/queryUserCore', {queryParam: userQueryParam},
+            ajaxGetJson('/user/queryUserCore', {queryParam: userQueryParam},
                 function (response) {
                     console.log(response);
                     if (response.success) {
@@ -267,6 +267,11 @@
                     modalAlertWarning.html(response.message);
                     processErrorMsg(response.data);
                 }
+            },
+            function (xhr) {
+                modalAlertWarning.removeClass('d-none');
+                modalAlertSuccess.addClass('d-none');
+                modalAlertWarning.html('请求出错，状态码：'+xhr.status)
             }
         );
     }

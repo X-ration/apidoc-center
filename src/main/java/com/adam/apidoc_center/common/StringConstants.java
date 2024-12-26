@@ -41,7 +41,7 @@ public class StringConstants {
     public static final String PROJECT_CREATE_FAIL_CHECK_INPUT = "项目创建失败，请检查输入";
     public static final String PROJECT_NAME_BLANK = "项目名为空";
     public static final String PROJECT_NAME_LENGTH_EXCEEDED = "项目名不超过32个字符";
-    public static final String PROJECT_DESCRIPTION_LENGTH_EXCEEDED = "项目介绍不超过100个字符";
+    public static final String PROJECT_DESCRIPTION_LENGTH_EXCEEDED = "项目介绍不超过200个字符";
     public static final String PROJECT_ACCESS_MODE_NULL = "项目访问模式为空";
     public static final String PROJECT_ALLOW_USER_IDS_INVALID = "项目允许访问的用户参数非法";
     public static final String PROJECT_DEPLOYMENT_ENVIRONMENT_BLANK = "项目部署环境名为空";

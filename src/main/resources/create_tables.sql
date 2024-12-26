@@ -42,7 +42,7 @@ DROP TABLE IF EXISTS `project`;
 CREATE TABLE `project` (
     `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(32) NOT NULL,
-    `description` VARCHAR(100) DEFAULT NULL,
+    `description` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `access_mode` ENUM('PUBLIC', 'PRIVATE') COMMENT '访问模式-公开还是私有',
     `create_user_id` BIGINT(64) NOT NULL,
     `update_user_id` BIGINT(64) NOT NULL,

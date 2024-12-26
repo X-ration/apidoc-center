@@ -4,6 +4,8 @@ import com.adam.apidoc_center.common.PagedData;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.domain.Project;
+import com.adam.apidoc_center.domain.ProjectAllowedUser;
+import com.adam.apidoc_center.domain.ProjectDeployment;
 import com.adam.apidoc_center.dto.ProjectCreateOrUpdateDTO;
 import com.adam.apidoc_center.dto.ProjectDisplayDTO;
 import com.adam.apidoc_center.dto.ProjectErrorMsg;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -42,6 +45,7 @@ public class ProjectService {
         return pagedData.map(ProjectDisplayDTO::convert);
     }
 
+    @Transactional
     public Response<?> checkAndCreate(ProjectCreateOrUpdateDTO projectCreateDTO) {
         ProjectErrorMsg projectErrorMsg = checkCreateParams(projectCreateDTO);
         if(projectErrorMsg.hasError()) {
@@ -51,7 +55,22 @@ public class ProjectService {
         Project project = new Project();
         project.setName(projectCreateDTO.getName());
         project.setDescription(projectCreateDTO.getDescription());
-        return Response.fail("Not implemented");
+        project.setAccessMode(projectCreateDTO.getAccessMode());
+        projectRepository.save(project);
+        long projectId = project.getId();
+        if(!CollectionUtils.isEmpty(projectCreateDTO.getAllowUserIdList())) {
+            List<ProjectAllowedUser> projectAllowedUserList = projectCreateDTO.getAllowUserIdList().stream()
+                    .map(userId -> new ProjectAllowedUser(projectId, userId))
+                    .collect(Collectors.toList());
+            projectAllowedUserRepository.saveAll(projectAllowedUserList);
+        }
+        if(!CollectionUtils.isEmpty(projectCreateDTO.getDeploymentList())) {
+            List<ProjectDeployment> projectDeploymentList = projectCreateDTO.getDeploymentList().stream()
+                    .map(deployment -> new ProjectDeployment(projectId, deployment))
+                    .collect(Collectors.toList());
+            projectDeploymentRepository.saveAll(projectDeploymentList);
+        }
+        return Response.success(projectId);
     }
 
     private ProjectErrorMsg checkCreateParams(ProjectCreateOrUpdateDTO projectCreateDTO) {
@@ -63,7 +82,7 @@ public class ProjectService {
         }
         if(StringUtils.isBlank(projectCreateDTO.getDescription())) {
             projectCreateDTO.setDescription(null);
-        } else if(projectCreateDTO.getDescription().length() > 100) {
+        } else if(projectCreateDTO.getDescription().length() > 200) {
             projectErrorMsg.setDescription(StringConstants.PROJECT_DESCRIPTION_LENGTH_EXCEEDED);
         }
         if(projectCreateDTO.getAccessMode() == null) {
