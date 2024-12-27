@@ -44,6 +44,20 @@
             </span>
             <br>
             <p class="bd-lead" th:text="${project.description}" th:if="${project.description}">项目介绍</p>
+            <span class="bd-lead" th:if="${project.accessMode} == '私有'" id="allowUsernames"></span><br><br>
+            <span class="bd-lead">项目部署地址</span>
+            <table class="table">
+                <thead><tr>
+                    <th>环境</th>
+                    <th>部署地址</th></tr>
+                </thead>
+                <tbody th:if="${project.deploymentList} != null" th:each="deployment:${project.deploymentList}">
+                <tr>
+                    <td th:text="${deployment.environment}"></td>
+                    <td th:text="${deployment.deploymentUrl}"></td>
+                </tr>
+                </tbody>
+            </table>
             <small class="text-muted" th:text="|创建于${project.createTime}|">创建时间</small>
             <small class="text-muted" th:text="|更新于${project.updateTime}|">更新时间</small>
             <br><br>
@@ -199,6 +213,18 @@
 </body>
 <script layout:fragment="script" th:inline="javascript">
     var csrfToken = [[${_csrf.token}]];
+    var allowUsernames = $('#allowUsernames');
+    if(allowUsernames.length === 1) {
+        var allowUserDTOs = [[${project.allowedUserList}]];
+        var value = '允许访问的用户：';
+        for(var i=0;i<allowUserDTOs.length;i++) {
+            value = value + allowUserDTOs[i].username + ",";
+        }
+        if(allowUserDTOs.length > 0) {
+            value = value.substring(0, value.length - 1);
+        }
+        allowUsernames.html(value);
+    }
     var projectId = [[${project.id}]];
     var projectName = $('#projectName');
     var projectDescription = $('#projectDescription');

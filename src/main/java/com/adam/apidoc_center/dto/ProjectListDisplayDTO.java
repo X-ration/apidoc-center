@@ -18,7 +18,13 @@ public class ProjectListDisplayDTO {
         ProjectListDisplayDTO dto = new ProjectListDisplayDTO();
         dto.setId(project.getId());
         dto.setName(project.getName());
-        dto.setDescription(project.getDescription());
+        if(project.getDescription() != null) {
+            if (project.getDescription().length() <= 100) {
+                dto.setDescription(project.getDescription());
+            } else {
+                dto.setDescription(project.getDescription().substring(0, 97) + "...");
+            }
+        }
         dto.setAccessMode(project.getAccessMode().getDesc());
         dto.setCreateTime(LocalDateTimeUtil.timeDiffFriendlyDesc(project.getCreateTime()));
         dto.setUpdateTime(LocalDateTimeUtil.timeDiffFriendlyDesc(project.getUpdateTime()));

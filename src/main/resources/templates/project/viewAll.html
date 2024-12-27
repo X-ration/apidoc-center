@@ -129,7 +129,8 @@
                 <img src="/resources/default_project.jpg" width="200px" height="200px" class="card-img-top" alt="项目图像">
                 <div class="card-body">
                     <h5 class="card-title" th:text="${project.name}">项目名</h5>
-                    <span class="card-text" th:text="${project.accessMode}">访问模式</span>
+                    <span class="card-text" th:if="${project.accessMode} == '公开'"><i class="fa fa-unlock"></i> 公开</span>
+                    <span class="card-text" th:if="${project.accessMode} == '私有'"><i class="fa fa-lock"></i> 私有</span>
                     <p class="card-text" th:text="${project.description}">项目介绍</p>
                     <small class="card-text text-muted" th:text="|创建于${project.createTime}|">创建时间</small><br>
                     <small class="card-text text-muted" th:text="|更新于${project.updateTime}|">更新时间</small><br>
