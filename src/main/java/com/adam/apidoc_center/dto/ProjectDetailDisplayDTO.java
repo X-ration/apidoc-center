@@ -4,6 +4,8 @@ import com.adam.apidoc_center.domain.Project;
 import com.adam.apidoc_center.util.LocalDateTimeUtil;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class ProjectDetailDisplayDTO {
 
@@ -13,6 +15,8 @@ public class ProjectDetailDisplayDTO {
     private String accessMode;
     private String createTime;
     private String updateTime;
+    private List<UserCoreDTO> allowedUserList;
+    private List<ProjectDeploymentCreateOrUpdateDTO> deploymentList;
 
     public static ProjectDetailDisplayDTO convert(Project project) {
         ProjectDetailDisplayDTO dto = new ProjectDetailDisplayDTO();

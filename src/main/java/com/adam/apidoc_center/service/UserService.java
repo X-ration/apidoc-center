@@ -17,8 +17,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -30,6 +36,20 @@ public class UserService {
     private UserAuthorityRepository userAuthorityRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    public Map<Long, User> queryUserMap(List<Long> userIdList) {
+        Assert.notNull(userIdList, "queryUserMap userIdList null");
+        if(CollectionUtils.isEmpty(userIdList)) {
+            return new HashMap<>();
+        }
+        List<User> userList = userRepository.findAllById(userIdList);
+        if(CollectionUtils.isEmpty(userList)) {
+            return new HashMap<>();
+        } else {
+            return userList.stream()
+                    .collect(Collectors.toMap(User::getId, Function.identity()));
+        }
+    }
 
     public Response<?> checkAndModify(UserDTO userDTO) {
         Assert.notNull(userDTO, "checkAndModify userDTO null");

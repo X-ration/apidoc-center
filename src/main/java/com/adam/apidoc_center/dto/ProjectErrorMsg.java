@@ -7,6 +7,7 @@ import java.util.List;
 
 @Data
 public class ProjectErrorMsg {
+    private String id;
     private String name;
     private String description;
     private String accessMode;

@@ -6,10 +6,8 @@ import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.domain.Project;
 import com.adam.apidoc_center.domain.ProjectAllowedUser;
 import com.adam.apidoc_center.domain.ProjectDeployment;
-import com.adam.apidoc_center.dto.ProjectCreateOrUpdateDTO;
-import com.adam.apidoc_center.dto.ProjectDetailDisplayDTO;
-import com.adam.apidoc_center.dto.ProjectListDisplayDTO;
-import com.adam.apidoc_center.dto.ProjectErrorMsg;
+import com.adam.apidoc_center.domain.User;
+import com.adam.apidoc_center.dto.*;
 import com.adam.apidoc_center.repository.ProjectAllowedUserRepository;
 import com.adam.apidoc_center.repository.ProjectDeploymentRepository;
 import com.adam.apidoc_center.repository.ProjectRepository;
@@ -27,9 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +38,8 @@ public class ProjectService {
     private ProjectDeploymentRepository projectDeploymentRepository;
     @Autowired
     private ProjectAllowedUserRepository projectAllowedUserRepository;
+    @Autowired
+    private UserService userService;
 
     public PagedData<ProjectListDisplayDTO> getProjectsPaged(int pageNum, int pageSize) {
         Assert.isTrue(pageNum >= 0 && pageSize > 0, "getProjectsPaged param invalid");
@@ -53,8 +51,34 @@ public class ProjectService {
 
     public ProjectDetailDisplayDTO getProjectDetail(long projectId) {
         Assert.isTrue(projectId > 0, "getProjectDetail projectId<=0");
-        Optional<Project> project = projectRepository.findById(projectId);
-        return project.map(ProjectDetailDisplayDTO::convert).orElse(null);
+        Optional<Project> projectOptional = projectRepository.findById(projectId);
+        if(projectOptional.isEmpty()) {
+            return null;
+        }
+        Project project = projectOptional.get();
+        ProjectDetailDisplayDTO projectDetailDisplayDTO = ProjectDetailDisplayDTO.convert(project);
+        if(!CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
+            List<Long> allowUserIdList = project.getProjectAllowedUserList().stream()
+                    .filter(ProjectAllowedUser::isAllow)
+                    .map(ProjectAllowedUser::getUserId)
+                    .collect(Collectors.toList());
+            Map<Long, User> userMap = userService.queryUserMap(allowUserIdList);
+            List<UserCoreDTO> userCoreDTOList = allowUserIdList.stream()
+                    .map(userMap::get)
+                    .filter(Objects::nonNull)
+                    .map(UserCoreDTO::new)
+                    .collect(Collectors.toList());
+            projectDetailDisplayDTO.setAllowedUserList(userCoreDTOList);
+        }
+        if(!CollectionUtils.isEmpty(project.getProjectDeploymentList())) {
+            List<ProjectDeploymentCreateOrUpdateDTO> projectDeploymentCreateOrUpdateDTOList =
+                    project.getProjectDeploymentList().stream()
+                            .filter(ProjectDeployment::isEnabled)
+                            .map(ProjectDeploymentCreateOrUpdateDTO::new)
+                            .collect(Collectors.toList());
+            projectDetailDisplayDTO.setDeploymentList(projectDeploymentCreateOrUpdateDTOList);
+        }
+        return projectDetailDisplayDTO;
     }
 
     public Response<Void> deleteProject(long projectId) {
@@ -64,8 +88,16 @@ public class ProjectService {
             return Response.fail(StringConstants.PROJECT_NOT_EXISTS);
         }
         Project project = projectOptional.get();
+        List<Long> allowUserIds = new LinkedList<>();
+        if(project.getAccessMode() == Project.AccessMode.PRIVATE && !CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
+            allowUserIds = project.getProjectAllowedUserList().stream()
+                    .filter(ProjectAllowedUser::isAllow)
+                    .map(ProjectAllowedUser::getUserId)
+                    .collect(Collectors.toList());
+        }
         ExtendedUser extendedUser = (ExtendedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if(project.getCreateUserId() != extendedUser.getUser().getId()) {
+        if(!extendedUser.getUsername().equals("admin") && project.getCreateUserId() != extendedUser.getUser().getId()
+                && project.getAccessMode() == Project.AccessMode.PRIVATE && !allowUserIds.contains(extendedUser.getUser().getId())) {
             return Response.fail(StringConstants.PROJECT_ONLY_OWNER_CAN_DELETE);
         }
         try {
@@ -75,6 +107,67 @@ public class ProjectService {
             log.error("deleteProjectError", e);
             return Response.fail(StringConstants.PROJECT_DELETE_FAIL);
         }
+    }
+
+    @Transactional
+    public Response<?> checkAndModify(ProjectCreateOrUpdateDTO projectUpdateDTO, long projectId) {
+        if(projectId <= 0) {
+            return Response.fail(StringConstants.PROJECT_ID_INVALID);
+        }
+        Optional<Project> projectOptional = projectRepository.findById(projectId);
+        if(projectOptional.isEmpty()) {
+            return Response.fail(StringConstants.PROJECT_ID_INVALID);
+        }
+        Project project = projectOptional.get();
+        List<Long> allowUserIds = new LinkedList<>();
+        if(project.getAccessMode() == Project.AccessMode.PRIVATE && !CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
+            allowUserIds = project.getProjectAllowedUserList().stream()
+                    .filter(ProjectAllowedUser::isAllow)
+                    .map(ProjectAllowedUser::getUserId)
+                    .collect(Collectors.toList());
+        }
+        ExtendedUser extendedUser = (ExtendedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(!extendedUser.getUsername().equals("admin") && project.getCreateUserId() != extendedUser.getUser().getId()
+                && project.getAccessMode() == Project.AccessMode.PRIVATE && !allowUserIds.contains(extendedUser.getUser().getId())) {
+            return Response.fail(StringConstants.PROJECT_ONLY_OWNER_CAN_MODIFY);
+        }
+        ProjectErrorMsg projectErrorMsg = checkCreateParams(projectUpdateDTO);
+        if(projectErrorMsg.hasError()) {
+            return Response.fail(StringConstants.PROJECT_MODIFY_FAIL_CHECK_INPUT, projectErrorMsg);
+        }
+        //修改项目
+        project.setName(projectUpdateDTO.getName());
+        project.setDescription(projectUpdateDTO.getDescription());
+        project.setAccessMode(projectUpdateDTO.getAccessMode());
+        if(!CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
+            projectAllowedUserRepository.deleteAll(project.getProjectAllowedUserList());
+        }
+        if(projectUpdateDTO.getAccessMode() == Project.AccessMode.PUBLIC) {
+            project.setProjectAllowedUserList(null);
+        } else if(projectUpdateDTO.getAccessMode() == Project.AccessMode.PRIVATE) {
+            if(!CollectionUtils.isEmpty(projectUpdateDTO.getAllowUserIdList())) {
+                List<ProjectAllowedUser> projectAllowedUserList = projectUpdateDTO.getAllowUserIdList().stream()
+                        .map(userId -> new ProjectAllowedUser(projectId, userId))
+                        .collect(Collectors.toList());
+                project.setProjectAllowedUserList(projectAllowedUserList);
+            }
+        }
+        if(!CollectionUtils.isEmpty(project.getProjectDeploymentList())) {
+//            List<Long> projectDeploymentIdList = project.getProjectDeploymentList().stream()
+//                    .map(ProjectDeployment::getId)
+//                    .collect(Collectors.toList());
+            //这个方法会报找不到实体的异常
+//            projectDeploymentRepository.deleteAllById(projectDeploymentIdList);
+            projectDeploymentRepository.deleteAll(project.getProjectDeploymentList());
+        }
+        if(!CollectionUtils.isEmpty(projectUpdateDTO.getDeploymentList())) {
+            List<ProjectDeployment> projectDeploymentList = projectUpdateDTO.getDeploymentList().stream()
+                    .map(deployment -> new ProjectDeployment(projectId, deployment))
+                    .collect(Collectors.toList());
+            project.setProjectDeploymentList(projectDeploymentList);
+        }
+        projectRepository.save(project);
+        return Response.success();
     }
 
     @Transactional
@@ -90,7 +183,7 @@ public class ProjectService {
         project.setAccessMode(projectCreateDTO.getAccessMode());
         projectRepository.save(project);
         long projectId = project.getId();
-        if(!CollectionUtils.isEmpty(projectCreateDTO.getAllowUserIdList())) {
+        if(projectCreateDTO.getAccessMode() == Project.AccessMode.PRIVATE && !CollectionUtils.isEmpty(projectCreateDTO.getAllowUserIdList())) {
             List<ProjectAllowedUser> projectAllowedUserList = projectCreateDTO.getAllowUserIdList().stream()
                     .map(userId -> new ProjectAllowedUser(projectId, userId))
                     .collect(Collectors.toList());

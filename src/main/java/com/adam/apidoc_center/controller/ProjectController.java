@@ -62,4 +62,14 @@ public class ProjectController {
         return projectService.deleteProject(projectId);
     }
 
+    @PostMapping(value = "/modify/{projectId}")
+    @ResponseBody
+    public Response<?> modifyProject(@RequestBody ProjectCreateOrUpdateDTO projectCreateOrUpdateDTO, @PathVariable long projectId) {
+        if(projectCreateOrUpdateDTO == null) {
+            return Response.fail(StringConstants.REQUEST_PARAM_IS_NULL);
+        }
+        log.debug("modifyProject dto={}", projectCreateOrUpdateDTO);
+        return projectService.checkAndModify(projectCreateOrUpdateDTO, projectId);
+    }
+
 }

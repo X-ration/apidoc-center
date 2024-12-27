@@ -21,7 +21,7 @@ public class ProjectAllowedUser extends AbstractAuditable {
     private long projectId;
     private long userId;
     private boolean isAllow;
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "project_id", insertable = false, updatable = false)
     private Project project;
 

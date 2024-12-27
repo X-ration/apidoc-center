@@ -1,10 +1,9 @@
 package com.adam.apidoc_center.domain;
 
 import com.adam.apidoc_center.common.AbstractAuditable;
-import com.adam.apidoc_center.dto.ProjectCreateOrUpdateDTO;
+import com.adam.apidoc_center.dto.ProjectDeploymentCreateOrUpdateDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -23,11 +22,11 @@ public class ProjectDeployment extends AbstractAuditable {
     private String environment;
     private String deploymentUrl;
     private boolean isEnabled;
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "project_id", insertable = false, updatable = false)
     private Project project;
 
-    public ProjectDeployment(long projectId, ProjectCreateOrUpdateDTO.ProjectDeploymentCreateOrUpdateDTO projectDeploymentCreateOrUpdateDTO) {
+    public ProjectDeployment(long projectId, ProjectDeploymentCreateOrUpdateDTO projectDeploymentCreateOrUpdateDTO) {
         this.projectId = projectId;
         this.environment = projectDeploymentCreateOrUpdateDTO.getEnvironment();
         this.deploymentUrl = projectDeploymentCreateOrUpdateDTO.getDeploymentUrl();

@@ -13,10 +13,4 @@ public class ProjectCreateOrUpdateDTO {
     private String allowUserIds;
     private List<Long> allowUserIdList;
     private List<ProjectDeploymentCreateOrUpdateDTO> deploymentList;
-
-    @Data
-    public static class ProjectDeploymentCreateOrUpdateDTO {
-        private String environment;
-        private String deploymentUrl;
-    }
 }

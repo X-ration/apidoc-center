@@ -76,7 +76,7 @@
                                                 <option>生产环境</option>
                                                 <option>自定义环境</option>
                                             </select>
-                                            <button class="btn btn-primary ml-1" onclick="addProjectDeployment()"><i class="fa fa-plus"></i> 新增地址</button>
+                                            <button type="button" class="btn btn-primary ml-1" onclick="addProjectDeployment()"><i class="fa fa-plus"></i> 新增地址</button>
                                         </div>
                                         <table id="projectDeploymentTable" class="table">
                                             <thead><tr>
@@ -194,13 +194,6 @@
             shareUserDiv.removeClass('d-none');
         }
     });
-    function updateTagsBgColor(tagsinput, color) {
-        var tags = tagsinput.prev().find("span.tag");
-        for(var i=0;i<tags.length;i++) {
-            var tag = $(tags[i]);
-            tag.attr('style','background-color: ' + color);
-        }
-    }
     var taginput = tagsinput.prev().find("input");
     taginput.keydown(function (event) {
         //监听回车键
@@ -280,6 +273,7 @@
         processErrorMsgItem(data.name, projectName);
         processErrorMsgItemOptional(data.description, projectDescription);
         processErrorMsgItem(data.accessMode, projectAccessModeContent);
+        processErrorMsgItem(data.allowUserIds, tagsinput.prev());
         var deploymentArray = data.deploymentList;
         if(deploymentArray !== null) {
             for (var i = 0; i < deploymentArray.length; i++) {

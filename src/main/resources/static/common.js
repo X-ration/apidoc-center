@@ -55,3 +55,10 @@ function processErrorMsgItemOptional(errorMsgItem, selector) {
         processErrorMsgItem(errorMsgItem, selector);
     }
 }
+function updateTagsBgColor(tagsinput, color) {
+    var tags = tagsinput.prev().prev().find("span.tag");
+    for(var i=0;i<tags.length;i++) {
+        var tag = $(tags[i]);
+        tag.attr('style','background-color: ' + color);
+    }
+}
