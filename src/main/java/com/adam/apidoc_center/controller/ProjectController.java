@@ -35,7 +35,7 @@ public class ProjectController {
         return "project/viewAll";
     }
 
-    @GetMapping("/view/{projectId}")
+    @GetMapping("/{projectId}/view")
     public String viewProject(@PathVariable long projectId, Model model) {
         ProjectDetailDisplayDTO projectDetailDisplayDTO = projectService.getProjectDetail(projectId);
         if(projectDetailDisplayDTO != null) {
@@ -56,13 +56,13 @@ public class ProjectController {
         return projectService.checkAndCreate(projectCreateOrUpdateDTO);
     }
 
-    @PostMapping("/delete/{projectId}")
+    @PostMapping("/{projectId}/delete")
     @ResponseBody
     public Response<Void> deleteProject(@PathVariable long projectId) {
         return projectService.deleteProject(projectId);
     }
 
-    @PostMapping(value = "/modify/{projectId}")
+    @PostMapping(value = "/{projectId}/modify")
     @ResponseBody
     public Response<?> modifyProject(@RequestBody ProjectCreateOrUpdateDTO projectCreateOrUpdateDTO, @PathVariable long projectId) {
         if(projectCreateOrUpdateDTO == null) {

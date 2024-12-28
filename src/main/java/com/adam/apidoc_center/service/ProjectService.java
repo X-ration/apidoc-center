@@ -81,7 +81,6 @@ public class ProjectService {
         return projectDetailDisplayDTO;
     }
 
-    //todo 删除关联的实体
     public Response<Void> deleteProject(long projectId) {
         Assert.isTrue(projectId > 0, "deleteProject projectId<=0");
         Optional<Project> projectOptional = projectRepository.findById(projectId);
@@ -102,7 +101,7 @@ public class ProjectService {
             return Response.fail(StringConstants.PROJECT_ONLY_OWNER_CAN_DELETE);
         }
         try {
-            projectRepository.deleteById(projectId);
+            projectRepository.deleteById(projectId);  //关联实体(分组)一并删除
             return Response.success();
         } catch (Exception e) {
             log.error("deleteProjectError", e);

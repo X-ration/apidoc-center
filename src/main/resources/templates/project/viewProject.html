@@ -51,8 +51,8 @@
                     <th>环境</th>
                     <th>部署地址</th></tr>
                 </thead>
-                <tbody th:if="${project.deploymentList} != null" th:each="deployment:${project.deploymentList}">
-                <tr>
+                <tbody>
+                <tr th:if="${project.deploymentList} != null" th:each="deployment:${project.deploymentList}">
                     <td th:text="${deployment.environment}"></td>
                     <td th:text="${deployment.deploymentUrl}"></td>
                 </tr>
@@ -66,8 +66,7 @@
                 <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#deleteProjectModal">删除项目</button>
             </div>
             <div class="row mt-1">
-                <button type="button" class="btn btn-primary mr-1" data-toggle="modal" data-target="#createGroupModal">创建分组</button>
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createInterfaceModal">创建接口</button>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createGroupModal">创建分组</button>
             </div>
         </main>
         <div class="modal fade" id="createGroupModal" tabindex="-1" role="dialog" aria-labelledby="createGroupModalLabel" aria-hidden="true">
@@ -80,10 +79,10 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div id="createGroupAlertWarning" class="d-none alert alert-warning" role="alert">
+                        <div id="createGroupAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
                             A simple warning alert—check it out!
                         </div>
-                        <div id="createGroupAlertSuccess" class="d-none alert alert-success" role="alert">
+                        <div id="createGroupAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
                             A simple warning alert—check it out!
                         </div>
                         <div class="form-group">
@@ -114,10 +113,10 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div id="modifyProjectAlertWarning" class="d-none alert alert-warning" role="alert">
+                        <div id="modifyProjectAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
                             A simple warning alert—check it out!
                         </div>
-                        <div id="modifyProjectAlertSuccess" class="d-none alert alert-success" role="alert">
+                        <div id="modifyProjectAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
                             A simple warning alert—check it out!
                         </div>
                         <div class="form-group">
@@ -177,6 +176,8 @@
                                         <th>部署地址</th>
                                         <th>操作</th>
                                     </tr>
+                                    </thead>
+                                    <tbody>
                                     <tr id="projectDeploymentTrTemplate" class="d-none">
                                         <td>
                                             <input class="form-control" style="width: 140px" type="text" placeholder="环境名">
@@ -192,23 +193,21 @@
                                             </button>
                                         </td>
                                     </tr>
-                                    </thead>
-                                    <tbody th:each="deployment:${project.deploymentList}">
-                                        <tr>
-                                            <td>
-                                                <input class="form-control" th:value="${deployment.environment}" style="width: 140px" type="text" placeholder="环境名">
-                                                <div class="invalid-feedback">项目部署环境名不超过32个字符</div>
-                                            </td>
-                                            <td>
-                                                <input class="form-control" th:value="${deployment.deploymentUrl}" style="width: 300px" type="text" placeholder="项目部署地址，以http/https开头">
-                                                <div class="invalid-feedback">项目部署地址不超过256个字符</div>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-primary" type="button" onclick="$(this).parent().parent().remove()">
-                                                    <i class="fa fa-trash-alt"></i> 删除
-                                                </button>
-                                            </td>
-                                        </tr>
+                                    <tr th:each="deployment:${project.deploymentList}">
+                                        <td>
+                                            <input class="form-control" th:value="${deployment.environment}" style="width: 140px" type="text" placeholder="环境名">
+                                            <div class="invalid-feedback">项目部署环境名不超过32个字符</div>
+                                        </td>
+                                        <td>
+                                            <input class="form-control" th:value="${deployment.deploymentUrl}" style="width: 300px" type="text" placeholder="项目部署地址，以http/https开头">
+                                            <div class="invalid-feedback">项目部署地址不超过256个字符</div>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-primary" type="button" onclick="$(this).parent().parent().remove()">
+                                                <i class="fa fa-trash-alt"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -231,10 +230,10 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div id="deleteProjectSuccessAlert" class="d-none alert alert-success" role="alert">
+                        <div id="deleteProjectSuccessAlert" class="d-none alert alert-success sticky-top" role="alert">
                             A simple success alert—check it out!
                         </div>
-                        <div id="deleteProjectWarningAlert" class="d-none alert alert-warning" role="alert">
+                        <div id="deleteProjectWarningAlert" class="d-none alert alert-warning sticky-top" role="alert">
                             A simple success alert—check it out!
                         </div>
                         您真的要删除这个项目吗？
@@ -366,11 +365,6 @@
     var projectDeploymentSelect = $('#projectDeploymentSelect');
     var projectDeploymentTable = $('#projectDeploymentTable');
     var projectDeploymentTrTemplate = $('#projectDeploymentTrTemplate');
-    projectDeploymentTrTemplate.remove();
-    if(projectDeploymentTable.find('tbody').length === 0) {
-        projectDeploymentTable.append('<tbody></tbody>');
-    }
-    projectDeploymentTable.find("tbody").prepend(projectDeploymentTrTemplate);
     function addProjectDeployment() {
         var environmentType = projectDeploymentSelect.val();
         if(environmentType === '开发环境' || environmentType === '测试环境' || environmentType === '生产环境' || environmentType === '自定义环境') {
@@ -419,7 +413,7 @@
         var paramJson = JSON.stringify(paramObject);
         console.log(paramObject);
         console.log(paramJson);
-        ajaxPostJsonFull('/project/modify/'+projectId,paramJson,csrfToken,
+        ajaxPostJsonFull('/project/'+projectId+'/modify',paramJson,csrfToken,
             function (response) {
                 console.log(response);
                 if(response.success) {
@@ -475,7 +469,7 @@
             deleteProjectWarningAlert.html("页面存在错误，请刷新重试");
             return;
         }
-        ajaxPostJsonFull('/project/delete/' + projectId,null,csrfToken,
+        ajaxPostJsonFull('/project/' + projectId + '/delete',null,csrfToken,
             function (response) {
                 if(response.success) {
                     deleteProjectSuccessAlert.removeClass('d-none');
