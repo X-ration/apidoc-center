@@ -21,7 +21,7 @@ public class InterfaceField extends AbstractAuditable {
     private Type type;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "interface_id", insertable = false, updatable = false)
-    private ProjectInterface projectInterface;
+    private GroupInterface groupInterface;
 
     public enum Type {
         TEXT,FILE

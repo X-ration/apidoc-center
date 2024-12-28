@@ -24,6 +24,6 @@ public class ProjectGroup extends AbstractAuditable {
     private Project project;
     @JsonIgnoreProperties("projectGroup")
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "projectGroup")
-    private List<ProjectInterface> projectInterfaceList;
+    private List<GroupInterface> groupInterfaceList;
 
 }

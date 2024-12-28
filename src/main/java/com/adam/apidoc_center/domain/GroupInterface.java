@@ -12,7 +12,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Data
-public class ProjectInterface extends AbstractAuditable {
+public class GroupInterface extends AbstractAuditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,8 +27,8 @@ public class ProjectInterface extends AbstractAuditable {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "group_id", insertable = false, updatable = false)
     private ProjectGroup projectGroup;
-    @JsonIgnoreProperties("projectInterface")
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "projectInterface")
+    @JsonIgnoreProperties("groupInterface")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "groupInterface")
     private List<InterfaceField> interfaceFieldList;
 
     public enum Type {

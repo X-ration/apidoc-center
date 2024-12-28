@@ -91,8 +91,8 @@ CREATE TABLE `project_group` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='项目分组表';
 
-DROP TABLE IF EXISTS `project_interface`;
-CREATE TABLE `project_interface` (
+DROP TABLE IF EXISTS `group_interface`;
+CREATE TABLE `group_interface` (
     `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
     `group_id` BIGINT(64) NOT NULL,
     `name` VARCHAR(32) NOT NULL,
