@@ -5,7 +5,9 @@ import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.dto.ProjectDTO;
 import com.adam.apidoc_center.dto.ProjectDetailDisplayDTO;
+import com.adam.apidoc_center.dto.ProjectGroupDTO;
 import com.adam.apidoc_center.dto.ProjectListDisplayDTO;
+import com.adam.apidoc_center.service.ProjectGroupService;
 import com.adam.apidoc_center.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,8 @@ public class ProjectController {
 
     @Autowired
     private ProjectService projectService;
+    @Autowired
+    private ProjectGroupService projectGroupService;
 
     @GetMapping("/viewAll")
     public String viewAll(@RequestParam(required = false) Integer pageNum, @RequestParam(required = false) Integer pageSize, Model model) {
@@ -70,6 +74,15 @@ public class ProjectController {
         }
         log.debug("modifyProject dto={}", projectDTO);
         return projectService.checkAndModify(projectDTO, projectId);
+    }
+
+    @PostMapping("/{projectId}/group/create")
+    @ResponseBody
+    public Response<?> createGroup(@PathVariable long projectId, @RequestBody ProjectGroupDTO projectGroupDTO) {
+        if(projectGroupDTO == null) {
+            return Response.fail(StringConstants.REQUEST_PARAM_IS_NULL);
+        }
+        return projectGroupService.checkAndCreate(projectId, projectGroupDTO);
     }
 
 }

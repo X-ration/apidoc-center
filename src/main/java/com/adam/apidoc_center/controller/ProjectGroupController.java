@@ -9,19 +9,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/project/{projectId}/group")
+@RequestMapping("/group")
 public class ProjectGroupController {
 
     @Autowired
     private ProjectGroupService projectGroupService;
-
-    @PostMapping("/create")
-    @ResponseBody
-    public Response<?> createGroup(@PathVariable long projectId, @RequestBody ProjectGroupDTO projectGroupDTO) {
-        if(projectGroupDTO == null) {
-            return Response.fail(StringConstants.REQUEST_PARAM_IS_NULL);
-        }
-        return projectGroupService.checkAndCreate(projectId, projectGroupDTO);
-    }
 
 }
