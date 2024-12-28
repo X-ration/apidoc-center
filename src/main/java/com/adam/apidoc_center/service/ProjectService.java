@@ -78,6 +78,13 @@ public class ProjectService {
                             .collect(Collectors.toList());
             projectDetailDisplayDTO.setDeploymentList(projectDeploymentDTOList);
         }
+        if(!CollectionUtils.isEmpty(project.getProjectGroupList())) {
+            List<ProjectGroupDisplayDTO> projectGroupDisplayDTOList =
+                    project.getProjectGroupList().stream()
+                            .map(ProjectGroupDisplayDTO::new)
+                            .collect(Collectors.toList());
+            projectDetailDisplayDTO.setGroupList(projectGroupDisplayDTOList);
+        }
         return projectDetailDisplayDTO;
     }
 

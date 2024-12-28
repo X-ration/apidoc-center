@@ -17,6 +17,7 @@ public class ProjectDetailDisplayDTO {
     private String updateTime;
     private List<UserCoreDTO> allowedUserList;
     private List<ProjectDeploymentDTO> deploymentList;
+    private List<ProjectGroupDisplayDTO> groupList;
 
     public static ProjectDetailDisplayDTO convert(Project project) {
         ProjectDetailDisplayDTO dto = new ProjectDetailDisplayDTO();

@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class ProjectGroupDTO {
 
-    private String name;
+    protected String name;
 
 }
