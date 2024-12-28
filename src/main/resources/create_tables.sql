@@ -77,3 +77,47 @@ CREATE TABLE `project_allowed_user` (
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='私有项目允许访问的用户列表表';
+
+-- 分组、接口相关
+DROP TABLE IF EXISTS `project_group`;
+CREATE TABLE `project_group` (
+    `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
+    `project_id` BIGINT(64) NOT NULL,
+    `name` VARCHAR(32) NOT NULL,
+    `create_user_id` BIGINT(64) NOT NULL,
+    `update_user_id` BIGINT(64) NOT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='项目分组表';
+
+DROP TABLE IF EXISTS `project_interface`;
+CREATE TABLE `project_interface` (
+    `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
+    `group_id` BIGINT(64) NOT NULL,
+    `name` VARCHAR(32) NOT NULL,
+    `description` VARCHAR(100) DEFAULT NULL,
+    `relative_path` VARCHAR(256) NOT NULL,
+    `method` ENUM('GET','POST','PUT','DELETE','HEAD','OPTIONS','PATCH','TRACE') NOT NULL,
+    `type` ENUM('FORM_URLENCODED','FORM_DATA','JSON') NOT NULL,
+    `create_user_id` BIGINT(64) NOT NULL,
+    `update_user_id` BIGINT(64) NOT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='项目接口表';
+
+DROP TABLE IF EXISTS `interface_field`;
+CREATE TABLE `interface_field`
+(
+    `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
+    `interface_id` BIGINT(64) NOT NULL,
+    `name` VARCHAR(32) NOT NULL,
+    `description` VARCHAR(100) DEFAULT NULL,
+    `type` ENUM('TEXT','FILE') NOT NULL DEFAULT 'TEXT',
+    `create_user_id` BIGINT(64) NOT NULL,
+    `update_user_id` BIGINT(64) NOT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='项目接口字段表';

@@ -27,6 +27,9 @@ public class Project extends AbstractAuditable {
     @JsonIgnoreProperties("project")
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "project")
     private List<ProjectAllowedUser> projectAllowedUserList;
+    @JsonIgnoreProperties("project")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "project")
+    private List<ProjectGroup> projectGroupList;
 
     @Getter
     public enum AccessMode {
