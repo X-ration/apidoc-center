@@ -61,11 +61,49 @@
             <small class="text-muted" th:text="|创建于${project.createTime}|">创建时间</small>
             <small class="text-muted" th:text="|更新于${project.updateTime}|">更新时间</small>
             <br><br>
-            <div class="row">
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modifyProjectModal">修改项目信息</button>
+            <div class="row mb-1">
+                <button type="button" class="btn btn-primary mr-1" data-toggle="modal" data-target="#modifyProjectModal">修改项目信息</button>
                 <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#deleteProjectModal">删除项目</button>
             </div>
+            <div class="row mt-1">
+                <button type="button" class="btn btn-primary mr-1" data-toggle="modal" data-target="#createGroupModal">创建分组</button>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createInterfaceModal">创建接口</button>
+            </div>
         </main>
+        <div class="modal fade" id="createGroupModal" tabindex="-1" role="dialog" aria-labelledby="createGroupModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">创建分组</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="createGroupAlertWarning" class="d-none alert alert-warning" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div id="createGroupAlertSuccess" class="d-none alert alert-success" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div class="form-group">
+                            <label for="projectId">项目id</label>
+                            <input type="text" readonly class="form-control" name="projectId" th:value="${project.id}">
+                            <div class="invalid-feedback">项目id不能为null</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="groupName">分组名称</label>
+                            <input type="text" class="form-control" id="groupName">
+                            <div class="invalid-feedback">分组名称不超过32个字符</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="createGroup()">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="modal fade" id="modifyProjectModal" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog" role="document" style="min-width: 800px">
                 <div class="modal-content">
@@ -213,6 +251,51 @@
 </body>
 <script layout:fragment="script" th:inline="javascript">
     var csrfToken = [[${_csrf.token}]];
+    var projectId = [[${project.id}]];
+    var groupName = $('#groupName');
+    function createGroup() {
+        var createGroupAlertSuccess = $('#createGroupAlertSuccess'),
+            createGroupAlertWarning = $('#createGroupAlertWarning');
+        if(isNaN(projectId)) {
+            createGroupAlertSuccess.addClass('d-none');
+            createGroupAlertWarning.removeClass('d-none');
+            createGroupAlertWarning.html("页面存在错误，请刷新重试");
+            return;
+        }
+        var paramObject = {
+            name: groupName.val(),
+        };
+        var paramJson = JSON.stringify(paramObject);
+        console.log(paramObject);
+        console.log(paramJson);
+        ajaxPostJsonFull('/project/' + projectId + '/group/create',paramJson,csrfToken,
+            function (response) {
+                console.log(response);
+                if(response.success) {
+                    createGroupAlertSuccess.removeClass("d-none");
+                    createGroupAlertWarning.addClass("d-none");
+                    createGroupAlertSuccess.html("项目修改成功，3秒后刷新页面");
+                    setTimeout(function () {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    createGroupAlertWarning.removeClass('d-none');
+                    createGroupAlertSuccess.addClass('d-none');
+                    createGroupAlertWarning.html(response.message);
+                    if(response.data !== null) {
+                        processErrorMsgItem(response.data.name, groupName);
+                    }
+                }
+            },
+            function (xhr) {
+                createGroupAlertWarning.removeClass('d-none');
+                createGroupAlertSuccess.addClass('d-none');
+                createGroupAlertWarning.html('请求出错，状态码：'+xhr.status)
+                console.log(xhr.responseText);
+            }
+        );
+    }
+
     var allowUsernames = $('#allowUsernames');
     if(allowUsernames.length === 1) {
         var allowUserDTOs = [[${project.allowedUserList}]];
@@ -225,7 +308,6 @@
         }
         allowUsernames.html(value);
     }
-    var projectId = [[${project.id}]];
     var projectName = $('#projectName');
     var projectDescription = $('#projectDescription');
     projectDescription.val([[${project.description}]]);
@@ -337,7 +419,6 @@
         var paramJson = JSON.stringify(paramObject);
         console.log(paramObject);
         console.log(paramJson);
-        var csrfToken = [[${_csrf.token}]];
         ajaxPostJsonFull('/project/modify/'+projectId,paramJson,csrfToken,
             function (response) {
                 console.log(response);
@@ -353,7 +434,7 @@
                     modifyProjectAlertSuccess.addClass('d-none');
                     modifyProjectAlertWarning.html(response.message);
                     if(response.data !== null) {
-                        processErrorMsg(response.data);
+                        processModifyProjectErrorMsg(response.data);
                     }
                 }
             },
@@ -364,7 +445,7 @@
             }
         );
     }
-    function processErrorMsg(data) {
+    function processModifyProjectErrorMsg(data) {
         var projectAccessModeContent = $('#projectAccessModeContent');
         processErrorMsgItem(data.id, $('#projectId'));
         processErrorMsgItem(data.name, projectName);

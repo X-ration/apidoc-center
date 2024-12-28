@@ -81,6 +81,7 @@ public class ProjectService {
         return projectDetailDisplayDTO;
     }
 
+    //todo 删除关联的实体
     public Response<Void> deleteProject(long projectId) {
         Assert.isTrue(projectId > 0, "deleteProject projectId<=0");
         Optional<Project> projectOptional = projectRepository.findById(projectId);
@@ -196,6 +197,17 @@ public class ProjectService {
             projectDeploymentRepository.saveAll(projectDeploymentList);
         }
         return Response.success(projectId);
+    }
+
+    public Project findById(long projectId) {
+        Assert.isTrue(projectId > 0, "findById projectId <= 0");
+        Optional<Project> projectOptional = projectRepository.findById(projectId);
+        return projectOptional.orElse(null);
+    }
+
+    public boolean exists(long projectId) {
+        Assert.isTrue(projectId > 0, "exists projectId <= 0");
+        return projectRepository.existsById(projectId);
     }
 
     private ProjectErrorMsg checkCreateParams(ProjectCreateOrUpdateDTO projectCreateDTO) {

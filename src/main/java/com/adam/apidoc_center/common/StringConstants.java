@@ -56,4 +56,10 @@ public class StringConstants {
     public static final String PROJECT_DELETE_FAIL = "删除失败，请稍候再试";
     public static final String PROJECT_ID_INVALID = "项目id非法";
 
+    //分组、接口、字段相关
+    public static final String PROJECT_GROUP_CREATE_FAIL_CHECK_INPUT = "分组创建失败，请检查输入";
+    public static final String PROJECT_GROUP_MODIFY_FAIL_CHECK_INPUT = "分组修改失败，请检查输入";
+    public static final String PROJECT_GROUP_NAME_BLANK = "分组名称为空";
+    public static final String PROJECT_GROUP_NAME_LENGTH_EXCEEDED = "分组长度不超过32个字符";
+
 }

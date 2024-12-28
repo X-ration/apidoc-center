@@ -6,7 +6,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 
 @Data
-public class ProjectErrorMsg {
+public class ProjectErrorMsg implements ErrorMsg{
     private String id;
     private String name;
     private String description;
@@ -14,6 +14,7 @@ public class ProjectErrorMsg {
     private String allowUserIds;
     private List<ProjectDeploymentErrorMsg> deploymentList;
 
+    @Override
     public boolean hasError() {
         boolean hasError = name != null || description != null;
         if(hasError) {
@@ -23,7 +24,7 @@ public class ProjectErrorMsg {
             return false;
         }
         for(ProjectDeploymentErrorMsg projectDeploymentErrorMsg: deploymentList) {
-            if(projectDeploymentErrorMsg.environment != null || projectDeploymentErrorMsg.deploymentUrl != null) {
+            if(projectDeploymentErrorMsg.hasError()) {
                 return true;
             }
         }
@@ -31,8 +32,13 @@ public class ProjectErrorMsg {
     }
 
     @Data
-    public static class ProjectDeploymentErrorMsg {
+    public static class ProjectDeploymentErrorMsg implements ErrorMsg{
         private String environment;
         private String deploymentUrl;
+
+        @Override
+        public boolean hasError() {
+            return environment != null || deploymentUrl != null;
+        }
     }
 }
