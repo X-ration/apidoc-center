@@ -16,7 +16,7 @@ public class ProjectDetailDisplayDTO {
     private String createTime;
     private String updateTime;
     private List<UserCoreDTO> allowedUserList;
-    private List<ProjectDeploymentCreateOrUpdateDTO> deploymentList;
+    private List<ProjectDeploymentDTO> deploymentList;
 
     public static ProjectDetailDisplayDTO convert(Project project) {
         ProjectDetailDisplayDTO dto = new ProjectDetailDisplayDTO();

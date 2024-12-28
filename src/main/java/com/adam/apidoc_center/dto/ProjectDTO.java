@@ -6,11 +6,11 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ProjectCreateOrUpdateDTO {
+public class ProjectDTO {
     private String name;
     private String description;
     private Project.AccessMode accessMode;
     private String allowUserIds;
     private List<Long> allowUserIdList;
-    private List<ProjectDeploymentCreateOrUpdateDTO> deploymentList;
+    private List<ProjectDeploymentDTO> deploymentList;
 }

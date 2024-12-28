@@ -3,7 +3,7 @@ package com.adam.apidoc_center.controller;
 import com.adam.apidoc_center.common.PagedData;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
-import com.adam.apidoc_center.dto.ProjectCreateOrUpdateDTO;
+import com.adam.apidoc_center.dto.ProjectDTO;
 import com.adam.apidoc_center.dto.ProjectDetailDisplayDTO;
 import com.adam.apidoc_center.dto.ProjectListDisplayDTO;
 import com.adam.apidoc_center.service.ProjectService;
@@ -48,12 +48,12 @@ public class ProjectController {
 
     @PostMapping(value = "/create")
     @ResponseBody
-    public Response<?> createProject(@RequestBody ProjectCreateOrUpdateDTO projectCreateOrUpdateDTO) {
-        if(projectCreateOrUpdateDTO == null) {
+    public Response<?> createProject(@RequestBody ProjectDTO projectDTO) {
+        if(projectDTO == null) {
             return Response.fail(StringConstants.REQUEST_PARAM_IS_NULL);
         }
-        log.debug("createProject dto={}", projectCreateOrUpdateDTO);
-        return projectService.checkAndCreate(projectCreateOrUpdateDTO);
+        log.debug("createProject dto={}", projectDTO);
+        return projectService.checkAndCreate(projectDTO);
     }
 
     @PostMapping("/{projectId}/delete")
@@ -64,12 +64,12 @@ public class ProjectController {
 
     @PostMapping(value = "/{projectId}/modify")
     @ResponseBody
-    public Response<?> modifyProject(@RequestBody ProjectCreateOrUpdateDTO projectCreateOrUpdateDTO, @PathVariable long projectId) {
-        if(projectCreateOrUpdateDTO == null) {
+    public Response<?> modifyProject(@RequestBody ProjectDTO projectDTO, @PathVariable long projectId) {
+        if(projectDTO == null) {
             return Response.fail(StringConstants.REQUEST_PARAM_IS_NULL);
         }
-        log.debug("modifyProject dto={}", projectCreateOrUpdateDTO);
-        return projectService.checkAndModify(projectCreateOrUpdateDTO, projectId);
+        log.debug("modifyProject dto={}", projectDTO);
+        return projectService.checkAndModify(projectDTO, projectId);
     }
 
 }

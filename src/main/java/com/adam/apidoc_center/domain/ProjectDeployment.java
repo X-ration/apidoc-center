@@ -1,7 +1,7 @@
 package com.adam.apidoc_center.domain;
 
 import com.adam.apidoc_center.common.AbstractAuditable;
-import com.adam.apidoc_center.dto.ProjectDeploymentCreateOrUpdateDTO;
+import com.adam.apidoc_center.dto.ProjectDeploymentDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -26,10 +26,10 @@ public class ProjectDeployment extends AbstractAuditable {
     @JoinColumn(name = "project_id", insertable = false, updatable = false)
     private Project project;
 
-    public ProjectDeployment(long projectId, ProjectDeploymentCreateOrUpdateDTO projectDeploymentCreateOrUpdateDTO) {
+    public ProjectDeployment(long projectId, ProjectDeploymentDTO projectDeploymentDTO) {
         this.projectId = projectId;
-        this.environment = projectDeploymentCreateOrUpdateDTO.getEnvironment();
-        this.deploymentUrl = projectDeploymentCreateOrUpdateDTO.getDeploymentUrl();
+        this.environment = projectDeploymentDTO.getEnvironment();
+        this.deploymentUrl = projectDeploymentDTO.getDeploymentUrl();
         this.isEnabled = true;
     }
 

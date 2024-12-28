@@ -6,10 +6,10 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class ProjectDeploymentCreateOrUpdateDTO {
+public class ProjectDeploymentDTO {
     private String environment;
     private String deploymentUrl;
-    public ProjectDeploymentCreateOrUpdateDTO(ProjectDeployment projectDeployment) {
+    public ProjectDeploymentDTO(ProjectDeployment projectDeployment) {
         this.environment = projectDeployment.getEnvironment();
         this.deploymentUrl = projectDeployment.getDeploymentUrl();
     }

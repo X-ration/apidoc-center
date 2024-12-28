@@ -71,12 +71,12 @@ public class ProjectService {
             projectDetailDisplayDTO.setAllowedUserList(userCoreDTOList);
         }
         if(!CollectionUtils.isEmpty(project.getProjectDeploymentList())) {
-            List<ProjectDeploymentCreateOrUpdateDTO> projectDeploymentCreateOrUpdateDTOList =
+            List<ProjectDeploymentDTO> projectDeploymentDTOList =
                     project.getProjectDeploymentList().stream()
                             .filter(ProjectDeployment::isEnabled)
-                            .map(ProjectDeploymentCreateOrUpdateDTO::new)
+                            .map(ProjectDeploymentDTO::new)
                             .collect(Collectors.toList());
-            projectDetailDisplayDTO.setDeploymentList(projectDeploymentCreateOrUpdateDTOList);
+            projectDetailDisplayDTO.setDeploymentList(projectDeploymentDTOList);
         }
         return projectDetailDisplayDTO;
     }
@@ -110,7 +110,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public Response<?> checkAndModify(ProjectCreateOrUpdateDTO projectUpdateDTO, long projectId) {
+    public Response<?> checkAndModify(ProjectDTO projectUpdateDTO, long projectId) {
         if(projectId <= 0) {
             return Response.fail(StringConstants.PROJECT_ID_INVALID);
         }
@@ -171,7 +171,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public Response<?> checkAndCreate(ProjectCreateOrUpdateDTO projectCreateDTO) {
+    public Response<?> checkAndCreate(ProjectDTO projectCreateDTO) {
         ProjectErrorMsg projectErrorMsg = checkCreateParams(projectCreateDTO);
         if(projectErrorMsg.hasError()) {
             return Response.fail(StringConstants.PROJECT_CREATE_FAIL_CHECK_INPUT, projectErrorMsg);
@@ -209,7 +209,7 @@ public class ProjectService {
         return projectRepository.existsById(projectId);
     }
 
-    private ProjectErrorMsg checkCreateParams(ProjectCreateOrUpdateDTO projectCreateDTO) {
+    private ProjectErrorMsg checkCreateParams(ProjectDTO projectCreateDTO) {
         ProjectErrorMsg projectErrorMsg = new ProjectErrorMsg();
         if(StringUtils.isBlank(projectCreateDTO.getName())) {
             projectErrorMsg.setName(StringConstants.PROJECT_NAME_BLANK);
