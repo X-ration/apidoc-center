@@ -46,7 +46,7 @@ public class ProjectController {
             model.addAttribute("project", projectDetailDisplayDTO);
             return "project/viewProject";
         } else {
-            return "error/404";
+            return "redirect:/error/404";
         }
     }
 

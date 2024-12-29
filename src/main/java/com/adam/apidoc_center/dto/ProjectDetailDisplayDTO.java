@@ -15,6 +15,10 @@ public class ProjectDetailDisplayDTO {
     private String accessMode;
     private String createTime;
     private String updateTime;
+    private UserCoreDTO creator;
+    private UserCoreDTO updater;
+    private long createUserId;
+    private long updateUserId;
     private List<UserCoreDTO> allowedUserList;
     private List<ProjectDeploymentDTO> deploymentList;
     private List<ProjectGroupDisplayDTO> groupList;
@@ -27,6 +31,8 @@ public class ProjectDetailDisplayDTO {
         dto.setAccessMode(project.getAccessMode().getDesc());
         dto.setCreateTime(LocalDateTimeUtil.timeDiffFriendlyDesc(project.getCreateTime()));
         dto.setUpdateTime(LocalDateTimeUtil.timeDiffFriendlyDesc(project.getUpdateTime()));
+        dto.setCreateUserId(project.getCreateUserId());
+        dto.setUpdateUserId(project.getUpdateUserId());
         return dto;
     }
 

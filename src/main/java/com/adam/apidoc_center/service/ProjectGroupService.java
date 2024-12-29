@@ -4,13 +4,21 @@ import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.domain.Project;
 import com.adam.apidoc_center.domain.ProjectGroup;
+import com.adam.apidoc_center.domain.User;
 import com.adam.apidoc_center.dto.ProjectGroupDTO;
+import com.adam.apidoc_center.dto.ProjectGroupDetailDisplayDTO;
 import com.adam.apidoc_center.dto.ProjectGroupErrorMsg;
+import com.adam.apidoc_center.dto.UserCoreDTO;
 import com.adam.apidoc_center.repository.ProjectGroupRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ProjectGroupService {
@@ -19,6 +27,39 @@ public class ProjectGroupService {
     private ProjectGroupRepository projectGroupRepository;
     @Autowired
     private ProjectService projectService;
+    @Autowired
+    private UserService userService;
+
+    public ProjectGroupDetailDisplayDTO getGroupDetail(long groupId) {
+        if(groupId <= 0) {
+            return null;
+        }
+        Optional<ProjectGroup> projectGroupOptional = projectGroupRepository.findById(groupId);
+        if(projectGroupOptional.isEmpty()) {
+            return null;
+        }
+        ProjectGroup projectGroup = projectGroupOptional.get();
+        ProjectGroupDetailDisplayDTO projectGroupDetailDisplayDTO = new ProjectGroupDetailDisplayDTO(projectGroup);
+        processCreatorAndUpdater(projectGroupDetailDisplayDTO);
+        return projectGroupDetailDisplayDTO;
+    }
+
+    private void processCreatorAndUpdater(ProjectGroupDetailDisplayDTO projectGroupDetailDisplayDTO) {
+        List<Long> userIdList = new LinkedList<>();
+        userIdList.add(projectGroupDetailDisplayDTO.getCreateUserId());
+        userIdList.add(projectGroupDetailDisplayDTO.getUpdateUserId());
+        Map<Long, User> userMap = userService.queryUserMap(userIdList);
+        if(userMap.containsKey(projectGroupDetailDisplayDTO.getCreateUserId())) {
+            User user = userMap.get(projectGroupDetailDisplayDTO.getCreateUserId());
+            UserCoreDTO userCoreDTO = new UserCoreDTO(user);
+            projectGroupDetailDisplayDTO.setCreator(userCoreDTO);
+        }
+        if(userMap.containsKey(projectGroupDetailDisplayDTO.getUpdateUserId())) {
+            User user = userMap.get(projectGroupDetailDisplayDTO.getUpdateUserId());
+            UserCoreDTO userCoreDTO = new UserCoreDTO(user);
+            projectGroupDetailDisplayDTO.setUpdater(userCoreDTO);
+        }
+    }
 
     @Transactional
     public Response<?> checkAndCreate(long projectId, ProjectGroupDTO projectGroupDTO) {

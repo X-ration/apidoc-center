@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default_with_navbar_and_tagsinput_and_docs}">
+<head>
+    <title>查看分组</title>
+</head>
+<body>
+<div class="container-fluid" layout:fragment="content">
+    <div class="row">
+        <div class="col-12 col-md-4 col-xl-3 bd-sidebar">
+            <form class="bd-search d-flex align-items-center">
+                <input type="search" class="form-control" id="search-input" placeholder="搜索接口" aria-label="Search for..." autocomplete="off" data-docs-version="4.3">
+                <button class="btn btn-link bd-search-docs-toggle d-md-none p-0 ml-3" type="button" data-toggle="collapse" data-target="#bd-docs-nav" aria-controls="bd-docs-nav" aria-expanded="false" aria-label="Toggle docs navigation"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" role="img" focusable="false"><title>菜单</title><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"/></svg></button>
+            </form>
+            <nav class="collapse bd-links" id="bd-docs-nav">
+                <div class="bd-toc-item active">
+                    <a class="bd-toc-link" th:href="|/project/${group.projectId}/view|">
+                        项目管理
+                    </a>
+                </div>
+                <div class="bd-toc-item" th:if="${group.groupList} != null" th:each="groupItem:${group.groupList}">
+                    <a class="bd-toc-link" th:href="|/group/${groupItem.id}/view|" th:text="${groupItem.name}">
+                        分组管理
+                    </a>
+                </div>
+                <div class="d-none bd-toc-item active">
+                    <a class="bd-toc-link" th:href="|/project/${group.projectId}/view|">
+                        项目管理
+                    </a>
+                    <ul class="nav bd-sidenav">
+                        <li class="active bd-sidenav-active">
+                            <a href="introduction_2.htm">Introduction</a>
+                        </li>
+                        <li>
+                            <a href="../download/download.htm">Download</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        <main class="col-12 col-md-8 col-xl-9 py-md-3 pl-md-5 bd-content" role="main">
+            <h1 class="bd-title" th:text="${group.name}">分组名称</h1>
+            <br>
+            <small class="text-muted" th:text="|创建于${group.createTime}|">创建时间</small>
+            <small class="text-muted" th:text="|更新于${group.updateTime}|">更新时间</small><br>
+            <small class="text-muted" th:if="${group.creator} != null" th:text="|创建者：${group.creator.username}|" data-toggle="tooltip" data-placement="right" th:title="${group.creator.email}">创建者</small><br>
+            <small class="text-muted" th:if="${group.updater} != null" th:text="|更新者：${group.updater.username}|" data-toggle="tooltip" data-placement="right" th:title="${group.updater.email}">更新者</small><br>
+            <br><br>
+            <div class="row mb-1">
+                <button type="button" class="btn btn-primary mr-1" data-toggle="modal" data-target="#modifyGroupModal">修改分组信息</button>
+                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#deleteGroupModal">删除分组</button>
+            </div>
+            <div class="row mt-1">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createInterfaceModal">创建接口</button>
+            </div>
+        </main>
+    </div>
+</div>
+</body>
+<script layout:fragment="script" th:inline="javascript">
+    $('[data-toggle="tooltip"]').tooltip({
+        delay: { "show": 0, "hide": 2000 }
+    });
+    const csrfToken = [[${_csrf.token}]];
+    const groupId = [[${group.id}]];
+</script>
+</html>

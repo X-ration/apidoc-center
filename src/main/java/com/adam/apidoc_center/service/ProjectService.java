@@ -50,13 +50,17 @@ public class ProjectService {
     }
 
     public ProjectDetailDisplayDTO getProjectDetail(long projectId) {
-        Assert.isTrue(projectId > 0, "getProjectDetail projectId<=0");
+//        Assert.isTrue(projectId > 0, "getProjectDetail projectId<=0");
+        if(projectId <= 0) {
+            return null;
+        }
         Optional<Project> projectOptional = projectRepository.findById(projectId);
         if(projectOptional.isEmpty()) {
             return null;
         }
         Project project = projectOptional.get();
         ProjectDetailDisplayDTO projectDetailDisplayDTO = ProjectDetailDisplayDTO.convert(project);
+        processCreatorAndUpdater(projectDetailDisplayDTO);
         if(!CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
             List<Long> allowUserIdList = project.getProjectAllowedUserList().stream()
                     .filter(ProjectAllowedUser::isAllow)
@@ -86,6 +90,23 @@ public class ProjectService {
             projectDetailDisplayDTO.setGroupList(projectGroupDisplayDTOList);
         }
         return projectDetailDisplayDTO;
+    }
+
+    private void processCreatorAndUpdater(ProjectDetailDisplayDTO projectDetailDisplayDTO) {
+        List<Long> userIdList = new LinkedList<>();
+        userIdList.add(projectDetailDisplayDTO.getCreateUserId());
+        userIdList.add(projectDetailDisplayDTO.getUpdateUserId());
+        Map<Long, User> userMap = userService.queryUserMap(userIdList);
+        if(userMap.containsKey(projectDetailDisplayDTO.getCreateUserId())) {
+            User user = userMap.get(projectDetailDisplayDTO.getCreateUserId());
+            UserCoreDTO userCoreDTO = new UserCoreDTO(user);
+            projectDetailDisplayDTO.setCreator(userCoreDTO);
+        }
+        if(userMap.containsKey(projectDetailDisplayDTO.getUpdateUserId())) {
+            User user = userMap.get(projectDetailDisplayDTO.getUpdateUserId());
+            UserCoreDTO userCoreDTO = new UserCoreDTO(user);
+            projectDetailDisplayDTO.setUpdater(userCoreDTO);
+        }
     }
 
     public Response<Void> deleteProject(long projectId) {
