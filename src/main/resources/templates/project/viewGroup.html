@@ -40,7 +40,7 @@
             </nav>
         </div>
         <main class="col-12 col-md-8 col-xl-9 py-md-3 pl-md-5 bd-content" role="main">
-            <h1 class="bd-title" th:text="${group.name}">分组名称</h1>
+            <h1 class="bd-title" th:text="|分组：${group.name}|">分组名称</h1>
             <br>
             <small class="text-muted" th:text="|创建于${group.createTime}|">创建时间</small>
             <small class="text-muted" th:text="|更新于${group.updateTime}|">更新时间</small><br>
@@ -55,6 +55,90 @@
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createInterfaceModal">创建接口</button>
             </div>
         </main>
+        <div class="modal fade" id="modifyGroupModal" tabindex="-1" role="dialog" aria-labelledby="modifyGroupModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">修改分组</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="modifyGroupAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div id="modifyGroupAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div class="form-group">
+                            <label for="groupId">分组id</label>
+                            <input type="text" readonly class="form-control" th:value="${group.id}">
+                            <div class="invalid-feedback">分组id不能为null</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="groupName">分组名称</label>
+                            <input type="text" class="form-control" id="groupName" th:value="${group.name}">
+                            <div class="invalid-feedback">分组名称不超过32个字符</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary">确认修改</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="deleteGroupModal" tabindex="-1" role="dialog" aria-labelledby="deleteGroupModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">删除分组</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="deleteGroupAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div id="deleteGroupAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        您真的要删除这个分组吗？<br>
+                        警告：分组下的接口会被同时删除！
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-warning" onclick="deleteGroup()">确认删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="createInterfaceModal" tabindex="-1" role="dialog" aria-labelledby="createInterfaceModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">创建接口</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="createInterfaceAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div id="createInterfaceAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 </body>
@@ -64,5 +148,37 @@
     });
     const csrfToken = [[${_csrf.token}]];
     const groupId = [[${group.id}]];
+    const projectId = [[${group.projectId}]];
+    function deleteGroup() {
+        var deleteGroupAlertSuccess = $('#deleteGroupAlertSuccess'),
+            deleteGroupAlertWarning = $('#deleteGroupAlertWarning');
+        if(isNaN(groupId)) {
+            deleteGroupAlertSuccess.addClass('d-none');
+            deleteGroupAlertWarning.removeClass('d-none');
+            deleteGroupAlertWarning.html("页面存在错误，请刷新重试");
+            return;
+        }
+        ajaxPostJsonFull('/group/' + groupId + '/delete',null,csrfToken,
+            function (response) {
+                if(response.success) {
+                    deleteGroupAlertSuccess.removeClass('d-none');
+                    deleteGroupAlertWarning.addClass('d-none');
+                    deleteGroupAlertSuccess.html("删除成功，3秒后返回项目管理页面");
+                    setTimeout(function () {
+                        location.href = "/project/" + projectId + "/view";
+                    }, 3000);
+                } else {
+                    deleteGroupAlertSuccess.addClass('d-none');
+                    deleteGroupAlertWarning.removeClass('d-none');
+                    deleteGroupAlertWarning.html("删除失败：" + response.message);
+                }
+            },
+            function (xhr) {
+                deleteGroupAlertSuccess.addClass('d-none');
+                deleteGroupAlertWarning.removeClass('d-none');
+                deleteGroupAlertWarning.html("删除失败，状态码：" + xhr.status);
+            }
+        )
+    }
 </script>
 </html>

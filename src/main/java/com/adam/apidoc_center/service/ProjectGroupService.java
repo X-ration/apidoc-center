@@ -44,6 +44,19 @@ public class ProjectGroupService {
         return projectGroupDetailDisplayDTO;
     }
 
+    public Response<Void> deleteGroup(long groupId) {
+        if(groupId <= 0) {
+            return Response.fail(StringConstants.PROJECT_GROUP_ID_INVALID);
+        }
+        Optional<ProjectGroup> projectGroupOptional = projectGroupRepository.findById(groupId);
+        if(projectGroupOptional.isEmpty()) {
+            return Response.fail(StringConstants.PROJECT_GROUP_ID_INVALID);
+        }
+        ProjectGroup projectGroup = projectGroupOptional.get();
+        projectGroupRepository.delete(projectGroup);
+        return Response.success();
+    }
+
     private void processCreatorAndUpdater(ProjectGroupDetailDisplayDTO projectGroupDetailDisplayDTO) {
         List<Long> userIdList = new LinkedList<>();
         userIdList.add(projectGroupDetailDisplayDTO.getCreateUserId());

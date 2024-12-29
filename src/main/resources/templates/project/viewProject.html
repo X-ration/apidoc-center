@@ -40,7 +40,7 @@
             </nav>
         </div>
         <main class="col-12 col-md-8 col-xl-9 py-md-3 pl-md-5 bd-content" role="main">
-            <h1 class="bd-title" th:text="${project.name}">项目名称</h1>
+            <h1 class="bd-title" th:text="|项目：${project.name}|">项目名称</h1>
             <span class="bd-lead" th:if="${project.accessMode} == '公开'">
                 <i class="fa fa-unlock"></i> 公开
             </span>
@@ -243,7 +243,8 @@
                         <div id="deleteProjectWarningAlert" class="d-none alert alert-warning sticky-top" role="alert">
                             A simple success alert—check it out!
                         </div>
-                        您真的要删除这个项目吗？
+                        您真的要删除这个项目吗？<br>
+                        警告：项目下的所有分组、接口会被同时删除！
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
@@ -256,9 +257,6 @@
 </div>
 </body>
 <script layout:fragment="script" th:inline="javascript">
-    $('[data-toggle="tooltip"]').tooltip({
-        delay: { "show": 0, "hide": 2000 }
-    });
     const csrfToken = [[${_csrf.token}]];
     const projectId = [[${project.id}]];
     var groupName = $('#groupName');
@@ -310,13 +308,18 @@
         var allowUserDTOs = [[${project.allowedUserList}]];
         var value = '允许访问的用户：';
         for(var i=0;i<allowUserDTOs.length;i++) {
-            value = value + allowUserDTOs[i].username + ",";
+            // value = value + allowUserDTOs[i].username + ",";
+            value = value + "<span data-toggle='tooltip' data-placement='top' title='" + allowUserDTOs[i].email + "'>"
+                + allowUserDTOs[i].username + "</span>,";
         }
         if(allowUserDTOs.length > 0) {
             value = value.substring(0, value.length - 1);
         }
         allowUsernames.html(value);
     }
+    $('[data-toggle="tooltip"]').tooltip({
+        delay: { "show": 0, "hide": 2000 }
+    });
     var projectName = $('#projectName');
     var projectDescription = $('#projectDescription');
     projectDescription.val([[${project.description}]]);

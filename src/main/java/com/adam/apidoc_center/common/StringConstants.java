@@ -61,5 +61,6 @@ public class StringConstants {
     public static final String PROJECT_GROUP_MODIFY_FAIL_CHECK_INPUT = "分组修改失败，请检查输入";
     public static final String PROJECT_GROUP_NAME_BLANK = "分组名称为空";
     public static final String PROJECT_GROUP_NAME_LENGTH_EXCEEDED = "分组长度不超过32个字符";
+    public static final String PROJECT_GROUP_ID_INVALID = "分组id非法";
 
 }
