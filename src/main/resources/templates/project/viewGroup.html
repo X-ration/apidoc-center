@@ -84,7 +84,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                        <button type="button" class="btn btn-primary">确认修改</button>
+                        <button type="button" class="btn btn-primary" onclick="modifyGroup()">确认修改</button>
                     </div>
                 </div>
             </div>
@@ -149,6 +149,49 @@
     const csrfToken = [[${_csrf.token}]];
     const groupId = [[${group.id}]];
     const projectId = [[${group.projectId}]];
+    var groupName = $('#groupName');
+    function modifyGroup() {
+        var modifyGroupAlertSuccess = $('#modifyGroupAlertSuccess'),
+            modifyGroupAlertWarning = $('#modifyGroupAlertWarning');
+        if (isNaN(groupId)) {
+            modifyGroupAlertSuccess.addClass('d-none');
+            modifyGroupAlertWarning.removeClass('d-none');
+            modifyGroupAlertWarning.html("页面存在错误，请刷新重试");
+            return;
+        }
+        var paramObject = {
+            name: groupName.val()
+        };
+        var paramJson = JSON.stringify(paramObject);
+        console.log(paramObject);
+        console.log(paramJson);
+        ajaxPostJsonFull('/group/'+groupId+'/modify',paramJson,csrfToken,
+            function (response) {
+                console.log(response);
+                if(response.success) {
+                    modifyGroupAlertSuccess.removeClass("d-none");
+                    modifyGroupAlertWarning.addClass("d-none");
+                    modifyGroupAlertSuccess.html("分组修改成功，3秒后刷新页面");
+                    setTimeout(function () {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    modifyGroupAlertWarning.removeClass('d-none');
+                    modifyGroupAlertSuccess.addClass('d-none');
+                    modifyGroupAlertWarning.html(response.message);
+                    if(response.data !== null) {
+                        processErrorMsgItem(response.data.name, groupName);
+                    }
+                }
+            },
+            function (xhr) {
+                modifyGroupAlertWarning.removeClass('d-none');
+                modifyGroupAlertSuccess.addClass('d-none');
+                modifyGroupAlertWarning.html('请求出错，状态码：'+xhr.status)
+            }
+        );
+    }
+    
     function deleteGroup() {
         var deleteGroupAlertSuccess = $('#deleteGroupAlertSuccess'),
             deleteGroupAlertWarning = $('#deleteGroupAlertWarning');

@@ -1,6 +1,8 @@
 package com.adam.apidoc_center.controller;
 
 import com.adam.apidoc_center.common.Response;
+import com.adam.apidoc_center.common.StringConstants;
+import com.adam.apidoc_center.dto.ProjectGroupDTO;
 import com.adam.apidoc_center.dto.ProjectGroupDetailDisplayDTO;
 import com.adam.apidoc_center.service.ProjectGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,15 @@ public class ProjectGroupController {
     @ResponseBody
     public Response<Void> deleteGroup(@PathVariable long groupId) {
         return projectGroupService.deleteGroup(groupId);
+    }
+
+    @PostMapping("/{groupId}/modify")
+    @ResponseBody
+    public Response<?> modifyGroup(@PathVariable long groupId, @RequestBody ProjectGroupDTO projectGroupDTO) {
+        if(projectGroupDTO == null) {
+            return Response.fail(StringConstants.REQUEST_PARAM_IS_NULL);
+        }
+        return projectGroupService.checkAndModify(groupId, projectGroupDTO);
     }
 
 }

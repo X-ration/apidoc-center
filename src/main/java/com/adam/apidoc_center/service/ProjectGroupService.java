@@ -74,6 +74,24 @@ public class ProjectGroupService {
         }
     }
 
+    public Response<?> checkAndModify(long groupId, ProjectGroupDTO projectGroupDTO) {
+        if(groupId <= 0) {
+            return Response.fail(StringConstants.PROJECT_GROUP_ID_INVALID);
+        }
+        Optional<ProjectGroup> projectGroupOptional = projectGroupRepository.findById(groupId);
+        if(projectGroupOptional.isEmpty()) {
+            return Response.fail(StringConstants.PROJECT_GROUP_ID_INVALID);
+        }
+        ProjectGroup projectGroup = projectGroupOptional.get();
+        ProjectGroupErrorMsg projectGroupErrorMsg = checkCreateParams(projectGroupDTO);
+        if(projectGroupErrorMsg.hasError()) {
+            return Response.fail(StringConstants.PROJECT_GROUP_MODIFY_FAIL_CHECK_INPUT, projectGroupErrorMsg);
+        }
+        projectGroup.setName(projectGroupDTO.getName());
+        projectGroupRepository.save(projectGroup);
+        return Response.success();
+    }
+
     @Transactional
     public Response<?> checkAndCreate(long projectId, ProjectGroupDTO projectGroupDTO) {
         if(projectId <= 0) {

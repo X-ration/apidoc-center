@@ -63,7 +63,7 @@
                 </tr>
                 </tbody>
             </table>
-            <small class="text-muted" th:text="|创建于${project.createTime}|">创建时间</small><br>
+            <small class="text-muted" th:text="|创建于${project.createTime}|">创建时间</small>
             <small class="text-muted" th:text="|更新于${project.updateTime}|">更新时间</small><br>
             <small class="text-muted" th:if="${project.creator} != null" th:text="|创建者：${project.creator.username}|" data-toggle="tooltip" data-placement="right" th:title="${project.creator.email}">创建者</small><br>
             <small class="text-muted" th:if="${project.updater} != null" th:text="|更新者：${project.updater.username}|" data-toggle="tooltip" data-placement="right" th:title="${project.updater.email}">更新者</small><br>
