@@ -14,7 +14,7 @@
                 <button class="btn btn-link bd-search-docs-toggle d-md-none p-0 ml-3" type="button" data-toggle="collapse" data-target="#bd-docs-nav" aria-controls="bd-docs-nav" aria-expanded="false" aria-label="Toggle docs navigation"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" role="img" focusable="false"><title>菜单</title><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"/></svg></button>
             </form>
             <nav class="collapse bd-links" id="bd-docs-nav">
-                <div class="bd-toc-item active">
+                <div class="bd-toc-item">
                     <a class="bd-toc-link" th:href="|/project/${group.projectId}/view|">
                         项目管理
                     </a>
@@ -150,6 +150,23 @@
     const groupId = [[${group.id}]];
     const projectId = [[${group.projectId}]];
     var groupName = $('#groupName');
+    addActiveClassForNav();
+    function addActiveClassForNav() {
+        var bdDocsNav = $('#bd-docs-nav');
+        var divs = bdDocsNav.find("div.bd-toc-item");
+        for(var i=0;i<divs.length;i++) {
+            var div = $(divs[i]);
+            if(div.hasClass('d-none')) {
+                continue;
+            }
+            var firstA = div.find("a").eq(0);
+            var href = firstA.attr('href');
+            var splits = href.split("/");
+            if(splits.length === 4 && splits[1] === 'group' && splits[2] === '' + groupId) {
+                div.addClass('active');
+            }
+        }
+    }
     function modifyGroup() {
         var modifyGroupAlertSuccess = $('#modifyGroupAlertSuccess'),
             modifyGroupAlertWarning = $('#modifyGroupAlertWarning');
