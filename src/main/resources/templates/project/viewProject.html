@@ -254,8 +254,8 @@
 </div>
 </body>
 <script layout:fragment="script" th:inline="javascript">
-    var csrfToken = [[${_csrf.token}]];
-    var projectId = [[${project.id}]];
+    const csrfToken = [[${_csrf.token}]];
+    const projectId = [[${project.id}]];
     var groupName = $('#groupName');
     function createGroup() {
         var createGroupAlertSuccess = $('#createGroupAlertSuccess'),

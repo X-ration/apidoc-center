@@ -244,7 +244,7 @@
         var paramJson = JSON.stringify(paramObject);
         console.log(paramObject);
         console.log(paramJson);
-        var csrfToken = [[${_csrf.token}]];
+        const csrfToken = [[${_csrf.token}]];
         ajaxPostJsonFull('/project/create',paramJson,csrfToken,
             function (response) {
                 console.log(response);
