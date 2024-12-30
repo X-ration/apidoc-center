@@ -32,6 +32,6 @@ public class GroupInterface extends AbstractAuditable {
     private List<InterfaceField> interfaceFieldList;
 
     public enum Type {
-        FORM_URLENCODED,FORM_DATA,JSON
+        FORM_URLENCODED,FORM_DATA,JSON,NO_BODY
     }
 }
