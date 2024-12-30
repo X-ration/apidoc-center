@@ -2,8 +2,10 @@ package com.adam.apidoc_center.domain;
 
 import com.adam.apidoc_center.common.AbstractAuditable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.springframework.http.HttpMethod;
 
 import javax.persistence.*;
@@ -30,8 +32,18 @@ public class GroupInterface extends AbstractAuditable {
     @JsonIgnoreProperties("groupInterface")
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "groupInterface")
     private List<InterfaceField> interfaceFieldList;
+    @JsonIgnoreProperties("groupInterface")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "groupInterface")
+    private List<InterfaceHeader> interfaceHeaderList;
 
+    @Getter
+    @AllArgsConstructor
     public enum Type {
-        FORM_URLENCODED,FORM_DATA,JSON,NO_BODY
+        FORM_URLENCODED("application/x-www-form-urlencoded"),
+        FORM_DATA("multipart/form-data"),
+        JSON("application/json"),
+        NO_BODY(null),
+        ;
+        private final String contentType;
     }
 }
