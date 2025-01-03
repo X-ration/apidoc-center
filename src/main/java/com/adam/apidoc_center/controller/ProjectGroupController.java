@@ -2,8 +2,10 @@ package com.adam.apidoc_center.controller;
 
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
+import com.adam.apidoc_center.dto.GroupInterfaceDTO;
 import com.adam.apidoc_center.dto.ProjectGroupDTO;
 import com.adam.apidoc_center.dto.ProjectGroupDetailDisplayDTO;
+import com.adam.apidoc_center.service.GroupInterfaceService;
 import com.adam.apidoc_center.service.ProjectGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +18,8 @@ public class ProjectGroupController {
 
     @Autowired
     private ProjectGroupService projectGroupService;
+    @Autowired
+    private GroupInterfaceService groupInterfaceService;
 
     @GetMapping("/{groupId}/view")
     public String viewGroup(@PathVariable long groupId, Model model) {
@@ -41,6 +45,15 @@ public class ProjectGroupController {
             return Response.fail(StringConstants.REQUEST_PARAM_IS_NULL);
         }
         return projectGroupService.checkAndModify(groupId, projectGroupDTO);
+    }
+
+    @PostMapping("/{groupId}/interface/create")
+    @ResponseBody
+    public Response<?> createInterface(@PathVariable long groupId, @RequestBody GroupInterfaceDTO groupInterfaceDTO) {
+        if(groupInterfaceDTO == null) {
+            return Response.fail(StringConstants.REQUEST_PARAM_IS_NULL);
+        }
+        return groupInterfaceService.checkAndCreate(groupId, groupInterfaceDTO);
     }
 
 }

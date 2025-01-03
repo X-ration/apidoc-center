@@ -40,6 +40,9 @@ function ajaxPostJsonFull(url,paramObject,csrfToken,successFunction,errorFunctio
 function ajax_common_error_function(xhr) {
     console.error("请求出错", xhr.status, xhr.statusText);
 }
+function isBoolean(val) {
+    return val === true || val === false;
+}
 function processErrorMsgItem(errorMsgItem, selector) {
     if(errorMsgItem != null) {
         selector.removeClass('is-valid');

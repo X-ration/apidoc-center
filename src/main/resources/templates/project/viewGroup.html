@@ -186,6 +186,7 @@
                             <table id="interfaceHeaderTable" class="table">
                                 <thead><tr>
                                     <th>头部名称</th>
+                                    <th>是否必填</th>
                                     <th>头部描述</th>
                                     <th>操作</th>
                                 </tr></thead>
@@ -196,7 +197,14 @@
                                         <div class="invalid-feedback">头部名称不超过32个字符</div>
                                     </td>
                                     <td>
-                                        <textarea class="form-control" style="width: 400px" placeholder="头部描述"></textarea>
+                                        <div style="width: 80px">
+                                            <input type="checkbox" class="form-check-input">
+                                            <label class="form-check-label">必填</label>
+                                            <div class="invalid-feedback">字段必选无效</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <textarea class="form-control" style="width: 320px" placeholder="头部描述"></textarea>
                                         <div class="invalid-feedback">头部描述不超过100个字符</div>
                                     </td>
                                     <td>
@@ -215,6 +223,7 @@
                                 <thead><tr>
                                     <th>字段名称</th>
                                     <th>字段类型</th>
+                                    <th>是否必填</th>
                                     <th>字段描述</th>
                                     <th>操作</th>
                                 </tr></thead>
@@ -230,6 +239,11 @@
                                             <option value="FILE">文件</option>
                                         </select>
                                         <div class="invalid-feedback">字段类型无效</div>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input">
+                                        <label class="form-check-label">必填</label>
+                                        <div class="invalid-feedback">字段必选无效</div>
                                     </td>
                                     <td>
                                         <textarea class="form-control" style="width: 300px" placeholder="字段描述"></textarea>
@@ -293,10 +307,12 @@
         "    \"name\": \"field_name\",\n" +
         "    \"type\": \"field\",\n" +
         "    \"field_type\": \"TEXT\",\n" +
+        "    \"required\": true,\n" +
         "    \"description\": \"field_description\"\n" +
         "},{\n" +
         "    \"name\": \"header_name\",\n" +
         "    \"type\": \"header\",\n" +
+        "    \"required\": false,\n" +
         "    \"description\": \"header_description\"\n" +
         "}]");
     interfaceHeaderFieldJson.height(interfaceHeaderFieldJson[0].scrollHeight);
@@ -352,19 +368,21 @@
                         var name = one.name,
                             type = one.type,
                             description = one.description,
-                            fieldType = one.field_type;
+                            fieldType = one.field_type,
+                            required = one.required
+                        ;
                         if(type === 'field' || type === 'header') {
-                            if(name !== null) {
+                            if(name !== null && required !== null && isBoolean(required)) {
                                 if (type === 'field') {
                                     if(fieldType === 'TEXT' || fieldType === 'FILE') {
                                         fieldCount++;
-                                        addField(name, fieldType, description);
+                                        addField(name, fieldType, required, description);
                                     } else {
                                         hasError = true;
                                     }
                                 } else if (type === 'header') {
                                     headerCount++;
-                                    addHeader(name, description);
+                                    addHeader(name, required, description);
                                 }
                             } else {
                                 hasError = true;
@@ -414,17 +432,19 @@
                 }
             }
         }
-        function addHeader(name,description) {
+        function addHeader(name,required,description) {
             var tr = interfaceHeaderTrTemplate.clone();
             tr.removeClass('d-none');
             tr.find("input").eq(0).val(name);
+            tr.find("input").eq(1).prop('checked',required);
             tr.find("textarea").eq(0).val(description);
             interfaceHeaderTable.find("tbody").append(tr);
         }
-        function addField(name,fieldType,description) {
+        function addField(name,fieldType,required,description) {
             var tr = interfaceFieldTrTemplate.clone();
             tr.removeClass('d-none');
             tr.find("input").eq(0).val(name);
+            tr.find("input").eq(1).prop('checked',required);
             tr.find("select").eq(0).val(fieldType);
             tr.find("textarea").eq(0).val(description);
             interfaceFieldTable.find("tbody").append(tr);
@@ -450,9 +470,11 @@
             if(!tr.hasClass('d-none')) {
                 var name = tr.find("input").eq(0).val();
                 var description = tr.find("textarea").eq(0).val();
+                var required = tr.find("input").eq(1).prop('checked');
                 var header = {
                     name: name,
-                    description: description
+                    description: description,
+                    required: required
                 }
                 headerArray.push(header);
             }
@@ -466,10 +488,12 @@
                 var name = tr.find("input").eq(0).val();
                 var type = tr.find("select").eq(0).val();
                 var description = tr.find("textarea").eq(0).val();
+                var required = tr.find("input").eq(1).prop('checked');
                 var field = {
                     name: name,
                     type: type,
-                    description: description
+                    description: description,
+                    required: required
                 }
                 fieldArray.push(field);
             }
@@ -520,7 +544,8 @@
                     break;
                 }
                 processErrorMsgItem(header.name, tr.find('input').eq(0));
-                processErrorMsgItem(header.description, tr.find('textarea').eq(0));
+                // processErrorMsgItem(header.required, tr.find('input').eq(1));
+                processErrorMsgItemOptional(header.description, tr.find('textarea').eq(0));
             }
         }
         var fieldArray = data.fieldList;
@@ -532,7 +557,9 @@
                     break;
                 }
                 processErrorMsgItem(field.name, tr.find('input').eq(0));
-                processErrorMsgItem(field.description, tr.find('textarea').eq(0));
+                processErrorMsgItem(field.type, tr.find('select').eq(0));
+                // processErrorMsgItem(field.required, tr.find('input').eq(1));
+                processErrorMsgItemOptional(field.description, tr.find('textarea').eq(0));
             }
         }
     }

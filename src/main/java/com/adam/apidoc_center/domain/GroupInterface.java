@@ -24,7 +24,9 @@ public class GroupInterface extends AbstractAuditable {
     private String name;
     private String description;
     private String relativePath;
+    @Enumerated(EnumType.STRING)
     private HttpMethod method;
+    @Enumerated(EnumType.STRING)
     private Type type;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "group_id", insertable = false, updatable = false)

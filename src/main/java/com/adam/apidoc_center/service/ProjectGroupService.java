@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -42,6 +43,11 @@ public class ProjectGroupService {
         ProjectGroupDetailDisplayDTO projectGroupDetailDisplayDTO = new ProjectGroupDetailDisplayDTO(projectGroup);
         processCreatorAndUpdater(projectGroupDetailDisplayDTO);
         return projectGroupDetailDisplayDTO;
+    }
+
+    public boolean exists(long groupId) {
+        Assert.isTrue(groupId > 0, "exists groupId<=0");
+        return projectGroupRepository.existsById(groupId);
     }
 
     public Response<Void> deleteGroup(long groupId) {

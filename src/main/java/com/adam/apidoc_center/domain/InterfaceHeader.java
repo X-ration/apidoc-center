@@ -18,6 +18,7 @@ public class InterfaceHeader extends AbstractAuditable {
     private long interfaceId;
     private String name;
     private String description;
+    private boolean required;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "interface_id", insertable = false, updatable = false)
     private GroupInterface groupInterface;

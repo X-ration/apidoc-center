@@ -18,7 +18,9 @@ public class InterfaceField extends AbstractAuditable {
     private long interfaceId;
     private String name;
     private String description;
+    @Enumerated(EnumType.STRING)
     private Type type;
+    private boolean required;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "interface_id", insertable = false, updatable = false)
     private GroupInterface groupInterface;

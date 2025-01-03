@@ -20,6 +20,7 @@ public class StringUtil {
                     "(:[0-9]+)?" + //端口
                     "((/[\\w-]*)*" + //路径
                     "(\\?[\\w-%:;&@#+=]*)?)"); //参数
+    public static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("(/[\\w-]*)+");
 
     public static boolean isEmail(String email) {
         Objects.requireNonNull(email);
@@ -42,6 +43,12 @@ public class StringUtil {
     public static boolean isHttpOrHttpsUrl(String string) {
         Objects.requireNonNull(string);
         Matcher matcher = HTTP_OR_HTTPS_URL_PATTERN.matcher(string);
+        return matcher.matches();
+    }
+
+    public static boolean isRelativePath(String string) {
+        Objects.requireNonNull(string);
+        Matcher matcher = RELATIVE_PATH_PATTERN.matcher(string);
         return matcher.matches();
     }
 

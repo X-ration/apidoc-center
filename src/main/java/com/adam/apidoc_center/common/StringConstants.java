@@ -62,5 +62,24 @@ public class StringConstants {
     public static final String PROJECT_GROUP_NAME_BLANK = "分组名称为空";
     public static final String PROJECT_GROUP_NAME_LENGTH_EXCEEDED = "分组长度不超过32个字符";
     public static final String PROJECT_GROUP_ID_INVALID = "分组id非法";
+    public static final String GROUP_INTERFACE_CREATE_FAIL_CHECK_INPUT = "接口创建失败，请检查输入";
+    public static final String GROUP_INTERFACE_MODIFY_FAIL_CHECK_INPUT = "接口修改失败，请检查输入";
+    public static final String GROUP_INTERFACE_NAME_BLANK = "接口名称为空";
+    public static final String GROUP_INTERFACE_NAME_LENGTH_EXCEEDED = "接口名称长度不超过32个字符";
+    public static final String GROUP_INTERFACE_DESCRIPTION_LENGTH_EXCEEDED = "接口描述长度不超过100个字符";
+    public static final String GROUP_INTERFACE_RELATIVE_PATH_BLANK = "接口相对路径为空";
+    public static final String GROUP_INTERFACE_RELATIVE_PATH_LENGTH_EXCEEDED = "接口相对路径长度不超过256个字符";
+    public static final String GROUP_INTERFACE_RELATIVE_PATH_INVALID = "无效的相对路径";
+    public static final String GROUP_INTERFACE_METHOD_NULL = "接口请求方法必填";
+    public static final String GROUP_INTERFACE_TYPE_NULL = "接口请求体类型必填";
+    public static final String INTERFACE_HEADER_NAME_BLANK = "接口头部名称为空";
+    public static final String INTERFACE_HEADER_NAME_LENGTH_EXCEEDED = "接口头部长度不超过32个字符";
+    public static final String INTERFACE_HEADER_DESCRIPTION_LENGTH_EXCEEDED = "接口头部描述长度不超过100个字符";
+    public static final String INTERFACE_HEADER_REQUIRED_NULL = "接口头部是否必填未选择";
+    public static final String INTERFACE_FIELD_NAME_BLANK = "接口字段名称为空";
+    public static final String INTERFACE_FIELD_NAME_LENGTH_EXCEEDED = "接口字段长度不超过32个字符";
+    public static final String INTERFACE_FIELD_TYPE_NULL = "接口字段类型必填";
+    public static final String INTERFACE_FIELD_DESCRIPTION_LENGTH_EXCEEDED = "接口字段描述长度不超过100个字符";
+    public static final String INTERFACE_FIELD_REQUIRED_NULL = "接口字段是否必填未选择";
 
 }

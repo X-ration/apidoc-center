@@ -1,4 +1,4 @@
-package com.adam.apidoc_center.domain;
+package com.adam.apidoc_center.dto;
 
 import lombok.Data;
 
@@ -6,4 +6,5 @@ import lombok.Data;
 public class InterfaceHeaderDTO {
     private String name;
     private String description;
+    private Boolean required;
 }
