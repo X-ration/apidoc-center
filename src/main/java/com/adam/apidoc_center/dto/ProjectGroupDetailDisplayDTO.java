@@ -45,9 +45,19 @@ public class ProjectGroupDetailDisplayDTO {
     public static class ProjectGroupDetailListDTO {
         private long id;
         private String name;
+        private List<GroupInterfaceListDisplayDTO> interfaceList;
         public ProjectGroupDetailListDTO(ProjectGroup projectGroup) {
             this.id = projectGroup.getId();
             this.name = projectGroup.getName();
+            if(!CollectionUtils.isEmpty(projectGroup.getGroupInterfaceList())) {
+                this.interfaceList = projectGroup.getGroupInterfaceList().stream()
+                        .map(groupInterface -> {
+                            GroupInterfaceListDisplayDTO dto = new GroupInterfaceListDisplayDTO();
+                            dto.setId(groupInterface.getId());
+                            dto.setName(groupInterface.getName());
+                            return dto;
+                        }).collect(Collectors.toList());
+            }
         }
     }
 

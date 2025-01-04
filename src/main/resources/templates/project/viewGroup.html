@@ -23,6 +23,11 @@
                     <a class="bd-toc-link" th:href="|/group/${groupItem.id}/view|" th:text="${groupItem.name}">
                         分组管理
                     </a>
+                    <ul class="nav bd-sidenav" th:if="${groupItem.interfaceList}">
+                        <li th:each="interface:${groupItem.interfaceList}">
+                            <a th:href="|/interface/${interface.id}/view|" th:text="${interface.name}">Introduction</a>
+                        </li>
+                    </ul>
                 </div>
                 <div class="d-none bd-toc-item active">
                     <a class="bd-toc-link" th:href="|/project/${group.projectId}/view|">
