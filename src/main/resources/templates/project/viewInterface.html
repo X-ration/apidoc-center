@@ -123,10 +123,10 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div id="createInterfaceAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
+                        <div id="modifyInterfaceAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
                             A simple warning alert—check it out!
                         </div>
-                        <div id="createInterfaceAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
+                        <div id="modifyInterfaceAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
                             A simple warning alert—check it out!
                         </div>
                         <div class="form-group">
@@ -347,8 +347,8 @@
             interfaceHeaderTable.find("tbody").append(tr);
         }
     }
-    var createInterfaceAlertWarning = $('#createInterfaceAlertWarning'),
-        createInterfaceAlertSuccess = $('#createInterfaceAlertSuccess');
+    var modifyInterfaceAlertWarning = $('#modifyInterfaceAlertWarning'),
+        modifyInterfaceAlertSuccess = $('#modifyInterfaceAlertSuccess');
     function interfaceImportFromJson() {
         var json = interfaceHeaderFieldJson.val();
         if(json === '') {
@@ -396,22 +396,22 @@
                 hasError = true;
             }
             if(!hasError) {
-                createInterfaceAlertSuccess.removeClass('d-none');
-                createInterfaceAlertWarning.addClass('d-none');
-                createInterfaceAlertSuccess.html(successImportText(headerCount,fieldCount));
+                modifyInterfaceAlertSuccess.removeClass('d-none');
+                modifyInterfaceAlertWarning.addClass('d-none');
+                modifyInterfaceAlertSuccess.html(successImportText(headerCount,fieldCount));
             } else {
-                createInterfaceAlertSuccess.addClass('d-none');
-                createInterfaceAlertWarning.removeClass('d-none');
-                createInterfaceAlertWarning.html("数据格式不符合约定，"+successImportText(headerCount,fieldCount));
+                modifyInterfaceAlertSuccess.addClass('d-none');
+                modifyInterfaceAlertWarning.removeClass('d-none');
+                modifyInterfaceAlertWarning.html("数据格式不符合约定，"+successImportText(headerCount,fieldCount));
             }
             if(headerCount > 0 || fieldCount > 0) {
                 interfaceFieldManualInput();
             }
         } catch (e) {
             console.error("导入json失败", e);
-            createInterfaceAlertSuccess.addClass('d-none');
-            createInterfaceAlertWarning.removeClass('d-none');
-            createInterfaceAlertWarning.html("JSON格式不正确！");
+            modifyInterfaceAlertSuccess.addClass('d-none');
+            modifyInterfaceAlertWarning.removeClass('d-none');
+            modifyInterfaceAlertWarning.html("JSON格式不正确！");
         }
         function successImportText(headerCount,fieldCount) {
             return '成功导入'+headerCount+"条头部、"+fieldCount+"条字段";
@@ -448,15 +448,6 @@
         tr.find("textarea").eq(0).val(description);
         interfaceFieldTable.find("tbody").append(tr);
     }
-    var interfaceType = $('#interfaceType');
-    var interfaceTypeValue = [[${interface.type}]];
-    var interfaceTypeOptions = interfaceType.find("option");
-    for(var i=0;i<interfaceTypeOptions.length;i++) {
-        var option = $(interfaceTypeOptions[i]);
-        if(option.html() === interfaceTypeValue) {
-            interfaceType.val(option.val());
-        }
-    }
     var headers = [[${interface.headerList}]];
     if(headers.length > 0) {
         for(var i=0;i<headers.length;i++) {
@@ -471,12 +462,18 @@
             addField(field.name,field.type,field.required,field.description);
         }
     }
+    var interfaceMethod = $('#interfaceMethod'),
+        interfaceType = $('#interfaceType');
+    var interfaceMethodValue = [[${interface.method}]],
+        interfaceTypeValue = [[${interface.type}]];
+    interfaceMethod.val(interfaceMethodValue);
+    interfaceType.val(interfaceTypeValue);
     var interfaceName = $('#interfaceName'),
         interfaceDescription = $('#interfaceDescription'),
-        interfaceRelativePath = $('#interfaceRelativePath'),
-        interfaceMethod = $('#interfaceMethod');
-    function createInterface() {
+        interfaceRelativePath = $('#interfaceRelativePath');
+    function modifyInterface() {
         var paramObject = {
+            id: interfaceId,
             name: interfaceName.val(),
             description: interfaceDescription.val(),
             relativePath: interfaceRelativePath.val(),
@@ -523,33 +520,33 @@
         var paramJson = JSON.stringify(paramObject);
         console.log(paramObject);
         console.log(paramJson);
-        ajaxPostJsonFull('/group/'+groupId+'/interface/create',paramJson,csrfToken,
+        ajaxPostJsonFull('/interface/'+interfaceId+'/modify',paramJson,csrfToken,
             function (response) {
                 console.log(response);
                 if(response.success) {
-                    createInterfaceAlertSuccess.removeClass("d-none");
-                    createInterfaceAlertWarning.addClass("d-none");
-                    createInterfaceAlertSuccess.html("接口创建成功，3秒后刷新页面");
+                    modifyInterfaceAlertSuccess.removeClass("d-none");
+                    modifyInterfaceAlertWarning.addClass("d-none");
+                    modifyInterfaceAlertSuccess.html("接口修改成功，3秒后刷新页面");
                     setTimeout(function () {
                         location.reload();
                     }, 3000);
                 } else {
-                    createInterfaceAlertWarning.removeClass('d-none');
-                    createInterfaceAlertSuccess.addClass('d-none');
-                    createInterfaceAlertWarning.html(response.message);
+                    modifyInterfaceAlertWarning.removeClass('d-none');
+                    modifyInterfaceAlertSuccess.addClass('d-none');
+                    modifyInterfaceAlertWarning.html(response.message);
                     if(response.data !== null) {
-                        processCreateInterfaceErrorMsg(response.data);
+                        processModifyInterfaceErrorMsg(response.data);
                     }
                 }
             },
             function (xhr) {
-                createInterfaceAlertWarning.removeClass('d-none');
-                createInterfaceAlertSuccess.addClass('d-none');
-                createInterfaceAlertWarning.html('请求出错，状态码：'+xhr.status)
+                modifyInterfaceAlertWarning.removeClass('d-none');
+                modifyInterfaceAlertSuccess.addClass('d-none');
+                modifyInterfaceAlertWarning.html('请求出错，状态码：'+xhr.status)
             }
         );
     }
-    function processCreateInterfaceErrorMsg(data) {
+    function processModifyInterfaceErrorMsg(data) {
         processErrorMsgItem(data.name, interfaceName);
         processErrorMsgItemOptional(data.description, interfaceDescription);
         processErrorMsgItem(data.relativePath, interfaceRelativePath);

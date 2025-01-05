@@ -1,16 +1,15 @@
 package com.adam.apidoc_center.domain;
 
 import com.adam.apidoc_center.common.AbstractAuditable;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import com.adam.apidoc_center.dto.InterfaceFieldDTO;
+import lombok.*;
 
 import javax.persistence.*;
 
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Data
+@NoArgsConstructor
 public class InterfaceField extends AbstractAuditable {
 
     @Id
@@ -26,6 +25,14 @@ public class InterfaceField extends AbstractAuditable {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "interface_id", insertable = false, updatable = false)
     private GroupInterface groupInterface;
+
+    public InterfaceField(long interfaceId, InterfaceFieldDTO interfaceFieldDTO) {
+        this.interfaceId = interfaceId;
+        this.name = interfaceFieldDTO.getName();
+        this.description = interfaceFieldDTO.getDescription();
+        this.type = interfaceFieldDTO.getType();
+        this.required = interfaceFieldDTO.getRequired();
+    }
 
     @Getter
     @AllArgsConstructor

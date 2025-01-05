@@ -69,6 +69,52 @@ public class GroupInterfaceService {
     }
 
     @Transactional
+    public Response<?> checkAndModify(long interfaceId, GroupInterfaceDTO groupInterfaceDTO) {
+        if(interfaceId <= 0) {
+            return Response.fail(StringConstants.GROUP_INTERFACE_ID_INVALID);
+        }
+        Optional<GroupInterface> groupInterfaceOptional = groupInterfaceRepository.findById(interfaceId);
+        if(groupInterfaceOptional.isEmpty()) {
+            return Response.fail(StringConstants.GROUP_INTERFACE_ID_INVALID);
+        }
+        GroupInterfaceErrorMsg groupInterfaceErrorMsg = checkCreateParams(groupInterfaceDTO);
+        if(groupInterfaceErrorMsg.hasError()) {
+            return Response.fail(StringConstants.GROUP_INTERFACE_MODIFY_FAIL_CHECK_INPUT, groupInterfaceErrorMsg);
+        }
+        GroupInterface groupInterface = groupInterfaceOptional.get();
+        groupInterface.setName(groupInterfaceDTO.getName());
+        if(StringUtils.isNotEmpty(groupInterfaceDTO.getDescription())) {
+            groupInterface.setDescription(groupInterface.getDescription());
+        }
+        groupInterface.setRelativePath(groupInterfaceDTO.getRelativePath());
+        groupInterface.setMethod(groupInterfaceDTO.getMethod());
+        groupInterface.setType(groupInterfaceDTO.getType());
+        //修改接口
+        if(!CollectionUtils.isEmpty(groupInterface.getInterfaceHeaderList())) {
+            interfaceHeaderRepository.deleteAll(groupInterface.getInterfaceHeaderList());
+            groupInterface.setInterfaceHeaderList(null);
+        }
+        if(!CollectionUtils.isEmpty(groupInterface.getInterfaceFieldList())) {
+            interfaceFieldRepository.deleteAll(groupInterface.getInterfaceFieldList());
+            groupInterface.setInterfaceFieldList(null);
+        }
+        if(!CollectionUtils.isEmpty(groupInterfaceDTO.getHeaderList())) {
+            groupInterface.setInterfaceHeaderList(groupInterfaceDTO.getHeaderList().stream()
+                    .map(interfaceHeaderDTO -> new InterfaceHeader(groupInterface.getId(), interfaceHeaderDTO))
+                    .collect(Collectors.toList())
+            );
+        }
+        if(!CollectionUtils.isEmpty(groupInterfaceDTO.getFieldList())) {
+            groupInterface.setInterfaceFieldList(groupInterfaceDTO.getFieldList().stream()
+                    .map(interfaceFieldDTO -> new InterfaceField(groupInterface.getId(), interfaceFieldDTO))
+                    .collect(Collectors.toList())
+            );
+        }
+        groupInterfaceRepository.save(groupInterface);
+        return Response.success();
+    }
+
+    @Transactional
     public Response<?> checkAndCreate(long groupId, GroupInterfaceDTO groupInterfaceDTO) {
         if(groupId <= 0) {
             return Response.fail(StringConstants.PROJECT_GROUP_ID_INVALID);

@@ -1,13 +1,14 @@
 package com.adam.apidoc_center.controller;
 
+import com.adam.apidoc_center.common.Response;
+import com.adam.apidoc_center.common.StringConstants;
+import com.adam.apidoc_center.dto.GroupInterfaceDTO;
 import com.adam.apidoc_center.dto.GroupInterfaceDetailDisplayDTO;
 import com.adam.apidoc_center.service.GroupInterfaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/interface/{interfaceId}")
@@ -25,6 +26,15 @@ public class GroupInterfaceController {
             model.addAttribute("interface", groupInterfaceDetailDisplayDTO);
             return "project/viewInterface";
         }
+    }
+
+    @PostMapping("/modify")
+    @ResponseBody
+    public Response<?> modifyInterface(@PathVariable long interfaceId, @RequestBody GroupInterfaceDTO groupInterfaceDTO) {
+        if(groupInterfaceDTO == null) {
+            return Response.fail(StringConstants.REQUEST_PARAM_IS_NULL);
+        }
+        return groupInterfaceService.checkAndModify(interfaceId, groupInterfaceDTO);
     }
 
 }

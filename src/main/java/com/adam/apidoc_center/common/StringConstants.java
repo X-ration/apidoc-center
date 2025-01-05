@@ -62,6 +62,7 @@ public class StringConstants {
     public static final String PROJECT_GROUP_NAME_BLANK = "分组名称为空";
     public static final String PROJECT_GROUP_NAME_LENGTH_EXCEEDED = "分组长度不超过32个字符";
     public static final String PROJECT_GROUP_ID_INVALID = "分组id非法";
+    public static final String GROUP_INTERFACE_ID_INVALID = "接口id非法";
     public static final String GROUP_INTERFACE_CREATE_FAIL_CHECK_INPUT = "接口创建失败，请检查输入";
     public static final String GROUP_INTERFACE_MODIFY_FAIL_CHECK_INPUT = "接口修改失败，请检查输入";
     public static final String GROUP_INTERFACE_NAME_BLANK = "接口名称为空";
