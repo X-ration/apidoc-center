@@ -1,8 +1,10 @@
 package com.adam.apidoc_center.domain;
 
 import com.adam.apidoc_center.common.AbstractAuditable;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 import javax.persistence.*;
 
@@ -25,7 +27,10 @@ public class InterfaceField extends AbstractAuditable {
     @JoinColumn(name = "interface_id", insertable = false, updatable = false)
     private GroupInterface groupInterface;
 
+    @Getter
+    @AllArgsConstructor
     public enum Type {
-        TEXT,FILE
+        TEXT("值"),FILE("文件");
+        private String desc;
     }
 }

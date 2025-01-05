@@ -5,8 +5,8 @@ import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.domain.GroupInterface;
 import com.adam.apidoc_center.domain.InterfaceField;
 import com.adam.apidoc_center.domain.InterfaceHeader;
-import com.adam.apidoc_center.dto.GroupInterfaceDTO;
-import com.adam.apidoc_center.dto.GroupInterfaceErrorMsg;
+import com.adam.apidoc_center.domain.User;
+import com.adam.apidoc_center.dto.*;
 import com.adam.apidoc_center.repository.GroupInterfaceRepository;
 import com.adam.apidoc_center.repository.InterfaceFieldRepository;
 import com.adam.apidoc_center.repository.InterfaceHeaderRepository;
@@ -17,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +34,39 @@ public class GroupInterfaceService {
     private InterfaceFieldRepository interfaceFieldRepository;
     @Autowired
     private ProjectGroupService projectGroupService;
+    @Autowired
+    private UserService userService;
+
+    public GroupInterfaceDetailDisplayDTO getInterfaceDetail(long interfaceId) {
+        if(interfaceId <= 0) {
+            return null;
+        }
+        Optional<GroupInterface> groupInterfaceOptional = groupInterfaceRepository.findById(interfaceId);
+        if(groupInterfaceOptional.isEmpty()) {
+            return null;
+        }
+        GroupInterface groupInterface = groupInterfaceOptional.get();
+        GroupInterfaceDetailDisplayDTO groupInterfaceDetailDisplayDTO = new GroupInterfaceDetailDisplayDTO(groupInterface);
+        processCreatorAndUpdater(groupInterfaceDetailDisplayDTO);
+        return groupInterfaceDetailDisplayDTO;
+    }
+
+    private void processCreatorAndUpdater(GroupInterfaceDetailDisplayDTO groupInterfaceDetailDisplayDTO) {
+        List<Long> userIdList = new LinkedList<>();
+        userIdList.add(groupInterfaceDetailDisplayDTO.getCreateUserId());
+        userIdList.add(groupInterfaceDetailDisplayDTO.getUpdateUserId());
+        Map<Long, User> userMap = userService.queryUserMap(userIdList);
+        if(userMap.containsKey(groupInterfaceDetailDisplayDTO.getCreateUserId())) {
+            User user = userMap.get(groupInterfaceDetailDisplayDTO.getCreateUserId());
+            UserCoreDTO userCoreDTO = new UserCoreDTO(user);
+            groupInterfaceDetailDisplayDTO.setCreator(userCoreDTO);
+        }
+        if(userMap.containsKey(groupInterfaceDetailDisplayDTO.getUpdateUserId())) {
+            User user = userMap.get(groupInterfaceDetailDisplayDTO.getUpdateUserId());
+            UserCoreDTO userCoreDTO = new UserCoreDTO(user);
+            groupInterfaceDetailDisplayDTO.setUpdater(userCoreDTO);
+        }
+    }
 
     @Transactional
     public Response<?> checkAndCreate(long groupId, GroupInterfaceDTO groupInterfaceDTO) {

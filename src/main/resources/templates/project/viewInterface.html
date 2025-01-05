@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default_with_navbar_and_tagsinput_and_docs}">
+<head>
+    <title>查看接口</title>
+</head>
+<body>
+<div class="container-fluid" layout:fragment="content">
+    <div class="row">
+        <div class="col-12 col-md-4 col-xl-3 bd-sidebar">
+            <form class="bd-search d-flex align-items-center">
+                <input type="search" class="form-control" id="search-input" placeholder="搜索接口" aria-label="Search for..." autocomplete="off" data-docs-version="4.3">
+                <button class="btn btn-link bd-search-docs-toggle d-md-none p-0 ml-3" type="button" data-toggle="collapse" data-target="#bd-docs-nav" aria-controls="bd-docs-nav" aria-expanded="false" aria-label="Toggle docs navigation"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" role="img" focusable="false"><title>菜单</title><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"/></svg></button>
+            </form>
+            <nav class="collapse bd-links" id="bd-docs-nav">
+                <div class="bd-toc-item">
+                    <a class="bd-toc-link" th:href="|/project/${interface.projectId}/view|">
+                        项目管理
+                    </a>
+                </div>
+                <div class="bd-toc-item" th:if="${interface.groupList} != null" th:each="group:${interface.groupList}">
+                    <a class="bd-toc-link" th:href="|/group/${group.id}/view|" th:text="${group.name}">
+                        分组管理
+                    </a>
+                    <ul class="nav bd-sidenav" th:if="${group.interfaceList}">
+                        <li th:each="interfaceItem:${group.interfaceList}">
+                            <a th:href="|/interface/${interfaceItem.id}/view|" th:text="${interfaceItem.name}">Introduction</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="d-none bd-toc-item active">
+                    <a class="bd-toc-link" th:href="|/project/${interface.projectId}/view|">
+                        项目管理
+                    </a>
+                    <ul class="nav bd-sidenav">
+                        <li class="active bd-sidenav-active">
+                            <a href="introduction_2.htm">Introduction</a>
+                        </li>
+                        <li>
+                            <a href="../download/download.htm">Download</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        <main class="col-12 col-md-8 col-xl-9 py-md-3 pl-md-5 bd-content" role="main">
+            <h1 class="bd-title" th:text="|接口：${interface.name}|">接口名称</h1>
+            <span class="bd-lead" th:text="${interface.description}">接口描述</span>
+            <label for="interfaceTable">接口详情表</label>
+            <table id="interfaceTable" class="table">
+                <tbody>
+                <tr>
+                    <td>相对路径</td>
+                    <td th:text="${interface.relativePath}"></td>
+                </tr>
+                <tr>
+                    <td>请求方法</td>
+                    <td th:text="${interface.method}"></td>
+                </tr>
+                <tr>
+                    <td>请求体类型</td>
+                    <td th:text="${interface.typeDesc}"></td>
+                </tr>
+                </tbody>
+            </table>
+            <label for="showInterfaceHeaderTable">接口头部表</label>
+            <table id="showInterfaceHeaderTable" class="table" th:if="${interface.headerList}">
+                <thead>
+                <tr>
+                    <th>头部名称</th>
+                    <th>是否必填</th>
+                    <th>头部描述</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="header:${interface.headerList}">
+                    <td th:text="${header.name}">头部名称</td>
+                    <td th:if="${header.required}"><i class="fa fa-check-circle"></i></td>
+                    <td th:if="!${header.required}"><i class="fa fa-times-circle"></td>
+                    <td th:text="${header.description}">头部描述</td>
+                </tr>
+                </tbody>
+            </table>
+            <label for="showInterfaceFieldTable">接口字段表</label>
+            <table id="showInterfaceFieldTable" class="table" th:if="${interface.fieldList}">
+                <thead>
+                <tr>
+                    <th>字段名称</th>
+                    <th>字段类型</th>
+                    <th>是否必填</th>
+                    <th>字段描述</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="field:${interface.fieldList}">
+                    <td th:text="${field.name}">字段名称</td>
+                    <td th:text="${field.typeDesc}">字段类型</td>
+                    <td th:if="${field.required}"><i class="fa fa-check-circle"></i></td>
+                    <td th:if="!${field.required}"><i class="fa fa-times-circle"></i></td>
+                    <td th:text="${field.description}">字段描述</td>
+                </tr>
+                </tbody>
+            </table>
+            <br>
+            <small class="text-muted" th:text="|创建于${interface.createTime}|">创建时间</small>
+            <small class="text-muted" th:text="|更新于${interface.updateTime}|">更新时间</small><br>
+            <small class="text-muted" th:if="${interface.creator} != null" th:text="|创建者：${interface.creator.username}|" data-toggle="tooltip" data-placement="right" th:title="${interface.creator.email}">创建者</small><br>
+            <small class="text-muted" th:if="${interface.updater} != null" th:text="|更新者：${interface.updater.username}|" data-toggle="tooltip" data-placement="right" th:title="${interface.updater.email}">更新者</small><br>
+            <br><br>
+            <div class="row mb-1">
+                <button type="button" class="btn btn-primary mr-1" data-toggle="modal" data-target="#modifyInterfaceModal">修改接口信息</button>
+                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#deleteInterfaceModal">删除接口</button>
+            </div>
+        </main>
+        <div class="modal fade" id="modifyInterfaceModal" tabindex="-1" role="dialog" aria-labelledby="createInterfaceModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document" style="min-width: 800px">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">修改接口</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="createInterfaceAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div id="createInterfaceAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div class="form-group">
+                            <label for="interfaceId">接口id</label>
+                            <input type="text" readonly class="form-control" th:value="${interface.id}">
+                            <div class="invalid-feedback">分组id不能为null</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="interfaceName">接口名称</label>
+                            <input type="text" class="form-control" th:value="${interface.name}" id="interfaceName" placeholder="不超过32个字符">
+                            <div class="invalid-feedback">接口名称不超过32个字符</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="interfaceDescription">接口描述</label>
+                            <textarea class="form-control" th:value="${interface.description}" id="interfaceDescription" placeholder="不超过100个字符"></textarea>
+                            <div class="invalid-feedback">接口描述不超过100个字符</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="interfaceRelativePath">相对路径</label>
+                            <input type="text" class="form-control" th:value="${interface.relativePath}" id="interfaceRelativePath" placeholder="以/开头的相对路径">
+                            <div class="invalid-feedback">相对路径不超过256个字符</div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-12 col-md-3">
+                                <label for="interfaceMethod">请求方法</label>
+                                <select class="form-control d-inline" th:value="${interface.method}" id="interfaceMethod">
+                                    <option>GET</option>
+                                    <option>POST</option>
+                                    <option>PUT</option>
+                                    <option>DELETE</option>
+                                    <option>HEAD</option>
+                                    <option>OPTIONS</option>
+                                    <option>PATCH</option>
+                                    <option>TRACE</option>
+                                </select>
+                                <div class="invalid-feedback">无效的请求方法</div>
+                            </div>
+                            <div class="form-group col-12 col-md-9">
+                                <label for="interfaceType">请求体类型</label>
+                                <select class="form-control d-inline" th:value="${interface.type}" id="interfaceType">
+                                    <option value="FORM_URLENCODED">application/x-www-form-urlencoded</option>
+                                    <option value="FORM_DATA">multipart/form-data</option>
+                                    <option value="JSON">application/json</option>
+                                    <option value="NO_BODY">无请求体</option>
+                                </select>
+                                <div class="invalid-feedback">无效的请求体类型</div>
+                            </div>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary" onclick="interfaceFieldManualInput()">手动输入字段和头部</button>
+                            <button type="button" class="btn btn-secondary" onclick="interfaceHeaderFieldJsonInput()">从JSON导入字段和头部</button>
+                        </div>
+                        <details id="interfaceHeaderManualDiv" open>
+                            <summary>接口头部表</summary>
+                            <table id="interfaceHeaderTable" class="table">
+                                <thead><tr>
+                                    <th>头部名称</th>
+                                    <th>是否必填</th>
+                                    <th>头部描述</th>
+                                    <th>操作</th>
+                                </tr></thead>
+                                <tbody>
+                                <tr id="interfaceHeaderTrTemplate" class="d-none">
+                                    <td>
+                                        <input class="form-control" style="width: 200px" type="text" placeholder="头部名称">
+                                        <div class="invalid-feedback">头部名称不超过32个字符</div>
+                                    </td>
+                                    <td>
+                                        <div style="width: 80px">
+                                            <input type="checkbox" class="form-check-input">
+                                            <label class="form-check-label">必填</label>
+                                            <div class="invalid-feedback">字段必选无效</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <textarea class="form-control" style="width: 320px" placeholder="头部描述"></textarea>
+                                        <div class="invalid-feedback">头部描述不超过100个字符</div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-primary" type="button" onclick="$(this).parent().parent().remove()">
+                                            <i class="fa fa-trash-alt"></i> 删除
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-primary" onclick="interfaceHeaderManualAdd()"><i class="fa fa-plus"></i> 添加头部(手动输入)</button>
+                        </details>
+                        <details id="interfaceFieldManualDiv" open>
+                            <summary>接口字段表</summary>
+                            <table id="interfaceFieldTable" class="table">
+                                <thead><tr>
+                                    <th>字段名称</th>
+                                    <th>字段类型</th>
+                                    <th>是否必填</th>
+                                    <th>字段描述</th>
+                                    <th>操作</th>
+                                </tr></thead>
+                                <tbody>
+                                <tr id="interfaceFieldTrTemplate" class="d-none">
+                                    <td>
+                                        <input class="form-control" style="width: 140px" type="text" placeholder="字段名称">
+                                        <div class="invalid-feedback">字段名称不超过32个字符</div>
+                                    </td>
+                                    <td>
+                                        <select class="form-control" style="width: 100px">
+                                            <option value="TEXT">值</option>
+                                            <option value="FILE">文件</option>
+                                        </select>
+                                        <div class="invalid-feedback">字段类型无效</div>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input">
+                                        <label class="form-check-label">必填</label>
+                                        <div class="invalid-feedback">字段必选无效</div>
+                                    </td>
+                                    <td>
+                                        <textarea class="form-control" style="width: 300px" placeholder="字段描述"></textarea>
+                                        <div class="invalid-feedback">字段描述不超过100个字符</div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-primary" type="button" onclick="$(this).parent().parent().remove()">
+                                            <i class="fa fa-trash-alt"></i> 删除
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-primary" onclick="interfaceFieldManualAdd()"><i class="fa fa-plus"></i> 添加字段(手动输入)</button>
+                        </details>
+                        <div id="interfaceHeaderFieldJsonDiv" class="d-none">
+                            <label for="interfaceHeaderFieldJson">头部和字段JSON</label>
+                            <textarea class="form-control" id="interfaceHeaderFieldJson">
+                            </textarea>
+                            <small class="text-muted">提示：点击导入按钮数据才会生效！</small>
+                            <br>
+                            <button type="button" class="btn btn-primary" onclick="interfaceImportFromJson()">确定导入</button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="modifyInterface()">确定修改</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script layout:fragment="script" th:inline="javascript">
+    $('[data-toggle="tooltip"]').tooltip({
+        delay: { "show": 0, "hide": 2000 }
+    });
+    const csrfToken = [[${_csrf.token}]];
+    const interfaceId = [[${interface.id}]];
+    const projectId = [[${interface.projectId}]];
+    addActiveClassForNav();
+    function addActiveClassForNav() {
+        var bdDocsNav = $('#bd-docs-nav');
+        var as = bdDocsNav.find("a");
+        for(var i=0;i<as.length;i++) {
+            var a= $(as[i]);
+            if(a.hasClass('bd-toc-link')) {
+                continue;
+            }
+            var href = a.attr('href');
+            var splits = href.split("/");
+            if(splits.length === 4 && splits[1] === 'interface' && splits[2] === '' + interfaceId) {
+                a.parent().parent().parent().addClass('active');
+                a.parent().addClass('active bd-sidenav-active');
+            }
+        }
+    }
+    var interfaceHeaderFieldJson = $('#interfaceHeaderFieldJson');
+    interfaceHeaderFieldJson.val("[{\n" +
+        "    \"name\": \"field_name\",\n" +
+        "    \"type\": \"field\",\n" +
+        "    \"field_type\": \"TEXT\",\n" +
+        "    \"required\": true,\n" +
+        "    \"description\": \"field_description\"\n" +
+        "},{\n" +
+        "    \"name\": \"header_name\",\n" +
+        "    \"type\": \"header\",\n" +
+        "    \"required\": false,\n" +
+        "    \"description\": \"header_description\"\n" +
+        "}]");
+    interfaceHeaderFieldJson.height(interfaceHeaderFieldJson[0].scrollHeight);
+    var interfaceFieldManualDiv = $('#interfaceFieldManualDiv'),
+        interfaceHeaderManualDiv = $('#interfaceHeaderManualDiv'),
+        interfaceHeaderFieldJsonDiv = $('#interfaceHeaderFieldJsonDiv')
+    ;
+    var interfaceFieldTable = $('#interfaceFieldTable'),
+        interfaceFieldTrTemplate = $('#interfaceFieldTrTemplate'),
+        interfaceHeaderTable = $('#interfaceHeaderTable'),
+        interfaceHeaderTrTemplate = $('#interfaceHeaderTrTemplate');
+    function interfaceFieldManualInput() {
+        interfaceFieldManualDiv.removeClass('d-none');
+        interfaceHeaderManualDiv.removeClass('d-none');
+        interfaceHeaderFieldJsonDiv.addClass('d-none');
+    }
+    function interfaceHeaderFieldJsonInput() {
+        interfaceFieldManualDiv.addClass('d-none');
+        interfaceHeaderManualDiv.addClass('d-none');
+        interfaceHeaderFieldJsonDiv.removeClass('d-none');
+        interfaceHeaderFieldJson.height(interfaceHeaderFieldJson[0].scrollHeight);
+    }
+    function interfaceFieldManualAdd() {
+        if(!interfaceFieldManualDiv.hasClass('d-none')) {
+            var tr = interfaceFieldTrTemplate.clone();
+            tr.removeClass('d-none');
+            interfaceFieldTable.find("tbody").append(tr);
+        }
+    }
+    function interfaceHeaderManualAdd() {
+        if(!interfaceHeaderManualDiv.hasClass('d-none')) {
+            var tr = interfaceHeaderTrTemplate.clone();
+            tr.removeClass('d-none');
+            interfaceHeaderTable.find("tbody").append(tr);
+        }
+    }
+    var createInterfaceAlertWarning = $('#createInterfaceAlertWarning'),
+        createInterfaceAlertSuccess = $('#createInterfaceAlertSuccess');
+    function interfaceImportFromJson() {
+        var json = interfaceHeaderFieldJson.val();
+        if(json === '') {
+            return;
+        }
+        try {
+            clearHeaderFieldTable();
+            var jsonObject = JSON.parse(json);
+            var hasError = false;
+            var headerCount = 0, fieldCount = 0;
+            if(jsonObject instanceof Array) {
+                for(var i=0;i<jsonObject.length;i++) {
+                    var one = jsonObject[i];
+                    if(one instanceof Object) {
+                        var name = one.name,
+                            type = one.type,
+                            description = one.description,
+                            fieldType = one.field_type,
+                            required = one.required
+                        ;
+                        if(type === 'field' || type === 'header') {
+                            if(name !== null && required !== null && isBoolean(required)) {
+                                if (type === 'field') {
+                                    if(fieldType === 'TEXT' || fieldType === 'FILE') {
+                                        fieldCount++;
+                                        addField(name, fieldType, required, description);
+                                    } else {
+                                        hasError = true;
+                                    }
+                                } else if (type === 'header') {
+                                    headerCount++;
+                                    addHeader(name, required, description);
+                                }
+                            } else {
+                                hasError = true;
+                            }
+                        } else {
+                            hasError = true;
+                        }
+                    } else {
+                        hasError = true;
+                    }
+                }
+            } else {
+                hasError = true;
+            }
+            if(!hasError) {
+                createInterfaceAlertSuccess.removeClass('d-none');
+                createInterfaceAlertWarning.addClass('d-none');
+                createInterfaceAlertSuccess.html(successImportText(headerCount,fieldCount));
+            } else {
+                createInterfaceAlertSuccess.addClass('d-none');
+                createInterfaceAlertWarning.removeClass('d-none');
+                createInterfaceAlertWarning.html("数据格式不符合约定，"+successImportText(headerCount,fieldCount));
+            }
+            if(headerCount > 0 || fieldCount > 0) {
+                interfaceFieldManualInput();
+            }
+        } catch (e) {
+            console.error("导入json失败", e);
+            createInterfaceAlertSuccess.addClass('d-none');
+            createInterfaceAlertWarning.removeClass('d-none');
+            createInterfaceAlertWarning.html("JSON格式不正确！");
+        }
+        function successImportText(headerCount,fieldCount) {
+            return '成功导入'+headerCount+"条头部、"+fieldCount+"条字段";
+        }
+        function clearHeaderFieldTable() {
+            var headerTrs = interfaceHeaderTable.find("tbody").find("tr");
+            removeDisplayTrs(headerTrs);
+            var fieldTrs = interfaceFieldTable.find("tbody").find("tr");
+            removeDisplayTrs(fieldTrs);
+        }
+        function removeDisplayTrs(trs) {
+            for(var i=0;i<trs.length;i++) {
+                var tr = $(trs[i]);
+                if(!tr.hasClass('d-none')) {
+                    tr.remove();
+                }
+            }
+        }
+    }
+    function addHeader(name,required,description) {
+        var tr = interfaceHeaderTrTemplate.clone();
+        tr.removeClass('d-none');
+        tr.find("input").eq(0).val(name);
+        tr.find("input").eq(1).prop('checked',required);
+        tr.find("textarea").eq(0).val(description);
+        interfaceHeaderTable.find("tbody").append(tr);
+    }
+    function addField(name,fieldType,required,description) {
+        var tr = interfaceFieldTrTemplate.clone();
+        tr.removeClass('d-none');
+        tr.find("input").eq(0).val(name);
+        tr.find("input").eq(1).prop('checked',required);
+        tr.find("select").eq(0).val(fieldType);
+        tr.find("textarea").eq(0).val(description);
+        interfaceFieldTable.find("tbody").append(tr);
+    }
+    var interfaceType = $('#interfaceType');
+    var interfaceTypeValue = [[${interface.type}]];
+    var interfaceTypeOptions = interfaceType.find("option");
+    for(var i=0;i<interfaceTypeOptions.length;i++) {
+        var option = $(interfaceTypeOptions[i]);
+        if(option.html() === interfaceTypeValue) {
+            interfaceType.val(option.val());
+        }
+    }
+    var headers = [[${interface.headerList}]];
+    if(headers.length > 0) {
+        for(var i=0;i<headers.length;i++) {
+            var header = headers[i];
+            addHeader(header.name,header.required,header.description);
+        }
+    }
+    var fields = [[${interface.fieldList}]];
+    if(fields.length > 0) {
+        for(var i=0;i<fields.length;i++) {
+            var field = fields[i];
+            addField(field.name,field.type,field.required,field.description);
+        }
+    }
+    var interfaceName = $('#interfaceName'),
+        interfaceDescription = $('#interfaceDescription'),
+        interfaceRelativePath = $('#interfaceRelativePath'),
+        interfaceMethod = $('#interfaceMethod');
+    function createInterface() {
+        var paramObject = {
+            name: interfaceName.val(),
+            description: interfaceDescription.val(),
+            relativePath: interfaceRelativePath.val(),
+            method: interfaceMethod.val(),
+            type: interfaceType.val()
+        };
+        var headerArray = [];
+        var trs = interfaceHeaderTable.find('tbody').find('tr');
+        for(var i=0;i<trs.length;i++) {
+            var tr = $(trs[i]);
+            if(!tr.hasClass('d-none')) {
+                var name = tr.find("input").eq(0).val();
+                var description = tr.find("textarea").eq(0).val();
+                var required = tr.find("input").eq(1).prop('checked');
+                var header = {
+                    name: name,
+                    description: description,
+                    required: required
+                }
+                headerArray.push(header);
+            }
+        }
+        paramObject.headerList = headerArray;
+        var fieldArray = [];
+        trs = interfaceFieldTable.find('tbody').find('tr');
+        for(var i=0;i<trs.length;i++) {
+            var tr = $(trs[i]);
+            if(!tr.hasClass('d-none')) {
+                var name = tr.find("input").eq(0).val();
+                var type = tr.find("select").eq(0).val();
+                var description = tr.find("textarea").eq(0).val();
+                var required = tr.find("input").eq(1).prop('checked');
+                var field = {
+                    name: name,
+                    type: type,
+                    description: description,
+                    required: required
+                }
+                fieldArray.push(field);
+            }
+        }
+        paramObject.fieldList = fieldArray;
+
+        var paramJson = JSON.stringify(paramObject);
+        console.log(paramObject);
+        console.log(paramJson);
+        ajaxPostJsonFull('/group/'+groupId+'/interface/create',paramJson,csrfToken,
+            function (response) {
+                console.log(response);
+                if(response.success) {
+                    createInterfaceAlertSuccess.removeClass("d-none");
+                    createInterfaceAlertWarning.addClass("d-none");
+                    createInterfaceAlertSuccess.html("接口创建成功，3秒后刷新页面");
+                    setTimeout(function () {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    createInterfaceAlertWarning.removeClass('d-none');
+                    createInterfaceAlertSuccess.addClass('d-none');
+                    createInterfaceAlertWarning.html(response.message);
+                    if(response.data !== null) {
+                        processCreateInterfaceErrorMsg(response.data);
+                    }
+                }
+            },
+            function (xhr) {
+                createInterfaceAlertWarning.removeClass('d-none');
+                createInterfaceAlertSuccess.addClass('d-none');
+                createInterfaceAlertWarning.html('请求出错，状态码：'+xhr.status)
+            }
+        );
+    }
+    function processCreateInterfaceErrorMsg(data) {
+        processErrorMsgItem(data.name, interfaceName);
+        processErrorMsgItemOptional(data.description, interfaceDescription);
+        processErrorMsgItem(data.relativePath, interfaceRelativePath);
+        processErrorMsgItem(data.method, interfaceMethod);
+        processErrorMsgItem(data.type, interfaceType);
+        var headerArray = data.headerList;
+        if(headerArray !== null) {
+            for(var i=0;i<headerArray.length;i++) {
+                var header = headerArray[i];
+                var tr = interfaceHeaderTable.find('tbody').find('tr').eq(i+1);
+                if(tr.length === 0) {
+                    break;
+                }
+                processErrorMsgItem(header.name, tr.find('input').eq(0));
+                // processErrorMsgItem(header.required, tr.find('input').eq(1));
+                processErrorMsgItemOptional(header.description, tr.find('textarea').eq(0));
+            }
+        }
+        var fieldArray = data.fieldList;
+        if(fieldArray !== null) {
+            for(var i=0;i<fieldArray.length;i++) {
+                var field = fieldArray[i];
+                var tr = interfaceFieldTable.find('tbody').find('tr').eq(i+1);
+                if(tr.length === 0) {
+                    break;
+                }
+                processErrorMsgItem(field.name, tr.find('input').eq(0));
+                processErrorMsgItem(field.type, tr.find('select').eq(0));
+                // processErrorMsgItem(field.required, tr.find('input').eq(1));
+                processErrorMsgItemOptional(field.description, tr.find('textarea').eq(0));
+            }
+        }
+    }
+</script>
+</html>

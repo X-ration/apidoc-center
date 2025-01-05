@@ -44,7 +44,7 @@ public class GroupInterface extends AbstractAuditable {
         FORM_URLENCODED("application/x-www-form-urlencoded"),
         FORM_DATA("multipart/form-data"),
         JSON("application/json"),
-        NO_BODY(null),
+        NO_BODY("无请求体"),
         ;
         private final String contentType;
     }

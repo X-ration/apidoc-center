@@ -8,11 +8,11 @@ import java.util.List;
 
 @Data
 public class GroupInterfaceDTO {
-    private String name;
-    private String description;
-    private String relativePath;
-    private HttpMethod method;
-    private GroupInterface.Type type;
-    private List<InterfaceHeaderDTO> headerList;
-    private List<InterfaceFieldDTO> fieldList;
+    protected String name;
+    protected String description;
+    protected String relativePath;
+    protected HttpMethod method;
+    protected GroupInterface.Type type;
+    protected List<InterfaceHeaderDTO> headerList;
+    protected List<InterfaceFieldDTO> fieldList;
 }
