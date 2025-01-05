@@ -410,6 +410,7 @@
             description: projectDescription.val(),
             accessMode: projectAccessMode.val()
         }
+        //todo 公开项目也可以添加分享者
         if(paramObject.accessMode === 'PRIVATE') {
             paramObject.allowUserIds = tagsinput.val();
         }

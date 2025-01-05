@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import java.util.LinkedList;
@@ -68,6 +69,16 @@ public class GroupInterfaceService {
             UserCoreDTO userCoreDTO = new UserCoreDTO(user);
             groupInterfaceDetailDisplayDTO.setUpdater(userCoreDTO);
         }
+    }
+
+    public Long getProjectId(long interfaceId) {
+        Assert.isTrue(interfaceId > 0, "getProjectId interfaceId<=0");
+        Optional<GroupInterface> groupInterfaceOptional = groupInterfaceRepository.findById(interfaceId);
+        if(groupInterfaceOptional.isEmpty()) {
+            return null;
+        }
+        GroupInterface groupInterface = groupInterfaceOptional.get();
+        return groupInterface.getProjectGroup().getProjectId();
     }
 
     public Response<Void> deleteInterface(long interfaceId) {

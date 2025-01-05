@@ -20,7 +20,7 @@ public class StringUtil {
                     "(:[0-9]+)?" + //端口
                     "((/[\\w-]*)*" + //路径
                     "(\\?[\\w-%:;&@#+=]*)?)"); //参数
-    public static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("(/[\\w-]*)+");
+    public static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("(/[\\w-{}]*)+");
 
     public static boolean isEmail(String email) {
         Objects.requireNonNull(email);

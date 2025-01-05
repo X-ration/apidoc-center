@@ -2,6 +2,8 @@ package com.adam.apidoc_center.config;
 
 import com.adam.apidoc_center.security.ImprovedSavedRequestAwareAuthenticationSuccessHandler;
 import com.adam.apidoc_center.security.PersistentTokenRepositoryImpl;
+import com.adam.apidoc_center.security.ProjectAuthorizationManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -16,6 +18,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private ProjectAuthorizationManager projectAuthorizationManager;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -26,6 +31,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests()
                 .antMatchers("/user/login/**", "/user/logout", "/user/register", "/error/**").permitAll()
                 .antMatchers("/resources/**").permitAll()
+                .antMatchers("/project/**","/group/**","/interface/**").access(projectAuthorizationManager)
                 .anyRequest().authenticated();
 
         http.formLogin(form -> form

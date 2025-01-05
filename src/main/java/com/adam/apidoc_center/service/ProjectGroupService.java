@@ -50,6 +50,16 @@ public class ProjectGroupService {
         return projectGroupRepository.existsById(groupId);
     }
 
+    public Long getProjectId(long groupId) {
+        Assert.isTrue(groupId > 0, "getProjectId groupId<=0");
+        Optional<ProjectGroup> projectGroupOptional = projectGroupRepository.findById(groupId);
+        if(projectGroupOptional.isEmpty()) {
+            return null;
+        }
+        ProjectGroup projectGroup = projectGroupOptional.get();
+        return projectGroup.getProjectId();
+    }
+
     public Response<Void> deleteGroup(long groupId) {
         if(groupId <= 0) {
             return Response.fail(StringConstants.PROJECT_GROUP_ID_INVALID);

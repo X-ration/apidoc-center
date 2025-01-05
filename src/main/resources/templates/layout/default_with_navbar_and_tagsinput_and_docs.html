@@ -50,6 +50,9 @@ charset=UTF-8"/>
                             注册时间：<span sec:authentication="principal.user.createTimeDesc">createTime</span>
                             <p sec:authentication="principal.user.description"></p>
                             <a class="btn btn-primary" href="/user/modifyProfile">修改资料</a>
+                            <form th:action="@{/user/logout}" method="post">
+                                <button type="submit" class="btn btn-warning">退出登录</button>
+                            </form>
                         </div>
                     </div>
                 </div>
