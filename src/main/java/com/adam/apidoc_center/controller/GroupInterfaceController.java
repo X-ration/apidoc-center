@@ -37,4 +37,10 @@ public class GroupInterfaceController {
         return groupInterfaceService.checkAndModify(interfaceId, groupInterfaceDTO);
     }
 
+    @PostMapping("/delete")
+    @ResponseBody
+    public Response<Void> deleteInterface(@PathVariable long interfaceId) {
+        return groupInterfaceService.deleteInterface(interfaceId);
+    }
+
 }

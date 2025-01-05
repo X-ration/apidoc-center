@@ -273,6 +273,31 @@
                 </div>
             </div>
         </div>
+        <div class="modal fade" id="deleteInterfaceModal" tabindex="-1" role="dialog" aria-labelledby="deleteInterfaceModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">删除接口</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="deleteInterfaceAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div id="deleteInterfaceAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        您真的要删除这个接口吗？<br>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-warning" onclick="deleteInterface()">确认删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 </body>
@@ -283,6 +308,7 @@
     const csrfToken = [[${_csrf.token}]];
     const interfaceId = [[${interface.id}]];
     const projectId = [[${interface.projectId}]];
+    const groupId = [[${interface.groupId}]];
     addActiveClassForNav();
     function addActiveClassForNav() {
         var bdDocsNav = $('#bd-docs-nav');
@@ -580,5 +606,37 @@
             }
         }
     }
-</script>
+
+
+    function deleteInterface() {
+        var deleteInterfaceAlertSuccess = $('#deleteInterfaceAlertSuccess'),
+            deleteInterfaceAlertWarning = $('#deleteInterfaceAlertWarning');
+        if(isNaN(interfaceId)) {
+            deleteInterfaceAlertSuccess.addClass('d-none');
+            deleteInterfaceAlertWarning.removeClass('d-none');
+            deleteInterfaceAlertWarning.html("页面存在错误，请刷新重试");
+            return;
+        }
+        ajaxPostJsonFull('/interface/' + interfaceId + '/delete',null,csrfToken,
+            function (response) {
+                if(response.success) {
+                    deleteInterfaceAlertSuccess.removeClass('d-none');
+                    deleteInterfaceAlertWarning.addClass('d-none');
+                    deleteInterfaceAlertSuccess.html("删除成功，3秒后返回分组管理页面");
+                    setTimeout(function () {
+                        location.href = "/group/" + groupId + "/view";
+                    }, 3000);
+                } else {
+                    deleteInterfaceAlertSuccess.addClass('d-none');
+                    deleteInterfaceAlertWarning.removeClass('d-none');
+                    deleteInterfaceAlertWarning.html("删除失败：" + response.message);
+                }
+            },
+            function (xhr) {
+                deleteInterfaceAlertSuccess.addClass('d-none');
+                deleteInterfaceAlertWarning.removeClass('d-none');
+                deleteInterfaceAlertWarning.html("删除失败，状态码：" + xhr.status);
+            }
+        )
+    }</script>
 </html>

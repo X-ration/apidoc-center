@@ -65,6 +65,7 @@ public class StringConstants {
     public static final String GROUP_INTERFACE_ID_INVALID = "接口id非法";
     public static final String GROUP_INTERFACE_CREATE_FAIL_CHECK_INPUT = "接口创建失败，请检查输入";
     public static final String GROUP_INTERFACE_MODIFY_FAIL_CHECK_INPUT = "接口修改失败，请检查输入";
+    public static final String GROUP_INTERFACE_DELETE_FAIL = "删除失败，请稍候再试";
     public static final String GROUP_INTERFACE_NAME_BLANK = "接口名称为空";
     public static final String GROUP_INTERFACE_NAME_LENGTH_EXCEEDED = "接口名称长度不超过32个字符";
     public static final String GROUP_INTERFACE_DESCRIPTION_LENGTH_EXCEEDED = "接口描述长度不超过100个字符";

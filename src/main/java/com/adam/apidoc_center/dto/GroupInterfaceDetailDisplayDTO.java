@@ -13,6 +13,7 @@ public class GroupInterfaceDetailDisplayDTO {
 
     private long id;
     private long projectId;
+    private long groupId;
     private String name;
     private String description;
     private String relativePath;
@@ -32,6 +33,7 @@ public class GroupInterfaceDetailDisplayDTO {
     public GroupInterfaceDetailDisplayDTO(GroupInterface groupInterface) {
         this.id = groupInterface.getId();
         this.projectId = groupInterface.getProjectGroup().getProjectId();
+        this.groupId = groupInterface.getGroupId();
         this.name = groupInterface.getName();
         this.description = groupInterface.getDescription();
         this.relativePath = groupInterface.getRelativePath();

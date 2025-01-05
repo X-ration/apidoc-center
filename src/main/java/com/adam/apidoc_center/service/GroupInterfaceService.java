@@ -11,6 +11,7 @@ import com.adam.apidoc_center.repository.GroupInterfaceRepository;
 import com.adam.apidoc_center.repository.InterfaceFieldRepository;
 import com.adam.apidoc_center.repository.InterfaceHeaderRepository;
 import com.adam.apidoc_center.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class GroupInterfaceService {
 
     @Autowired
@@ -65,6 +67,24 @@ public class GroupInterfaceService {
             User user = userMap.get(groupInterfaceDetailDisplayDTO.getUpdateUserId());
             UserCoreDTO userCoreDTO = new UserCoreDTO(user);
             groupInterfaceDetailDisplayDTO.setUpdater(userCoreDTO);
+        }
+    }
+
+    public Response<Void> deleteInterface(long interfaceId) {
+        if(interfaceId <= 0) {
+            return Response.fail(StringConstants.GROUP_INTERFACE_ID_INVALID);
+        }
+        Optional<GroupInterface> groupInterfaceOptional = groupInterfaceRepository.findById(interfaceId);
+        if(groupInterfaceOptional.isEmpty()) {
+            return Response.fail(StringConstants.GROUP_INTERFACE_ID_INVALID);
+        }
+        GroupInterface groupInterface = groupInterfaceOptional.get();
+        try {
+            groupInterfaceRepository.delete(groupInterface);
+            return Response.success();
+        } catch (Exception e) {
+            log.error("deleteInterface error", e);
+            return Response.fail(StringConstants.GROUP_INTERFACE_DELETE_FAIL);
         }
     }
 
