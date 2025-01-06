@@ -54,7 +54,7 @@
             </span>
             <br>
             <p class="bd-lead" th:text="${project.description}" th:if="${project.description}">项目介绍</p>
-            <span class="bd-lead" th:if="${project.accessMode} == '私有'" id="allowUsernames"></span><br><br>
+            <span class="bd-lead" th:if="${project.accessMode} == '私有'" id="shareUsernames"></span><br><br>
             <span class="bd-lead">项目部署地址</span>
             <table class="table">
                 <thead><tr>
@@ -165,8 +165,8 @@
                             <input type="hidden" id="projectAccessMode" th:if="${project.accessMode} == '公开'" value="PUBLIC">
                             <input type="hidden" id="projectAccessMode" th:if="${project.accessMode} == '私有'" value="PRIVATE">
                         </div>
-                        <div id="shareUserDiv" class="d-none">
-                            <label for="shareUserTagsInput">授权用户访问</label>
+                        <div id="shareUserDiv">
+                            <label for="shareUserTagsInput">将项目分享给</label>
                             <div class="invalid-feedback" id="shareUserTagsFeedback">授权用户访问参数非法</div>
                             <input id="shareUserTagsInput" data-role="tagsinput">
                         </div>
@@ -286,7 +286,7 @@
                 if(response.success) {
                     createGroupAlertSuccess.removeClass("d-none");
                     createGroupAlertWarning.addClass("d-none");
-                    createGroupAlertSuccess.html("项目修改成功，3秒后刷新页面");
+                    createGroupAlertSuccess.html("分组创建成功，3秒后刷新页面");
                     setTimeout(function () {
                         location.reload();
                     }, 3000);
@@ -308,19 +308,19 @@
         );
     }
 
-    var allowUsernames = $('#allowUsernames');
-    if(allowUsernames.length === 1) {
-        var allowUserDTOs = [[${project.allowedUserList}]];
+    var shareUsernames = $('#shareUsernames');
+    if(shareUsernames.length === 1) {
+        var shareUserDTOs = [[${project.sharedUserList}]];
         var value = '允许访问的用户：';
-        for(var i=0;i<allowUserDTOs.length;i++) {
-            // value = value + allowUserDTOs[i].username + ",";
-            value = value + "<span data-toggle='tooltip' data-placement='top' title='" + allowUserDTOs[i].email + "'>"
-                + allowUserDTOs[i].username + "</span>,";
+        for(var i=0;i<shareUserDTOs.length;i++) {
+            // value = value + shareUserDTOs[i].username + ",";
+            value = value + "<span data-toggle='tooltip' data-placement='top' title='" + shareUserDTOs[i].email + "'>"
+                + shareUserDTOs[i].username + "</span>,";
         }
-        if(allowUserDTOs.length > 0) {
+        if(shareUserDTOs.length > 0) {
             value = value.substring(0, value.length - 1);
         }
-        allowUsernames.html(value);
+        shareUsernames.html(value);
     }
     $('[data-toggle="tooltip"]').tooltip({
         delay: { "show": 0, "hide": 2000 }
@@ -338,11 +338,11 @@
     });
     tagsinput.before(shareUserTagsFeedback[0]);
     tagsinput.prev().prev().addClass("col-12");
-    var allowUsers = [[${project.allowedUserList}]];
-    // console.log(allowUsers);
-    if(allowUsers !== null) {
-        for(var i=0;i<allowUsers.length;i++) {
-            tagsinput.tagsinput('add', allowUsers[i]);
+    var shareUsers = [[${project.sharedUserList}]];
+    // console.log(shareUsers);
+    if(shareUsers !== null) {
+        for(var i=0;i<shareUsers.length;i++) {
+            tagsinput.tagsinput('add', shareUsers[i]);
         }
         updateTagsBgColor(tagsinput, 'green');
     }
@@ -374,11 +374,6 @@
         if(accessMode === 'PUBLIC' || accessMode === 'PRIVATE') {
             projectAccessMode.val(accessMode);
         }
-        if(accessMode === 'PUBLIC') {
-            shareUserDiv.addClass('d-none');
-        } else if(accessMode === 'PRIVATE') {
-            shareUserDiv.removeClass('d-none');
-        }
     });
     var projectDeploymentSelect = $('#projectDeploymentSelect');
     var projectDeploymentTable = $('#projectDeploymentTable');
@@ -408,12 +403,9 @@
         var paramObject = {
             name: projectName.val(),
             description: projectDescription.val(),
-            accessMode: projectAccessMode.val()
-        }
-        //todo 公开项目也可以添加分享者
-        if(paramObject.accessMode === 'PRIVATE') {
-            paramObject.allowUserIds = tagsinput.val();
-        }
+            accessMode: projectAccessMode.val(),
+            shareUserIds: tagsinput.val()
+        };
         var deploymentArray = [];
         var trs = projectDeploymentTable.find("tr");
         for(var i=1;i<trs.length;i++) {
@@ -464,7 +456,7 @@
         processErrorMsgItem(data.name, projectName);
         processErrorMsgItemOptional(data.description, projectDescription);
         processErrorMsgItem(data.accessMode, projectAccessModeContent);
-        processErrorMsgItem(data.allowUserIds, tagsinput.prev().prev());
+        processErrorMsgItem(data.shareUserIds, tagsinput.prev().prev());
         var deploymentArray = data.deploymentList;
         if(deploymentArray !== null) {
             for (var i = 0; i < deploymentArray.length; i++) {

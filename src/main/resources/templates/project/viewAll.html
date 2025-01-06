@@ -61,9 +61,9 @@
                                     <div class="invalid-feedback">访问模式必选</div>
                                     <input type="hidden" id="projectAccessMode" value="PUBLIC">
                                 </div>
-                                <div id="shareUserDiv" class="d-none">
-                                    <label for="shareUserTagsInput">授权用户访问</label>
-                                    <div class="invalid-feedback">授权用户访问参数非法</div>
+                                <div id="shareUserDiv">
+                                    <label for="shareUserTagsInput">将项目分享给</label>
+                                    <div id="shareUserInvalidFeedback" class="invalid-feedback">授权用户访问参数非法</div>
                                     <input id="shareUserTagsInput" data-role="tagsinput">
                                 </div>
                                 <div>
@@ -181,7 +181,10 @@
         itemValue: 'id',
         itemText: 'username'
     });
-    tagsinput.prev().addClass("col-12");
+    var shareUserInvalidFeedback = $('#shareUserInvalidFeedback');
+    shareUserInvalidFeedback.remove();
+    shareUserInvalidFeedback.insertBefore(tagsinput);
+    tagsinput.prev().prev().addClass("col-12");
     var projectAccessMode = $('#projectAccessMode');
     $("input[name=projectAccessModeRadio]").change(function() {
         var accessMode = $(this).val();
@@ -189,13 +192,8 @@
             projectAccessMode.val(accessMode);
         }
         var shareUserDiv = $('#shareUserDiv');
-        if(accessMode === 'PUBLIC') {
-            shareUserDiv.addClass('d-none');
-        } else if(accessMode === 'PRIVATE') {
-            shareUserDiv.removeClass('d-none');
-        }
     });
-    var taginput = tagsinput.prev().find("input");
+    var taginput = tagsinput.prev().prev().find("input");
     taginput.keydown(function (event) {
         //监听回车键
         if(event.which === 13) {
@@ -221,11 +219,9 @@
         var paramObject = {
             name: projectName.val(),
             description: projectDescription.val(),
-            accessMode: projectAccessMode.val()
-        }
-        if(paramObject.accessMode === 'PRIVATE') {
-            paramObject.allowUserIds = tagsinput.val();
-        }
+            accessMode: projectAccessMode.val(),
+            shareUserIds: tagsinput.val()
+        };
         var deploymentArray = [];
         var trs = projectDeploymentTable.find("tr");
         for(var i=1;i<trs.length;i++) {
@@ -274,7 +270,7 @@
         processErrorMsgItem(data.name, projectName);
         processErrorMsgItemOptional(data.description, projectDescription);
         processErrorMsgItem(data.accessMode, projectAccessModeContent);
-        processErrorMsgItem(data.allowUserIds, tagsinput.prev());
+        processErrorMsgItem(data.shareUserIds, tagsinput.prev());
         var deploymentArray = data.deploymentList;
         if(deploymentArray !== null) {
             for (var i = 0; i < deploymentArray.length; i++) {

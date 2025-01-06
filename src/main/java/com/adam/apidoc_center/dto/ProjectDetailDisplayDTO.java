@@ -19,7 +19,7 @@ public class ProjectDetailDisplayDTO {
     private UserCoreDTO updater;
     private long createUserId;
     private long updateUserId;
-    private List<UserCoreDTO> allowedUserList;
+    private List<UserCoreDTO> sharedUserList;
     private List<ProjectDeploymentDTO> deploymentList;
     private List<ProjectGroupDisplayDTO> groupList;
 

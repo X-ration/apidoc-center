@@ -11,13 +11,12 @@ public class ProjectErrorMsg implements ErrorMsg{
     private String name;
     private String description;
     private String accessMode;
-    private String allowUserIds;
+    private String shareUserIds;
     private List<ProjectDeploymentErrorMsg> deploymentList;
 
     @Override
     public boolean hasError() {
-        boolean hasError = name != null || description != null;
-        if(hasError) {
+        if(name != null || description != null || accessMode != null || shareUserIds != null) {
             return true;
         }
         if(CollectionUtils.isEmpty(deploymentList)) {

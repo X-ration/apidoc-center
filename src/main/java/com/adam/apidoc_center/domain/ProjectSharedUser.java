@@ -3,7 +3,6 @@ package com.adam.apidoc_center.domain;
 import com.adam.apidoc_center.common.AbstractAuditable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -12,7 +11,7 @@ import javax.persistence.*;
 @Entity
 @Data
 @NoArgsConstructor
-public class ProjectAllowedUser extends AbstractAuditable {
+public class ProjectSharedUser extends AbstractAuditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,15 +19,15 @@ public class ProjectAllowedUser extends AbstractAuditable {
     @Column(name= "project_id")
     private long projectId;
     private long userId;
-    private boolean isAllow;
+    private boolean isShare;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "project_id", insertable = false, updatable = false)
     private Project project;
 
-    public ProjectAllowedUser(long projectId, long userId) {
+    public ProjectSharedUser(long projectId, long userId) {
         this.projectId = projectId;
         this.userId = userId;
-        this.isAllow = true;
+        this.isShare = true;
     }
 
 }

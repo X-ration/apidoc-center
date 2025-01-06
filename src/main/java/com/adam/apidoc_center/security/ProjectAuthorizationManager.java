@@ -1,26 +1,22 @@
 package com.adam.apidoc_center.security;
 
 import com.adam.apidoc_center.domain.Project;
-import com.adam.apidoc_center.domain.ProjectAllowedUser;
+import com.adam.apidoc_center.domain.ProjectSharedUser;
 import com.adam.apidoc_center.service.GroupInterfaceService;
 import com.adam.apidoc_center.service.ProjectGroupService;
 import com.adam.apidoc_center.service.ProjectService;
-import com.nimbusds.oauth2.sdk.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationTrustResolver;
-import org.springframework.security.authentication.AuthenticationTrustResolverImpl;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
@@ -71,7 +67,8 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
             return new AuthorizationDecision(false);
         }
         long userId = -1;
-        if(authentication.get() instanceof UsernamePasswordAuthenticationToken) {
+        if(authentication.get() instanceof UsernamePasswordAuthenticationToken
+                || authentication.get() instanceof RememberMeAuthenticationToken) {
             ExtendedUser extendedUser = (ExtendedUser) authentication.get().getPrincipal();
             //系统管理员全部放行
             if (extendedUser.getUser().getUsername().equals("admin")) {
@@ -89,7 +86,7 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
             if(projectRequestMatcher.matches(object.getRequest())) {
                 projectIdString = resolveVariableValue(projectRequestMatcher, object.getRequest(), PROJECT_ID_VARIABLE_NAME);
                 action = resolveVariableValue(projectRequestMatcher, object.getRequest(), ACTION_VARIABLE_NAME);
-                if(!CollectionUtils.contains(registeredActionList, action)) {
+                if(!registeredActionList.contains(action)) {
                     return new AuthorizationDecision(false);
                 }
             } else if(projectCreateGroupRequestMatcher.matches(object.getRequest())) {
@@ -110,7 +107,7 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
             if(groupRequestMatcher.matches(object.getRequest())) {
                 groupIdString = resolveVariableValue(groupRequestMatcher, object.getRequest(), GROUP_ID_VARIABLE_NAME);
                 action = resolveVariableValue(groupRequestMatcher, object.getRequest(), ACTION_VARIABLE_NAME);
-                if(!CollectionUtils.contains(registeredActionList, action)) {
+                if(!registeredActionList.contains(action)) {
                     return new AuthorizationDecision(false);
                 }
             } else if(groupCreateInterfaceRequestMatcher.matches(object.getRequest())) {
@@ -131,7 +128,7 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
             if(interfaceRequestMatcher.matches(object.getRequest())) {
                 String interfaceIdString = resolveVariableValue(interfaceRequestMatcher, object.getRequest(), INTERFACE_ID_VARIABLE_NAME);
                 action = resolveVariableValue(interfaceRequestMatcher, object.getRequest(), ACTION_VARIABLE_NAME);
-                if(!CollectionUtils.contains(registeredActionList, action)) {
+                if(!registeredActionList.contains(action)) {
                     return new AuthorizationDecision(false);
                 }
                 try {
@@ -150,19 +147,19 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
         if(project == null) {
             return new AuthorizationDecision(false);
         }
-        List<Long> allowUserIds = new LinkedList<>();
-        if(project.getAccessMode() == Project.AccessMode.PRIVATE && !org.springframework.util.CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
-            allowUserIds = project.getProjectAllowedUserList().stream()
-                    .filter(ProjectAllowedUser::isAllow)
-                    .map(ProjectAllowedUser::getUserId)
-                    .collect(Collectors.toList());
-        }
         //公开项目可自由查看
         if(action.equals("view") && project.getAccessMode() == Project.AccessMode.PUBLIC) {
             return new AuthorizationDecision(true);
         }
+        List<Long> shareUserIdList = new LinkedList<>();
+        if(!CollectionUtils.isEmpty(project.getProjectSharedUserList())) {
+            shareUserIdList = project.getProjectSharedUserList().stream()
+                    .filter(ProjectSharedUser::isShare)
+                    .map(ProjectSharedUser::getUserId)
+                    .collect(Collectors.toList());
+        }
         //修改、删除、创建或查看私有项目都需要管理员用户或创建者或项目分享者权限
-        if(project.getCreateUserId() == userId || allowUserIds.contains(userId)) {
+        if(project.getCreateUserId() == userId || shareUserIdList.contains(userId)) {
             return new AuthorizationDecision(true);
         } else {
             return new AuthorizationDecision(false);

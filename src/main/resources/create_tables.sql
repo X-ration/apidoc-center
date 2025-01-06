@@ -65,12 +65,12 @@ CREATE TABLE `project_deployment` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='项目环境部署地址表';
 
-DROP TABLE IF EXISTS `project_allowed_user`;
-CREATE TABLE `project_allowed_user` (
+DROP TABLE IF EXISTS `project_shared_user`;
+CREATE TABLE `project_shared_user` (
     `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
     `project_id` BIGINT(64) NOT NULL,
     `user_id` BIGINT(64) NOT NULL,
-    `is_allow` BOOL NOT NULL DEFAULT TRUE,
+    `is_share` BOOL NOT NULL DEFAULT TRUE,
     `create_user_id` BIGINT(64) NOT NULL,
     `update_user_id` BIGINT(64) NOT NULL,
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

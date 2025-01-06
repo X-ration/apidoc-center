@@ -4,14 +4,13 @@ import com.adam.apidoc_center.common.PagedData;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.domain.Project;
-import com.adam.apidoc_center.domain.ProjectAllowedUser;
+import com.adam.apidoc_center.domain.ProjectSharedUser;
 import com.adam.apidoc_center.domain.ProjectDeployment;
 import com.adam.apidoc_center.domain.User;
 import com.adam.apidoc_center.dto.*;
 import com.adam.apidoc_center.repository.ProjectAllowedUserRepository;
 import com.adam.apidoc_center.repository.ProjectDeploymentRepository;
 import com.adam.apidoc_center.repository.ProjectRepository;
-import com.adam.apidoc_center.security.ExtendedUser;
 import com.adam.apidoc_center.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -19,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -61,18 +59,18 @@ public class ProjectService {
         Project project = projectOptional.get();
         ProjectDetailDisplayDTO projectDetailDisplayDTO = ProjectDetailDisplayDTO.convert(project);
         processCreatorAndUpdater(projectDetailDisplayDTO);
-        if(!CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
-            List<Long> allowUserIdList = project.getProjectAllowedUserList().stream()
-                    .filter(ProjectAllowedUser::isAllow)
-                    .map(ProjectAllowedUser::getUserId)
+        if(!CollectionUtils.isEmpty(project.getProjectSharedUserList())) {
+            List<Long> shareUserIdList = project.getProjectSharedUserList().stream()
+                    .filter(ProjectSharedUser::isShare)
+                    .map(ProjectSharedUser::getUserId)
                     .collect(Collectors.toList());
-            Map<Long, User> userMap = userService.queryUserMap(allowUserIdList);
-            List<UserCoreDTO> userCoreDTOList = allowUserIdList.stream()
+            Map<Long, User> userMap = userService.queryUserMap(shareUserIdList);
+            List<UserCoreDTO> userCoreDTOList = shareUserIdList.stream()
                     .map(userMap::get)
                     .filter(Objects::nonNull)
                     .map(UserCoreDTO::new)
                     .collect(Collectors.toList());
-            projectDetailDisplayDTO.setAllowedUserList(userCoreDTOList);
+            projectDetailDisplayDTO.setSharedUserList(userCoreDTOList);
         }
         if(!CollectionUtils.isEmpty(project.getProjectDeploymentList())) {
             List<ProjectDeploymentDTO> projectDeploymentDTOList =
@@ -115,19 +113,6 @@ public class ProjectService {
         if(projectOptional.isEmpty()) {
             return Response.fail(StringConstants.PROJECT_NOT_EXISTS);
         }
-        Project project = projectOptional.get();
-        List<Long> allowUserIds = new LinkedList<>();
-        if(project.getAccessMode() == Project.AccessMode.PRIVATE && !CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
-            allowUserIds = project.getProjectAllowedUserList().stream()
-                    .filter(ProjectAllowedUser::isAllow)
-                    .map(ProjectAllowedUser::getUserId)
-                    .collect(Collectors.toList());
-        }
-        ExtendedUser extendedUser = (ExtendedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if(!extendedUser.getUsername().equals("admin") && project.getCreateUserId() != extendedUser.getUser().getId()
-                && project.getAccessMode() == Project.AccessMode.PRIVATE && !allowUserIds.contains(extendedUser.getUser().getId())) {
-            return Response.fail(StringConstants.PROJECT_ONLY_OWNER_CAN_DELETE);
-        }
         try {
             projectRepository.deleteById(projectId);  //关联实体(分组)一并删除
             return Response.success();
@@ -147,18 +132,6 @@ public class ProjectService {
             return Response.fail(StringConstants.PROJECT_ID_INVALID);
         }
         Project project = projectOptional.get();
-        List<Long> allowUserIds = new LinkedList<>();
-        if(project.getAccessMode() == Project.AccessMode.PRIVATE && !CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
-            allowUserIds = project.getProjectAllowedUserList().stream()
-                    .filter(ProjectAllowedUser::isAllow)
-                    .map(ProjectAllowedUser::getUserId)
-                    .collect(Collectors.toList());
-        }
-        ExtendedUser extendedUser = (ExtendedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if(!extendedUser.getUsername().equals("admin") && project.getCreateUserId() != extendedUser.getUser().getId()
-                && project.getAccessMode() == Project.AccessMode.PRIVATE && !allowUserIds.contains(extendedUser.getUser().getId())) {
-            return Response.fail(StringConstants.PROJECT_ONLY_OWNER_CAN_MODIFY);
-        }
         ProjectErrorMsg projectErrorMsg = checkCreateParams(projectUpdateDTO);
         if(projectErrorMsg.hasError()) {
             return Response.fail(StringConstants.PROJECT_MODIFY_FAIL_CHECK_INPUT, projectErrorMsg);
@@ -167,18 +140,15 @@ public class ProjectService {
         project.setName(projectUpdateDTO.getName());
         project.setDescription(projectUpdateDTO.getDescription());
         project.setAccessMode(projectUpdateDTO.getAccessMode());
-        if(!CollectionUtils.isEmpty(project.getProjectAllowedUserList())) {
-            projectAllowedUserRepository.deleteAll(project.getProjectAllowedUserList());
+        if(!CollectionUtils.isEmpty(project.getProjectSharedUserList())) {
+            projectAllowedUserRepository.deleteAll(project.getProjectSharedUserList());
+            project.setProjectSharedUserList(null);
         }
-        if(projectUpdateDTO.getAccessMode() == Project.AccessMode.PUBLIC) {
-            project.setProjectAllowedUserList(null);
-        } else if(projectUpdateDTO.getAccessMode() == Project.AccessMode.PRIVATE) {
-            if(!CollectionUtils.isEmpty(projectUpdateDTO.getAllowUserIdList())) {
-                List<ProjectAllowedUser> projectAllowedUserList = projectUpdateDTO.getAllowUserIdList().stream()
-                        .map(userId -> new ProjectAllowedUser(projectId, userId))
-                        .collect(Collectors.toList());
-                project.setProjectAllowedUserList(projectAllowedUserList);
-            }
+        if(!CollectionUtils.isEmpty(projectUpdateDTO.getShareUserIdList())) {
+            List<ProjectSharedUser> projectSharedUserList = projectUpdateDTO.getShareUserIdList().stream()
+                    .map(userId -> new ProjectSharedUser(projectId, userId))
+                    .collect(Collectors.toList());
+            project.setProjectSharedUserList(projectSharedUserList);
         }
         if(!CollectionUtils.isEmpty(project.getProjectDeploymentList())) {
 //            List<Long> projectDeploymentIdList = project.getProjectDeploymentList().stream()
@@ -211,11 +181,11 @@ public class ProjectService {
         project.setAccessMode(projectCreateDTO.getAccessMode());
         projectRepository.save(project);
         long projectId = project.getId();
-        if(projectCreateDTO.getAccessMode() == Project.AccessMode.PRIVATE && !CollectionUtils.isEmpty(projectCreateDTO.getAllowUserIdList())) {
-            List<ProjectAllowedUser> projectAllowedUserList = projectCreateDTO.getAllowUserIdList().stream()
-                    .map(userId -> new ProjectAllowedUser(projectId, userId))
+        if(!CollectionUtils.isEmpty(projectCreateDTO.getShareUserIdList())) {
+            List<ProjectSharedUser> projectSharedUserList = projectCreateDTO.getShareUserIdList().stream()
+                    .map(userId -> new ProjectSharedUser(projectId, userId))
                     .collect(Collectors.toList());
-            projectAllowedUserRepository.saveAll(projectAllowedUserList);
+            projectAllowedUserRepository.saveAll(projectSharedUserList);
         }
         if(!CollectionUtils.isEmpty(projectCreateDTO.getDeploymentList())) {
             List<ProjectDeployment> projectDeploymentList = projectCreateDTO.getDeploymentList().stream()
@@ -251,25 +221,24 @@ public class ProjectService {
         }
         if(projectCreateDTO.getAccessMode() == null) {
             projectErrorMsg.setAccessMode(StringConstants.PROJECT_ACCESS_MODE_NULL);
-        } else if(projectCreateDTO.getAccessMode() == Project.AccessMode.PRIVATE){
-            String allowUserIds = projectCreateDTO.getAllowUserIds();
-            if(StringUtils.isNotBlank(allowUserIds)) {
-                String[] splits = allowUserIds.split(",");
-                List<Long> allowUserIdList = new LinkedList<>();
-                if (splits.length > 1 || StringUtils.isNotEmpty(splits[0])) {
-                    for (String split : splits) {
-                        try {
-                            long userId = Long.parseLong(split);
-                            allowUserIdList.add(userId);
-                        } catch (NumberFormatException e) {
-                            projectErrorMsg.setAllowUserIds(StringConstants.PROJECT_ALLOW_USER_IDS_INVALID);
-                            break;
-                        }
+        }
+        String shareUserIds = projectCreateDTO.getShareUserIds();
+        if(StringUtils.isNotBlank(shareUserIds)) {
+            String[] splits = shareUserIds.split(",");
+            List<Long> shareUserIdList = new LinkedList<>();
+            if (splits.length > 1 || StringUtils.isNotEmpty(splits[0])) {
+                for (String split : splits) {
+                    try {
+                        long userId = Long.parseLong(split);
+                        shareUserIdList.add(userId);
+                    } catch (NumberFormatException e) {
+                        projectErrorMsg.setShareUserIds(StringConstants.PROJECT_ALLOW_USER_IDS_INVALID);
+                        break;
                     }
                 }
-                if (!projectErrorMsg.hasError()) {
-                    projectCreateDTO.setAllowUserIdList(allowUserIdList);
-                }
+            }
+            if (!projectErrorMsg.hasError()) {
+                projectCreateDTO.setShareUserIdList(shareUserIdList);
             }
         }
         if(!CollectionUtils.isEmpty(projectCreateDTO.getDeploymentList())) {

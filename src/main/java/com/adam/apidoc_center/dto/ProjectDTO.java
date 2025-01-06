@@ -10,7 +10,7 @@ public class ProjectDTO {
     private String name;
     private String description;
     private Project.AccessMode accessMode;
-    private String allowUserIds;
-    private List<Long> allowUserIdList;
+    private String shareUserIds;
+    private List<Long> shareUserIdList;
     private List<ProjectDeploymentDTO> deploymentList;
 }
