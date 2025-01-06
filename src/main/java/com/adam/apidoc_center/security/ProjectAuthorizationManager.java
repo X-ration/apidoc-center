@@ -11,6 +11,7 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
@@ -19,10 +20,7 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -71,7 +69,8 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
                 || authentication.get() instanceof RememberMeAuthenticationToken) {
             ExtendedUser extendedUser = (ExtendedUser) authentication.get().getPrincipal();
             //系统管理员全部放行
-            if (extendedUser.getUser().getUsername().equals("admin")) {
+//            if (extendedUser.getUser().getUsername().equals("admin")) {
+            if(hasAdminAuthority(authentication.get())) {
                 return new AuthorizationDecision(true);
             }
             userId = extendedUser.getUser().getId();
@@ -164,6 +163,16 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
         } else {
             return new AuthorizationDecision(false);
         }
+    }
+
+    private boolean hasAdminAuthority(Authentication authentication) {
+        Collection<? extends GrantedAuthority> grantedAuthorityList = authentication.getAuthorities();
+        for(GrantedAuthority grantedAuthority: grantedAuthorityList) {
+            if(grantedAuthority.getAuthority().equals("ROLE_ADMIN")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String resolveVariableValue(AntPathRequestMatcher requestMatcher, HttpServletRequest request, String variableKey) {
