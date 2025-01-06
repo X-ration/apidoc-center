@@ -8,7 +8,7 @@ import com.adam.apidoc_center.domain.ProjectSharedUser;
 import com.adam.apidoc_center.domain.ProjectDeployment;
 import com.adam.apidoc_center.domain.User;
 import com.adam.apidoc_center.dto.*;
-import com.adam.apidoc_center.repository.ProjectAllowedUserRepository;
+import com.adam.apidoc_center.repository.ProjectSharedUserRepository;
 import com.adam.apidoc_center.repository.ProjectDeploymentRepository;
 import com.adam.apidoc_center.repository.ProjectRepository;
 import com.adam.apidoc_center.util.StringUtil;
@@ -35,7 +35,7 @@ public class ProjectService {
     @Autowired
     private ProjectDeploymentRepository projectDeploymentRepository;
     @Autowired
-    private ProjectAllowedUserRepository projectAllowedUserRepository;
+    private ProjectSharedUserRepository projectSharedUserRepository;
     @Autowired
     private UserService userService;
 
@@ -141,7 +141,7 @@ public class ProjectService {
         project.setDescription(projectUpdateDTO.getDescription());
         project.setAccessMode(projectUpdateDTO.getAccessMode());
         if(!CollectionUtils.isEmpty(project.getProjectSharedUserList())) {
-            projectAllowedUserRepository.deleteAll(project.getProjectSharedUserList());
+            projectSharedUserRepository.deleteAll(project.getProjectSharedUserList());
             project.setProjectSharedUserList(null);
         }
         if(!CollectionUtils.isEmpty(projectUpdateDTO.getShareUserIdList())) {
@@ -185,7 +185,7 @@ public class ProjectService {
             List<ProjectSharedUser> projectSharedUserList = projectCreateDTO.getShareUserIdList().stream()
                     .map(userId -> new ProjectSharedUser(projectId, userId))
                     .collect(Collectors.toList());
-            projectAllowedUserRepository.saveAll(projectSharedUserList);
+            projectSharedUserRepository.saveAll(projectSharedUserList);
         }
         if(!CollectionUtils.isEmpty(projectCreateDTO.getDeploymentList())) {
             List<ProjectDeployment> projectDeploymentList = projectCreateDTO.getDeploymentList().stream()
