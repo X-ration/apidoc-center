@@ -4,10 +4,13 @@ import com.adam.apidoc_center.config.WebConfig;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.Getter;
+import org.springframework.util.Assert;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Data
@@ -40,6 +43,11 @@ public class User {
     public enum UserType {
         NORMAL("普通"), OAUTH2_GITHUB("GitHub"), OAUTH2_HUAWEI("华为");
         private String desc;
+        private static final Map<String, UserType> registrationIdToUserTypeMap = new HashMap<>();
+        static {
+            registrationIdToUserTypeMap.put("huawei", OAUTH2_HUAWEI);
+            registrationIdToUserTypeMap.put("github", OAUTH2_GITHUB);
+        }
         UserType(String desc) {
             this.desc = desc;
         }
@@ -50,6 +58,16 @@ public class User {
 
         public String getFullDesc() {
             return desc + "用户";
+        }
+
+        public static UserType of(String registrationId) {
+            Assert.notNull(registrationId, "of registrationId null");
+            for(Map.Entry<String,UserType> entry: registrationIdToUserTypeMap.entrySet()) {
+                if(entry.getKey().equalsIgnoreCase(registrationId)) {
+                    return entry.getValue();
+                }
+            }
+            return null;
         }
     }
 
