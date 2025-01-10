@@ -51,4 +51,10 @@ public class SecurityUtil {
             return null;
         }
     }
+
+    public static boolean hasUserType(String registrationId) {
+        User user = getUser();
+        return user.getUserTypeList().contains(User.UserType.of(registrationId));
+    }
+
 }

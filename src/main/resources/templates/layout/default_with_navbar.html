@@ -44,6 +44,12 @@ charset=UTF-8"/>
                             <h5 sec:authentication="principal.user.username">username</h5>
                             <span sec:authentication="principal.user.email">email</span><br>
                             <small class="text-muted" sec:authentication="principal.user.userTypeFullDesc">user type</small>
+                            <div th:if="${T(com.adam.apidoc_center.security.SecurityUtil).hasUserType('huawei')}">
+                                华为用户：<span sec:authentication="principal.user.userOAuth2Huawei.displayName"></span>
+                            </div>
+                            <div th:if="${T(com.adam.apidoc_center.security.SecurityUtil).hasUserType('github')}">
+                                GitHub用户：<span sec:authentication="principal.user.userOAuth2Github.username"></span>
+                            </div>
                             <div class="dropdown-divider"></div>
                             注册时间：<span sec:authentication="principal.user.createTimeDesc">createTime</span>
                             <p sec:authentication="principal.user.description"></p>
