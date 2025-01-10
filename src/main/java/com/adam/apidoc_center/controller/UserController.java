@@ -2,17 +2,17 @@ package com.adam.apidoc_center.controller;
 
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
-import com.adam.apidoc_center.dto.RegisterForm;
-import com.adam.apidoc_center.dto.RegisterSuccessData;
-import com.adam.apidoc_center.dto.UserCoreDTO;
-import com.adam.apidoc_center.dto.UserDTO;
-import com.adam.apidoc_center.security.ExtendedUser;
+import com.adam.apidoc_center.domain.User;
+import com.adam.apidoc_center.dto.*;
+import com.adam.apidoc_center.security.ImprovedSavedRequestAwareAuthenticationSuccessHandler;
+import com.adam.apidoc_center.security.SecurityUtil;
 import com.adam.apidoc_center.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,7 +20,10 @@ import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Map;
 
 @Controller
@@ -32,6 +35,8 @@ public class UserController {
     private UserService userService;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private ImprovedSavedRequestAwareAuthenticationSuccessHandler authenticationSuccessHandler;
 
     @GetMapping("/login")
     public ModelAndView login(HttpServletRequest request) {
@@ -76,9 +81,9 @@ public class UserController {
 
     @GetMapping("/modifyProfile")
     public String modifyProfilePage(Model model, @RequestParam(required = false) boolean success) {
-        ExtendedUser extendedUser = (ExtendedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = SecurityUtil.getUser();
         //隐藏密码
-        UserDTO userDTO = new UserDTO(extendedUser.getUser());
+        UserDTO userDTO = new UserDTO(user);
         model.addAttribute("user", userDTO);
         if(success) {
             model.addAttribute("success", true);
@@ -117,6 +122,58 @@ public class UserController {
         } else {
             return Response.fail(StringConstants.QUERY_USER_CORE_NOT_FOUND);
         }
+    }
+
+    @GetMapping("/bindOAuth2Login")
+    public String bindOAuth2Login(Model model) {
+        model.addAttribute("oauth2User", SecurityUtil.getExtendedOAuth2User());
+        model.addAttribute("registrationId", SecurityUtil.getOAuth2RegistrationId());
+        return "user/oauth2BindLogin";
+    }
+
+    @PostMapping("/bindOAuth2Login")
+    public String bindOAuth2LoginPost(@RequestParam String username, @RequestParam String password, Model model) {
+        Response<OAuth2BindSuccessData> response = userService.oauth2BindLogin(username, password);
+        if(response.isSuccess()) {
+            model.addAttribute("data", response.getData());
+            return "user/oauth2BindSuccess";
+        } else {
+            model.addAttribute("error", "");
+            return "user/oauth2BindLogin";
+        }
+    }
+
+    @GetMapping("/bindOAuth2Register")
+    public String bindOAuth2Register(Model model) {
+        model.addAttribute("oauth2User", SecurityUtil.getExtendedOAuth2User());
+        model.addAttribute("registrationId", SecurityUtil.getOAuth2RegistrationId());
+        model.addAttribute("registerForm", new RegisterForm());
+        return "user/oauth2BindRegister";
+    }
+
+    @PostMapping("/bindOAuth2Register")
+    public String bindOAuth2RegisterPost(RegisterForm registerForm, Model model) {
+        Assert.notNull(registerForm, "register registerForm null");
+        Response<?> response = userService.oauth2BindRegister(registerForm);
+        if(response.isSuccess()) {
+            model.addAttribute("data", response.getData());
+            return "user/oauth2BindSuccess";
+        } else {
+            try {
+                String json = objectMapper.writeValueAsString(response);
+                model.addAttribute("error", json);
+            } catch (JsonProcessingException e) {
+                log.error("register Jackson processing exception", e);
+                model.addAttribute("error", "注册失败：服务器出现异常");
+            }
+            return "user/oauth2BindRegister";
+        }
+    }
+
+    @GetMapping("/bindOAuth2Redirect")
+    public void bindOAuth2Redirect(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();;
+        authenticationSuccessHandler.onAuthenticationSuccess(request, response, authentication);
     }
 
 }

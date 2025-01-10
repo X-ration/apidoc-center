@@ -1,6 +1,7 @@
 package com.adam.apidoc_center.config;
 
 import com.adam.apidoc_center.security.ImprovedSavedRequestAwareAuthenticationSuccessHandler;
+import com.adam.apidoc_center.security.OAuth2BindUserFilter;
 import com.adam.apidoc_center.security.PersistentTokenRepositoryImpl;
 import com.adam.apidoc_center.security.ProjectAuthorizationManager;
 import com.adam.apidoc_center.security.oauth2.MyDefaultOAuth2AuthorizationRequestResolver;
@@ -26,10 +27,9 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
-import javax.persistence.Table;
 import javax.servlet.Filter;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -44,13 +44,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, PersistentTokenRepositoryImpl persistentTokenRepository,
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, ImprovedSavedRequestAwareAuthenticationSuccessHandler authenticationSuccessHandler,
+                                                   PersistentTokenRepositoryImpl persistentTokenRepository,
                                                    ClientRegistrationRepository clientRegistrationRepository,
-                                                   OAuth2AuthorizedClientService oAuth2AuthorizedClientService
+                                                   OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
+                                                   MyOAuth2UserService oAuth2UserService
     ) throws Exception {
         http.authorizeHttpRequests()
                 .antMatchers("/user/login/**", "/user/logout", "/user/register", "/error/**").permitAll()
                 .antMatchers("/resources/**").permitAll()
+                .antMatchers("/restHello/**").permitAll()
                 .antMatchers("/project/**","/group/**","/interface/**").access(projectAuthorizationManager)
                 .anyRequest().authenticated();
 
@@ -58,7 +61,7 @@ public class SecurityConfig {
                         .loginPage("/user/login")
                         .usernameParameter("username")
                         .passwordParameter("password")
-                        .successHandler(new ImprovedSavedRequestAwareAuthenticationSuccessHandler())
+                        .successHandler(authenticationSuccessHandler)
                         .failureUrl("/user/login?error")
         );
 
@@ -85,7 +88,7 @@ public class SecurityConfig {
                         //用户信息端点，定义从OAuth2UserRequest到OAuth2User的获取过程
                         //默认给予ROLE_USER和以SCOPE_开头的两个权限，可以通过自定义OAuth2UserService定制权限列表
                         .userInfoEndpoint(userInfo -> userInfo
-                                        .userService(oAuth2UserService())
+                                        .userService(oAuth2UserService(oAuth2UserService))
 //                        .userAuthoritiesMapper(grantedAuthoritiesMapper)
                         )
                         //授权端点，定义页面中a.href跳转的连接的基础uri，处理Github登录请求，将请求重定向到github.com
@@ -101,6 +104,9 @@ public class SecurityConfig {
                 clientRegistrationRepository, oAuth2AuthorizedClientService,
                 "/user/login/oauth2/callback/*");
         http.addFilterBefore(myOAuth2LoginAuthenticationFilter, OAuth2LoginAuthenticationFilter.class);
+        OAuth2BindUserFilter oAuth2BindUserFilter = new OAuth2BindUserFilter("/user/login/**", "/user/logout",
+                "/user/register", "/error/**", "/resources/**", "/restHello/**");
+        http.addFilterAfter(oAuth2BindUserFilter, AuthorizationFilter.class);
         SecurityFilterChain securityFilterChain = http.build();
         AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManagerBuilder.class).getObject();
         myOAuth2LoginAuthenticationFilter.setAuthenticationManager(authenticationManager);
@@ -108,8 +114,7 @@ public class SecurityConfig {
         return securityFilterChain;
     }
 
-    private DefaultOAuth2UserService oAuth2UserService() {
-        MyOAuth2UserService oAuth2UserService = new MyOAuth2UserService();
+    private DefaultOAuth2UserService oAuth2UserService(MyOAuth2UserService oAuth2UserService) {
         oAuth2UserService.setRequestEntityConverter(new MyOAuth2UserRequestEntityConverter());
         return oAuth2UserService;
     }

@@ -1,7 +1,10 @@
 package com.adam.apidoc_center.security.oauth2;
 
+import com.adam.apidoc_center.domain.User;
+import com.adam.apidoc_center.service.UserService;
 import com.adam.apidoc_center.util.ReflectUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -10,13 +13,17 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 
 @Slf4j
+@Service
 public class MyOAuth2UserService extends DefaultOAuth2UserService {
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -35,6 +42,24 @@ public class MyOAuth2UserService extends DefaultOAuth2UserService {
         Set<GrantedAuthority> authoritySet = new HashSet<>();
         authoritySet.add(new SimpleGrantedAuthority("ROLE_USER"));
 
-        return new DefaultOAuth2User(authoritySet, oAuth2User.getAttributes(), nameAttributeKey);
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        OAuth2Provider oAuth2Provider = OAuth2Provider.of(registrationId);
+        if (oAuth2Provider == null) {
+            OAuth2Error oAuth2Error = new OAuth2Error("unknown_oauth2_provider", "Unknown OAuth2 provider \"" + registrationId + "\"", null);
+            throw new OAuth2AuthenticationException(oAuth2Error, oAuth2Error.toString());
+        }
+        User user = null;
+        switch (oAuth2Provider) {
+            case GITHUB:
+                Integer githubId = oAuth2User.getAttribute("id");
+                user = userService.findGithubBindUser(githubId);
+                break;
+            case HUAWEI:
+                String unionId = oAuth2User.getAttribute("unionID");
+                user = userService.findHuaweiBindUser(unionId);
+                break;
+        }
+
+        return new ExtendedOAuth2User(authoritySet, oAuth2User.getAttributes(), nameAttributeKey, OAuth2Provider.of(registrationId), user);
     }
 }

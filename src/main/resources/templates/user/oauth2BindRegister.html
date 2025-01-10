@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>绑定新注册用户</title>
+</head>
+<body>
+<div class="container-fluid" layout:fragment="content">
+    <br><br><br>
+    <h1 class="text-center">绑定新注册用户</h1>
+    <br><br>
+    <p class="text-center">您好，
+        <span th:if="${registrationId} == 'github'">GitHub</span>
+        <span th:if="${registrationId} == 'huawei'">华为</span>
+        用户
+        <span th:if="${registrationId} == 'github'" th:text="${oauth2User.getAttribute('login')}">用户名</span>
+        <span th:if="${registrationId} == 'huawei'" th:text="${oauth2User.getAttribute('displayName')}">用户名</span>
+        ：
+    </p>
+    <div class="col-12 col-md-8 offset-md-2">
+        <div id="errorMsg" class="alert alert-warning" role="alert" th:if="${error}" th:text="${error}">
+            A simple warning alert—check it out!
+        </div>
+        <form id="registerForm" th:object="${registerForm}" th:action="@{/user/bindOAuth2Register}" method="post">
+            <div class="form-row">
+                <div class="col-12 col-md-8 offset-md-2">
+                    <label for="id">用户id</label>
+                    <input type="text" readonly class="form-control" id="id" value="自动生成">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-12 col-md-8 offset-md-2">
+                    <label for="username">用户名</label>
+                    <input type="text" class="form-control" id="username" th:field="*{username}" placeholder="用户名由字母、数字和下划线组成，不超过32个字符">
+                    <div class="invalid-feedback">用户名长度不能超过32个字符</div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-12 col-md-8 offset-md-2">
+                    <label for="email">电子邮件地址</label>
+                    <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="someone@example.com">
+                    <div class="invalid-feedback">必须是合法的电子邮件地址</div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-12 col-md-8 offset-md-2">
+                    <label for="password">密码</label>
+                    <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="只能由字母、数字、下划线组成，密码长度不超过32位">
+                    <div class="invalid-feedback">密码长度不超过32位</div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-12 col-md-8 offset-md-2">
+                    <label for="verifyPassword">确认密码</label>
+                    <input type="password" class="form-control" id="verifyPassword" th:field="*{verifyPassword}" placeholder="再输入一次密码">
+                    <div class="invalid-feedback">两次输入的密码不一致</div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-12 col-md-8 offset-md-2">
+                    <label for="avatarUrl">头像</label>
+                    <div class="d-flex justify-content-center">
+                        <img src="/resources/default_user.png" alt="默认头像">
+                    </div>
+                    <small class="form-text text-muted">注册使用默认头像，登录后可在个人主页修改</small>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-12 col-md-8 offset-md-2">
+                    <label for="description">个人介绍</label>
+                    <textarea class="form-control" id="description" th:field="*{description}" placeholder="个人介绍不超过100字符"></textarea>
+                    <div class="invalid-feedback">个人介绍不能超过100个字符</div>
+                </div>
+            </div>
+            <br>
+            <div class="form-row">
+                <div class="col-12 col-md-8 offset-md-2">
+                    <button type="submit" class="btn btn-primary btn-block">注册</button>
+                </div>
+            </div>
+        </form>
+        <div class="col-12 col-md-8 offset-md-2">
+            <div class="form-group">
+                <a href="/user/bindOAuth2Login">绑定已注册用户</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script layout:fragment="script">
+    processErrorMsg();
+    function processErrorMsg() {
+        var errorMsg = $('#errorMsg');
+        var errorMsgText = errorMsg.text();
+        try {
+            var errorMsgObject = JSON.parse(errorMsgText);
+            if(errorMsgObject.success) {
+                errorMsg.remove();
+            } else {
+                errorMsg.text(errorMsgObject.message);
+                var errorMsgDataObject = errorMsgObject.data;
+                if(errorMsgDataObject !== null) {
+                    var username = $('#username'), email = $('#email'), password = $('#password'),
+                        verifyPassword = $('#verifyPassword'), description = $('#description');
+                    processErrorMsgItem(errorMsgDataObject.username, username);
+                    processErrorMsgItem(errorMsgDataObject.email, email);
+                    processErrorMsgItem(errorMsgDataObject.password, password);
+                    processErrorMsgItem(errorMsgDataObject.verifyPassword, verifyPassword);
+                    processErrorMsgItemOptional(errorMsgDataObject.description, description);
+                }
+            }
+        } catch (e) {
+        }
+    }
+</script>
+</html>

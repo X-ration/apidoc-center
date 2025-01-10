@@ -36,6 +36,9 @@ public class StringConstants {
     //用户相关
     public static final String QUERY_USER_CORE_PARAM_BLANK = "参数为空";
     public static final String QUERY_USER_CORE_NOT_FOUND = "未找到用户";
+    public static final String USERNAME_OR_PASSWORD_WRONG = "用户名或密码错误";
+    public static final String OAUTH2_UNKNOWN_PROVIDER = "未知的OAuth2服务提供者";
+    public static final String OAUTH2_USER_ALREADY_BIND = "该用户已经被绑定了";
 
     //项目相关
     public static final String PROJECT_CREATE_FAIL_CHECK_INPUT = "项目创建失败，请检查输入";

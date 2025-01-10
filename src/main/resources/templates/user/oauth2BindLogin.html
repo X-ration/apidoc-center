@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>绑定已注册用户</title>
+</head>
+<body>
+<div class="container-fluid" layout:fragment="content">
+    <br><br><br>
+    <h1 class="text-center">绑定已注册用户</h1>
+    <br><br>
+    <p class="text-center">您好，
+        <span th:if="${registrationId} == 'github'">GitHub</span>
+        <span th:if="${registrationId} == 'huawei'">华为</span>
+        用户
+        <span th:if="${registrationId} == 'github'" th:text="${oauth2User.getAttribute('login')}">用户名</span>
+        <span th:if="${registrationId} == 'huawei'" th:text="${oauth2User.getAttribute('displayName')}">用户名</span>
+        ：
+    </p>
+    <div class="col-12 col-md-10 offset-md-1 col-xl-8 offset-xl-2">
+        <div class="alert alert-warning" role="alert" th:if="${error}">
+            用户名或密码错误
+        </div>
+        <form id="loginForm" th:action="@{/user/bindOAuth2Login}" method="post">
+            <div id="usernameGroup" class="form-group">
+                <label for="username">用户id/用户名/邮箱</label>
+                <input id="username" name="username" type="text" class="form-control" required="required">
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" class="form-control" id="password" name="password" required="required">
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-block">绑定</button>
+            </div>
+            <div class="form-group">
+                <a href="/user/bindOAuth2Register">绑定新注册用户</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+</body>
+</html>

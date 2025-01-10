@@ -11,7 +11,7 @@ CREATE TABLE `user`(
     `password` CHAR(60) NOT NULL,
     `avatar_url` VARCHAR(256) NOT NULL,
     `description` VARCHAR(100) DEFAULT NULL,
-    `user_type` ENUM('NORMAL','OAUTH2_GITHUB','OAUTH2_HUAWEI') NOT NULL,
+    `user_type` VARCHAR(64) NOT NULL COMMENT '以逗号分隔的UserType枚举值',
     `is_enabled` BOOL NOT NULL DEFAULT TRUE,
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -26,6 +26,35 @@ CREATE TABLE `user_authority` (
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `user_oauth2_github`;
+CREATE TABLE `user_oauth2_github`(
+    `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT(64) NOT NULL DEFAULT 0,
+    `github_id` INT(32) NOT NULL,
+    `username` VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL UNIQUE,
+    `real_name` VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL UNIQUE,
+    `avatar_url` VARCHAR(256) NOT NULL,
+    `email` VARCHAR(256) NOT NULL UNIQUE,
+    `bio` VARCHAR(100) DEFAULT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY(`id`)
+)ENGINE=INNODB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `user_oauth2_huawei`;
+CREATE TABLE `user_oauth2_huawei`(
+    `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT(64) NOT NULL DEFAULT 0,
+    `display_name` VARCHAR(32) NOT NULL,
+    `head_picture_url` VARCHAR(256) NOT NULL,
+    `union_id` VARCHAR(100) NOT NULL,
+    `open_id` VARCHAR(100) NOT NULL,
+    `display_name_flag` tinyint(1) NOT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY(`id`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `remember_me_token`;
 CREATE TABLE `remember_me_token` (

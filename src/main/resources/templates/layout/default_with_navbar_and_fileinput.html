@@ -35,16 +35,16 @@ charset=UTF-8"/>
             </form>
             <div class="navbar-nav mr-0">
                 <div class="nav-item dropdown">
-                    <a sec:authentication="principal.username" class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a sec:authentication="principal.user.username" class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Username
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown" style="min-width: 300px">
                         <div class="ml-2">
                             <img width="200px" height="200px" id="avatarImg" alt="头像">
                             <span id="avatarUrlHidden" class="d-none" sec:authentication="principal.user.avatarUrl">avatarUrl</span>
-                            <h5 sec:authentication="principal.username">username</h5>
+                            <h5 sec:authentication="principal.user.username">username</h5>
                             <span sec:authentication="principal.user.email">email</span><br>
-                            <small class="text-muted" sec:authentication="principal.user.userType.fullDesc">user type</small>
+                            <small class="text-muted" sec:authentication="principal.user.userTypeFullDesc">user type</small>
                             <div class="dropdown-divider"></div>
                             注册时间：<span sec:authentication="principal.user.createTimeDesc">createTime</span>
                             <p sec:authentication="principal.user.description"></p>

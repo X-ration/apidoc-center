@@ -2,6 +2,7 @@ package com.adam.apidoc_center.security;
 
 import com.adam.apidoc_center.domain.Project;
 import com.adam.apidoc_center.domain.ProjectSharedUser;
+import com.adam.apidoc_center.domain.User;
 import com.adam.apidoc_center.service.GroupInterfaceService;
 import com.adam.apidoc_center.service.ProjectGroupService;
 import com.adam.apidoc_center.service.ProjectService;
@@ -64,17 +65,12 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
         if(authentication.get() instanceof AnonymousAuthenticationToken) {
             return new AuthorizationDecision(false);
         }
-        long userId = -1;
-        if(authentication.get() instanceof UsernamePasswordAuthenticationToken
-                || authentication.get() instanceof RememberMeAuthenticationToken) {
-            ExtendedUser extendedUser = (ExtendedUser) authentication.get().getPrincipal();
-            //系统管理员全部放行
-//            if (extendedUser.getUser().getUsername().equals("admin")) {
-            if(hasAdminAuthority(authentication.get())) {
-                return new AuthorizationDecision(true);
-            }
-            userId = extendedUser.getUser().getId();
+        //系统管理员全部放行
+        if(hasAdminAuthority(authentication.get())) {
+            return new AuthorizationDecision(true);
         }
+        User user = SecurityUtil.getUser();
+        long userId = user.getId();
 
         if(requestURI.startsWith("/project")) {
             //任何人都可以创建项目、查看项目

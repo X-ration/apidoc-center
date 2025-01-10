@@ -5,8 +5,6 @@ import com.adam.apidoc_center.domain.User;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @NoArgsConstructor
 public class UserDTO {
@@ -27,7 +25,7 @@ public class UserDTO {
         this.username = user.getUsername();
         this.avatarUrl = user.getAvatarUrl();
         this.description = user.getDescription();
-        this.userType = user.getUserType().getFullDesc();
+        this.userType = user.getUserTypeFullDesc();
         this.createTime = user.getCreateTime().format(WebConfig.DATE_TIME_FORMATTER);
     }
 

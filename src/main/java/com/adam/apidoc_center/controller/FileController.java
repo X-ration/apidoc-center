@@ -2,10 +2,9 @@ package com.adam.apidoc_center.controller;
 
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
-import com.adam.apidoc_center.config.WebConfig;
-import com.adam.apidoc_center.security.ExtendedUser;
+import com.adam.apidoc_center.domain.User;
+import com.adam.apidoc_center.security.SecurityUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.net.InetAddress;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,8 +35,8 @@ public class FileController {
             return Response.fail(StringConstants.REQUEST_FILE_IS_NULL);
         }
         MultipartFile file = file_data;
-        ExtendedUser user = (ExtendedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        long userId = user.getUser().getId();
+        User user = SecurityUtil.getUser();
+        long userId = user.getId();
         log.debug("upload file {} {} user id={}", file.getName(), file.getOriginalFilename(), userId);
         try {
             String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
