@@ -43,8 +43,7 @@ charset=UTF-8"/>
                             <span id="avatarUrlHidden" class="d-none" sec:authentication="principal.user.avatarUrl">avatarUrl</span>
                             <h5 sec:authentication="principal.user.username">username</h5>
                             <span sec:authentication="principal.user.email">email</span><br>
-                            <small class="text-muted" sec:authentication="principal.user.userTypeFullDesc">user type</small>
-                            <div th:if="${T(com.adam.apidoc_center.security.SecurityUtil).hasUserType('huawei')}">
+                            <small class="text-muted">登录方式：<span sec:authentication="principal.loginType.fullDesc">login type</span></small>                            <div th:if="${T(com.adam.apidoc_center.security.SecurityUtil).hasUserType('huawei')}">
                                 华为用户：<span sec:authentication="principal.user.userOAuth2Huawei.displayName"></span>
                             </div>
                             <div th:if="${T(com.adam.apidoc_center.security.SecurityUtil).hasUserType('github')}">
