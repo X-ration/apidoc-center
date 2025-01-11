@@ -39,6 +39,9 @@ public class StringConstants {
     public static final String USERNAME_OR_PASSWORD_WRONG = "用户名或密码错误";
     public static final String OAUTH2_UNKNOWN_PROVIDER = "未知的OAuth2服务提供者";
     public static final String OAUTH2_USER_ALREADY_BIND = "该用户已经被绑定了";
+    public static final String OAUTH2_UNBIND_SUCCESS = "解绑成功";
+    public static final String OAUTH2_UNBIND_FAIL_NO_BINDING_HUAWEI = "解绑失败，未绑定华为账号";
+    public static final String OAUTH2_UNBIND_FAIL_NO_BINDING_GITHUB = "解绑失败，未绑定GitHub账号";
 
     //项目相关
     public static final String PROJECT_CREATE_FAIL_CHECK_INPUT = "项目创建失败，请检查输入";

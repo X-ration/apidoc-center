@@ -8,7 +8,7 @@ import java.util.Collection;
 
 @Getter
 public class ExtendedUser extends User implements SecurityUser{
-    private final com.adam.apidoc_center.domain.User user;
+    private com.adam.apidoc_center.domain.User user;
     private final LoginType loginType;
     public ExtendedUser(String username, String password, Collection<? extends GrantedAuthority> authorities, com.adam.apidoc_center.domain.User user) {
         super(username, password, authorities);
@@ -16,4 +16,8 @@ public class ExtendedUser extends User implements SecurityUser{
         this.loginType = LoginType.USERNAME_PASSWORD;
     }
 
+    @Override
+    public void clearUser() {
+        this.user = null;
+    }
 }

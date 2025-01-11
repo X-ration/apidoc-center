@@ -12,6 +12,7 @@ import com.adam.apidoc_center.repository.UserAuthorityRepository;
 import com.adam.apidoc_center.repository.UserOAuth2GithubRepository;
 import com.adam.apidoc_center.repository.UserOAuth2HuaweiRepository;
 import com.adam.apidoc_center.repository.UserRepository;
+import com.adam.apidoc_center.security.LoginType;
 import com.adam.apidoc_center.security.SecurityUtil;
 import com.adam.apidoc_center.security.oauth2.ExtendedOAuth2User;
 import com.adam.apidoc_center.security.oauth2.OAuth2Provider;
@@ -21,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -71,57 +73,52 @@ public class UserService {
         List<User.UserType> userTypeList = user.getUserTypeList();
         switch (oAuth2Provider) {
             case HUAWEI:
-                String unionId = extendedOAuth2User.getAttribute("unionId");
-                if(userOAuth2HuaweiRepository.existsByUnionId(unionId)) {
-                    return Response.fail(StringConstants.OAUTH2_USER_ALREADY_BIND);
-                }
-                UserOAuth2Huawei userOAuth2Huawei = new UserOAuth2Huawei();
-                updateHuaweiUserProperties(userOAuth2Huawei, extendedOAuth2User, user.getId(), now);
+                String unionId = extendedOAuth2User.getAttribute("unionID");
+                //因为在OAuth2UserService中执行了创建，这里直接find就行
+                UserOAuth2Huawei userOAuth2Huawei = findUserHuawei(unionId);
+                updateHuaweiUserProperties(userOAuth2Huawei, extendedOAuth2User, user.getId(), now, false);
                 userOAuth2HuaweiRepository.save(userOAuth2Huawei);
                 if(!userTypeList.contains(User.UserType.OAUTH2_HUAWEI)) {
                     userTypeList.add(User.UserType.OAUTH2_HUAWEI);
                     user.setUserTypeList(userTypeList);
                 }
+                user.setUserOAuth2Huawei(userOAuth2Huawei);
                 break;
             case GITHUB:
                 Integer githubId = extendedOAuth2User.getAttribute("id");
-                if(userOAuth2GithubRepository.existsByGithubId(githubId)) {
-                    return Response.fail(StringConstants.OAUTH2_USER_ALREADY_BIND);
-                }
-                UserOAuth2Github userOAuth2Github = new UserOAuth2Github();
-                updateGitHubUserProperties(userOAuth2Github, extendedOAuth2User, user.getId(), now);
+                //因为在OAuth2UserService中执行了创建，这里直接find就行
+                UserOAuth2Github userOAuth2Github = findUserGithub(githubId);
+                updateGitHubUserProperties(userOAuth2Github, extendedOAuth2User, user.getId(), now, false);
                 userOAuth2GithubRepository.save(userOAuth2Github);
                 if(!userTypeList.contains(User.UserType.OAUTH2_GITHUB)) {
                     userTypeList.add(User.UserType.OAUTH2_GITHUB);
                     user.setUserTypeList(userTypeList);
                 }
+                user.setUserOAuth2Github(userOAuth2Github);
                 break;
         }
         user.setUpdateTime(now);
         userRepository.save(user);
         extendedOAuth2User.setUser(user);
 
-        OAuth2BindSuccessData oAuth2BindSuccessData = new OAuth2BindSuccessData();
-        oAuth2BindSuccessData.setOAuth2User(extendedOAuth2User);
-        oAuth2BindSuccessData.setProvider(oAuth2Provider);
-        oAuth2BindSuccessData.setUserId(user.getId());
-        oAuth2BindSuccessData.setUsername(user.getUsername());
-        oAuth2BindSuccessData.setEmail(user.getEmail());
+        OAuth2BindSuccessData oAuth2BindSuccessData = generateOAuth2BindSuccessData(extendedOAuth2User, oAuth2Provider, user);
         return Response.success(oAuth2BindSuccessData);
     }
 
-    private void updateHuaweiUserProperties(UserOAuth2Huawei user, ExtendedOAuth2User oAuth2User, long userId, LocalDateTime now) {
+    private void updateHuaweiUserProperties(UserOAuth2Huawei user, OAuth2User oAuth2User, long userId, LocalDateTime now, boolean create) {
         user.setUserId(userId);
         user.setDisplayName(oAuth2User.getAttribute("displayName"));
         user.setHeadPictureUrl(oAuth2User.getAttribute("headPictureURL"));
         user.setUnionId(oAuth2User.getAttribute("unionID"));
         user.setOpenId(oAuth2User.getAttribute("openID"));
         user.setDisplayNameFlag(oAuth2User.getAttribute("displayNameFlag"));
-        user.setCreateTime(now);
+        if(create) {
+            user.setCreateTime(now);
+        }
         user.setUpdateTime(now);
     }
 
-    private void updateGitHubUserProperties(UserOAuth2Github user, ExtendedOAuth2User oAuth2User, long userId, LocalDateTime now) {
+    private void updateGitHubUserProperties(UserOAuth2Github user, OAuth2User oAuth2User, long userId, LocalDateTime now, boolean create) {
         user.setUserId(userId);
         user.setGithubId(oAuth2User.getAttribute("id"));
         user.setUsername(oAuth2User.getAttribute("login"));
@@ -129,7 +126,9 @@ public class UserService {
         user.setRealName(oAuth2User.getAttribute("name"));
         user.setEmail(oAuth2User.getAttribute("email"));
         user.setBio(oAuth2User.getAttribute("bio"));
-        user.setCreateTime(now);
+        if(create) {
+            user.setCreateTime(now);
+        }
         user.setUpdateTime(now);
     }
 
@@ -143,6 +142,32 @@ public class UserService {
         }
     }
 
+    public UserOAuth2Huawei findUserHuawei(String unionId) {
+        Objects.requireNonNull(unionId);
+        return userOAuth2HuaweiRepository.findByUnionId(unionId);
+    }
+
+    public void saveOAuth2User(Object userOAuth2, OAuth2User oAuth2User, User.UserType userType, long userId) {
+        Objects.requireNonNull(oAuth2User);
+        Objects.requireNonNull(userType);
+        Assert.isTrue(userType != User.UserType.NORMAL, "saveOAuth2User userType should not be NORMAL");
+        boolean create;
+        switch (userType) {
+            case OAUTH2_HUAWEI:
+                UserOAuth2Huawei userOAuth2Huawei = (UserOAuth2Huawei) userOAuth2;
+                create = userOAuth2Huawei.getId() == 0;
+                updateHuaweiUserProperties(userOAuth2Huawei, oAuth2User, userId, LocalDateTime.now(), create);
+                userOAuth2HuaweiRepository.save(userOAuth2Huawei);
+                break;
+            case OAUTH2_GITHUB:
+                UserOAuth2Github userOAuth2Github = (UserOAuth2Github) userOAuth2;
+                create = userOAuth2Github.getId() == 0;
+                updateGitHubUserProperties(userOAuth2Github, oAuth2User, userId, LocalDateTime.now(), create);
+                userOAuth2GithubRepository.save(userOAuth2Github);
+                break;
+        }
+    }
+
     public User findGithubBindUser(Integer githubId) {
         Objects.requireNonNull(githubId);
         UserOAuth2Github userOAuth2Github = userOAuth2GithubRepository.findByGithubId(githubId);
@@ -151,6 +176,11 @@ public class UserService {
         } else {
             return userOAuth2Github.getUser();
         }
+    }
+
+    public UserOAuth2Github findUserGithub(Integer githubId) {
+        Objects.requireNonNull(githubId);
+        return userOAuth2GithubRepository.findByGithubId(githubId);
     }
 
     public Map<Long, User> queryUserMap(List<Long> userIdList) {
@@ -218,17 +248,9 @@ public class UserService {
         userTypeList.add(User.UserType.NORMAL);
         switch (oAuth2Provider) {
             case HUAWEI:
-                String unionId = extendedOAuth2User.getAttribute("unionId");
-                if(userOAuth2HuaweiRepository.existsByUnionId(unionId)) {
-                    return Response.fail(StringConstants.OAUTH2_USER_ALREADY_BIND);
-                }
                 userTypeList.add(User.UserType.OAUTH2_HUAWEI);
                 break;
             case GITHUB:
-                Integer githubId = extendedOAuth2User.getAttribute("id");
-                if(userOAuth2GithubRepository.existsByGithubId(githubId)) {
-                    return Response.fail(StringConstants.OAUTH2_USER_ALREADY_BIND);
-                }
                 userTypeList.add(User.UserType.OAUTH2_GITHUB);
                 break;
         }
@@ -238,24 +260,78 @@ public class UserService {
         extendedOAuth2User.setUser(user);
         switch (oAuth2Provider) {
             case HUAWEI:
-                UserOAuth2Huawei userOAuth2Huawei = new UserOAuth2Huawei();
-                updateHuaweiUserProperties(userOAuth2Huawei, extendedOAuth2User, user.getId(), now);
+                String unionId = extendedOAuth2User.getAttribute("unionID");
+                UserOAuth2Huawei userOAuth2Huawei = findUserHuawei(unionId);
+                updateHuaweiUserProperties(userOAuth2Huawei, extendedOAuth2User, user.getId(), now, false);
                 userOAuth2HuaweiRepository.save(userOAuth2Huawei);
+                user.setUserOAuth2Huawei(userOAuth2Huawei);
                 break;
             case GITHUB:
-                UserOAuth2Github userOAuth2Github = new UserOAuth2Github();
-                updateGitHubUserProperties(userOAuth2Github, extendedOAuth2User, user.getId(), now);
+                Integer githubId = extendedOAuth2User.getAttribute("id");
+                UserOAuth2Github userOAuth2Github = findUserGithub(githubId);
+                updateGitHubUserProperties(userOAuth2Github, extendedOAuth2User, user.getId(), now, false);
                 userOAuth2GithubRepository.save(userOAuth2Github);
+                user.setUserOAuth2Github(userOAuth2Github);
                 break;
         }
 
+        OAuth2BindSuccessData oAuth2BindSuccessData = generateOAuth2BindSuccessData(extendedOAuth2User, oAuth2Provider, user);
+        return Response.success(oAuth2BindSuccessData);
+    }
+
+    private OAuth2BindSuccessData generateOAuth2BindSuccessData(ExtendedOAuth2User extendedOAuth2User, OAuth2Provider oAuth2Provider, User user) {
         OAuth2BindSuccessData oAuth2BindSuccessData = new OAuth2BindSuccessData();
         oAuth2BindSuccessData.setOAuth2User(extendedOAuth2User);
         oAuth2BindSuccessData.setProvider(oAuth2Provider);
         oAuth2BindSuccessData.setUserId(user.getId());
         oAuth2BindSuccessData.setUsername(user.getUsername());
         oAuth2BindSuccessData.setEmail(user.getEmail());
-        return Response.success(oAuth2BindSuccessData);
+        return oAuth2BindSuccessData;
+    }
+
+    public Response<Void> unbindOAuth2User(User.UserType userType) {
+        Objects.requireNonNull(userType);
+        Assert.isTrue(userType != User.UserType.NORMAL, "unbindOAuth2User userType should not be NORMAL");
+        User user = SecurityUtil.getUser();
+        List<User.UserType> userTypeList = user.getUserTypeList();
+        LoginType loginType = SecurityUtil.getLoginType();
+        switch (userType) {
+            case OAUTH2_GITHUB:
+                if(!userTypeList.contains(User.UserType.OAUTH2_GITHUB)) {
+                    return Response.fail(StringConstants.OAUTH2_UNBIND_FAIL_NO_BINDING_GITHUB);
+                } else {
+                    userTypeList.remove(User.UserType.OAUTH2_GITHUB);
+                    user.setUserTypeList(userTypeList);
+                }
+                UserOAuth2Github userOAuth2Github = user.getUserOAuth2Github();
+                userOAuth2Github.setUserId(SystemConstants.INVALID_USER_ID);
+                userOAuth2Github.setUser(null);
+                user.setUserOAuth2Github(null);
+                userOAuth2GithubRepository.save(userOAuth2Github);
+                userRepository.save(user);
+                if(loginType == LoginType.OAUTH2_GITHUB) {
+                    SecurityUtil.getSecurityUser().clearUser();
+                }
+                break;
+            case OAUTH2_HUAWEI:
+                if(!userTypeList.contains(User.UserType.OAUTH2_HUAWEI)) {
+                    return Response.fail(StringConstants.OAUTH2_UNBIND_FAIL_NO_BINDING_HUAWEI);
+                } else {
+                    userTypeList.remove(User.UserType.OAUTH2_HUAWEI);
+                    user.setUserTypeList(userTypeList);
+                }
+                UserOAuth2Huawei userOAuth2Huawei = user.getUserOAuth2Huawei();
+                userOAuth2Huawei.setUserId(SystemConstants.INVALID_USER_ID);
+                userOAuth2Huawei.setUser(null);
+                user.setUserOAuth2Huawei(null);
+                userOAuth2HuaweiRepository.save(userOAuth2Huawei);
+                userRepository.save(user);
+                if(loginType == LoginType.OAUTH2_HUAWEI) {
+                    SecurityUtil.getSecurityUser().clearUser();
+                }
+                break;
+        }
+        return Response.success();
     }
 
     public Response<?> checkAndRegister(RegisterForm registerForm) {

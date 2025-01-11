@@ -11,7 +11,7 @@
     <h1 class="text-center">修改资料</h1>
     <br><br>
     <div>
-        <div id="successMsg" class="alert alert-success col-12 col-md-8 offset-md-2" role="alert" th:if="${success}">
+        <div id="successMsg" class="alert alert-success col-12 col-md-8 offset-md-2" role="alert" th:if="${successMessage}" th:text="${successMessage}">
             修改资料成功。
         </div>
         <div id="errorMsg" class="alert alert-warning col-12 col-md-8 offset-md-2" role="alert" th:if="${error}" th:text="${error}">
@@ -36,6 +36,18 @@
                     <label for="email">电子邮件地址</label>
                     <input type="email" class="form-control" readonly id="email" th:field="*{email}" placeholder="someone@example.com">
                     <div class="invalid-feedback">必须是合法的电子邮件地址</div>
+                </div>
+            </div>
+            <div class="form-row" th:if="${user.oAuth2HuaweiUsername} != null">
+                <div class="col-12 col-md-8 offset-md-2 mt-1 mb-1">
+                    华为账号：<span th:text="${user.oAuth2HuaweiUsername}">username</span>
+                    <button type="button" class="btn btn-warning" onclick="$('#unbindHuaweiForm').submit()">解绑</button>
+                </div>
+            </div>
+            <div class="form-row" th:if="${user.oAuth2GithubUsername} != null">
+                <div class="col-12 col-md-8 offset-md-2 mt-1 mb-1">
+                    GitHub账号：<span th:text="${user.oAuth2GithubUsername}">username</span>
+                    <button type="button" class="btn btn-warning" onclick="$('#unbindGithubForm').submit()">解绑</button>
                 </div>
             </div>
             <div class="form-row">
@@ -75,6 +87,10 @@
                     <button type="submit" class="btn btn-primary btn-block">确定修改</button>
                 </div>
             </div>
+        </form>
+        <form id="unbindHuaweiForm" th:action="@{/user/unbindOAuth2Huawei}" method="post">
+        </form>
+        <form id="unbindGithubForm" th:action="@{/user/unbindOAuth2Github}" method="post">
         </form>
     </div>
 </div>

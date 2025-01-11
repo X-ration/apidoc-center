@@ -35,6 +35,11 @@ public class ExtendedOAuth2User extends DefaultOAuth2User implements SecurityUse
         this.loginType = resolveUserType(oAuth2Provider);
     }
 
+    @Override
+    public void clearUser() {
+        this.user = null;
+    }
+
     private LoginType resolveUserType(OAuth2Provider oAuth2Provider) {
         Objects.requireNonNull(oAuth2Provider);
         switch (oAuth2Provider) {

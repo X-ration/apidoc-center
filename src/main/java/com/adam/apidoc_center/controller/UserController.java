@@ -19,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -80,14 +81,11 @@ public class UserController {
     }
 
     @GetMapping("/modifyProfile")
-    public String modifyProfilePage(Model model, @RequestParam(required = false) boolean success) {
+    public String modifyProfilePage(Model model) {
         User user = SecurityUtil.getUser();
         //隐藏密码
         UserDTO userDTO = new UserDTO(user);
         model.addAttribute("user", userDTO);
-        if(success) {
-            model.addAttribute("success", true);
-        }
         return "user/modifyProfile";
     }
 
@@ -95,8 +93,10 @@ public class UserController {
     public String modifyProfile(UserDTO userDTO, Model model) {
         Assert.notNull(userDTO, "modifyProfile userDTO null");
         Response<?> registerResponse = userService.checkAndModify(userDTO);
+        model.addAttribute("user", userDTO);
         if(registerResponse.isSuccess()) {
-            return "redirect:/user/modifyProfile?success=true";
+//            return "redirect:/user/modifyProfile?success=true";
+            model.addAttribute("successMessage", "修改资料成功");
         } else {
             try {
                 String json = objectMapper.writeValueAsString(registerResponse);
@@ -105,9 +105,8 @@ public class UserController {
                 log.error("register Jackson processing exception", e);
                 model.addAttribute("error", "注册失败：服务器出现异常");
             }
-            model.addAttribute("user", userDTO);
-            return "user/modifyProfile";
         }
+        return "user/modifyProfile";
     }
 
     @GetMapping("/queryUserCore")
@@ -138,7 +137,9 @@ public class UserController {
             model.addAttribute("data", response.getData());
             return "user/oauth2BindSuccess";
         } else {
-            model.addAttribute("error", "");
+            model.addAttribute("oauth2User", SecurityUtil.getExtendedOAuth2User());
+            model.addAttribute("registrationId", SecurityUtil.getOAuth2RegistrationId());
+            model.addAttribute("error", response.getMessage());
             return "user/oauth2BindLogin";
         }
     }
@@ -166,6 +167,9 @@ public class UserController {
                 log.error("register Jackson processing exception", e);
                 model.addAttribute("error", "注册失败：服务器出现异常");
             }
+            model.addAttribute("oauth2User", SecurityUtil.getExtendedOAuth2User());
+            model.addAttribute("registrationId", SecurityUtil.getOAuth2RegistrationId());
+            model.addAttribute("registerForm", registerForm);
             return "user/oauth2BindRegister";
         }
     }
@@ -174,6 +178,28 @@ public class UserController {
     public void bindOAuth2Redirect(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();;
         authenticationSuccessHandler.onAuthenticationSuccess(request, response, authentication);
+    }
+
+    @PostMapping("/unbindOAuth2Huawei")
+    public String unbindOAuth2Huawei(RedirectAttributes redirectAttributes) {
+        Response<Void> response = userService.unbindOAuth2User(User.UserType.OAUTH2_HUAWEI);
+        if(response.isSuccess()) {
+            redirectAttributes.addAttribute("successMessage", StringConstants.OAUTH2_UNBIND_SUCCESS);
+        } else {
+            redirectAttributes.addAttribute("error", response.getMessage());
+        }
+        return "redirect:/user/modifyProfile";
+    }
+
+    @PostMapping("/unbindOAuth2Github")
+    public String unbindOAuth2Github(Model model) {
+        Response<Void> response = userService.unbindOAuth2User(User.UserType.OAUTH2_GITHUB);
+        if(response.isSuccess()) {
+            model.addAttribute("successMessage", StringConstants.OAUTH2_UNBIND_SUCCESS);
+        } else {
+            model.addAttribute("error", response.getMessage());
+        }
+        return "redirect:/user/modifyProfile";
     }
 
 }

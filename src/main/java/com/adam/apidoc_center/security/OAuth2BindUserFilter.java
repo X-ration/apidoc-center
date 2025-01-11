@@ -44,7 +44,7 @@ public class OAuth2BindUserFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, FilterChain chain) throws ServletException, IOException {
-        log.debug("OAuth2BindUserFilter.doFilterInternal {}", servletRequest);
+        log.debug("OAuth2BindUserFilter.doFilterInternal requestURI={}", servletRequest.getRequestURI());
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 

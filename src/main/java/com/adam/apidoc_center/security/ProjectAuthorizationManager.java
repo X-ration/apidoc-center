@@ -1,5 +1,6 @@
 package com.adam.apidoc_center.security;
 
+import com.adam.apidoc_center.common.SystemConstants;
 import com.adam.apidoc_center.domain.Project;
 import com.adam.apidoc_center.domain.ProjectSharedUser;
 import com.adam.apidoc_center.domain.User;
@@ -70,7 +71,7 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
             return new AuthorizationDecision(true);
         }
         User user = SecurityUtil.getUser();
-        long userId = user.getId();
+        long userId = user == null ? SystemConstants.INVALID_USER_ID : user.getId();
 
         if(requestURI.startsWith("/project")) {
             //任何人都可以创建项目、查看项目

@@ -6,5 +6,6 @@ package com.adam.apidoc_center.common;
 public class SystemConstants {
 
     public static final String DEFAULT_AVATAR_URL = "/resources/default_user.png";
+    public static final long INVALID_USER_ID = -1;
 
 }

@@ -57,4 +57,14 @@ public class SecurityUtil {
         return user.getUserTypeList().contains(User.UserType.of(registrationId));
     }
 
+    public static LoginType getLoginType() {
+        SecurityUser securityUser = getSecurityUser();
+        return securityUser.getLoginType();
+    }
+
+    public static SecurityUser getSecurityUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return (SecurityUser) authentication.getPrincipal();
+    }
+
 }

@@ -6,5 +6,6 @@ public interface SecurityUser {
 
     User getUser();
     LoginType getLoginType();
+    void clearUser();
 
 }
