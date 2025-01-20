@@ -157,7 +157,7 @@
                             <div class="invalid-feedback">相对路径不超过256个字符</div>
                         </div>
                         <div class="row">
-                            <div class="form-group col-12 col-md-3">
+                            <div class="form-group col-12 col-md-4">
                                 <label for="interfaceMethod">请求方法</label>
                                 <select class="form-control d-inline" id="interfaceMethod">
                                     <option>GET</option>
@@ -171,7 +171,7 @@
                                 </select>
                                 <div class="invalid-feedback">无效的请求方法</div>
                             </div>
-                            <div class="form-group col-12 col-md-9">
+                            <div class="form-group col-12 col-md-4">
                                 <label for="interfaceType">请求体类型</label>
                                 <select class="form-control d-inline" id="interfaceType">
                                     <option value="FORM_URLENCODED">application/x-www-form-urlencoded</option>
@@ -180,6 +180,14 @@
                                     <option value="NO_BODY">无请求体</option>
                                 </select>
                                 <div class="invalid-feedback">无效的请求体类型</div>
+                            </div>
+                            <div class="form-group col-12 col-md-4">
+                                <label for="interfaceResponseType">响应体类型</label>
+                                <select class="form-control d-inline" id="interfaceResponseType">
+                                    <option value="TEXT">字符串</option>
+                                    <option value="FILE">文件</option>
+                                </select>
+                                <div class="invalid-feedback">无效的响应体类型</div>
                             </div>
                         </div>
                         <div>
@@ -459,14 +467,16 @@
         interfaceDescription = $('#interfaceDescription'),
         interfaceRelativePath = $('#interfaceRelativePath'),
         interfaceMethod = $('#interfaceMethod'),
-        interfaceType = $('#interfaceType');
+        interfaceType = $('#interfaceType'),
+        interfaceResponseType = $('#interfaceResponseType');
     function createInterface() {
         var paramObject = {
             name: interfaceName.val(),
             description: interfaceDescription.val(),
             relativePath: interfaceRelativePath.val(),
             method: interfaceMethod.val(),
-            type: interfaceType.val()
+            type: interfaceType.val(),
+            responseType: interfaceResponseType.val()
         };
         var headerArray = [];
         var trs = interfaceHeaderTable.find('tbody').find('tr');
@@ -540,6 +550,7 @@
         processErrorMsgItem(data.relativePath, interfaceRelativePath);
         processErrorMsgItem(data.method, interfaceMethod);
         processErrorMsgItem(data.type, interfaceType);
+        processErrorMsgItem(data.responseType, interfaceResponseType);
         var headerArray = data.headerList;
         if(headerArray !== null) {
             for(var i=0;i<headerArray.length;i++) {

@@ -136,6 +136,7 @@ public class GroupInterfaceService {
         groupInterface.setRelativePath(groupInterfaceDTO.getRelativePath());
         groupInterface.setMethod(groupInterfaceDTO.getMethod());
         groupInterface.setType(groupInterfaceDTO.getType());
+        groupInterface.setResponseType(groupInterfaceDTO.getResponseType());
         //修改接口
         if(!CollectionUtils.isEmpty(groupInterface.getInterfaceHeaderList())) {
             interfaceHeaderRepository.deleteAll(groupInterface.getInterfaceHeaderList());
@@ -181,6 +182,7 @@ public class GroupInterfaceService {
         groupInterface.setRelativePath(groupInterfaceDTO.getRelativePath());
         groupInterface.setMethod(groupInterfaceDTO.getMethod());
         groupInterface.setType(groupInterfaceDTO.getType());
+        groupInterface.setResponseType(groupInterfaceDTO.getResponseType());
         groupInterfaceRepository.save(groupInterface);
         if(!CollectionUtils.isEmpty(groupInterfaceDTO.getHeaderList())) {
             List<InterfaceHeader> interfaceHeaderList = groupInterfaceDTO.getHeaderList().stream()
@@ -483,6 +485,9 @@ public class GroupInterfaceService {
         }
         if(groupInterfaceDTO.getType() == null) {
             errorMsg.setType(StringConstants.GROUP_INTERFACE_TYPE_NULL);
+        }
+        if(groupInterfaceDTO.getResponseType() == null) {
+            errorMsg.setResponseType(StringConstants.GROUP_INTERFACE_RESPONSE_TYPE_NULL);
         }
         if(!CollectionUtils.isEmpty(groupInterfaceDTO.getHeaderList())) {
             errorMsg.setHeaderList(groupInterfaceDTO.getHeaderList().stream()

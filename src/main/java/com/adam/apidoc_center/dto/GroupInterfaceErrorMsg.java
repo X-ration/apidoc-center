@@ -13,12 +13,13 @@ public class GroupInterfaceErrorMsg implements ErrorMsg{
     private String relativePath;
     private String method;
     private String type;
+    private String responseType;
     private List<InterfaceHeaderErrorMsg> headerList;
     private List<InterfaceFieldErrorMsg> fieldList;
 
     @Override
     public boolean hasError() {
-        if(name != null || description != null || relativePath != null || method != null || type != null) {
+        if(name != null || description != null || relativePath != null || method != null || type != null || responseType != null) {
             return true;
         }
         if(!CollectionUtils.isEmpty(headerList)) {

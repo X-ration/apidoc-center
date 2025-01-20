@@ -81,6 +81,7 @@ public class StringConstants {
     public static final String GROUP_INTERFACE_RELATIVE_PATH_INVALID = "无效的相对路径";
     public static final String GROUP_INTERFACE_METHOD_NULL = "接口请求方法必填";
     public static final String GROUP_INTERFACE_TYPE_NULL = "接口请求体类型必填";
+    public static final String GROUP_INTERFACE_RESPONSE_TYPE_NULL = "接口响应体类型必填";
     public static final String GROUP_INTERFACE_CALL_PARAM_INVALID = "调用接口参数不合法：";
     public static final String GROUP_INTERFACE_CALL_HEADER_MISSING = "头部{}为空";
     public static final String GROUP_INTERFACE_CALL_FIELD_MISSING = "字段{}为空";

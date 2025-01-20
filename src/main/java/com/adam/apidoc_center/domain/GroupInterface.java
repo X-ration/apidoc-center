@@ -51,7 +51,11 @@ public class GroupInterface extends AbstractAuditable {
         private final String contentType;
     }
 
+    @Getter
+    @AllArgsConstructor
     public enum ResponseType {
-        FILE, TEXT
+        FILE("文件"), TEXT("字符串")
+        ;
+        private final String desc;
     }
 }

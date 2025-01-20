@@ -67,6 +67,10 @@
                     <td>请求体类型</td>
                     <td th:text="${interface.typeDesc}"></td>
                 </tr>
+                <tr>
+                    <td>响应体类型</td>
+                    <td th:text="${interface.responseTypeDesc}"></td>
+                </tr>
                 </tbody>
             </table>
             <label for="showInterfaceHeaderTable">接口头部表</label>
@@ -138,13 +142,17 @@
                             A simple warning alert—check it out!
                         </div>
                         <div class="row">
-                            <div class="form-group col-12 col-md-3">
+                            <div class="form-group col-12 col-md-4">
                                 <label for="callInterfaceMethod">请求方法</label>
                                 <input type="text" id="callInterfaceMethod" readonly class="form-control" th:value="${interface.method}">
                             </div>
-                            <div class="form-group col-12 col-md-9">
+                            <div class="form-group col-12 col-md-4">
                                 <label for="callInterfaceType">请求体类型</label>
                                 <input type="text" id="callInterfaceType" readonly class="form-control" th:value="${interface.typeDesc}">
+                            </div>
+                            <div class="form-group col-12 col-md-4">
+                                <label for="callInterfaceResponseType">请求体类型</label>
+                                <input type="text" id="callInterfaceResponseType" readonly class="form-control" th:value="${interface.responseTypeDesc}">
                             </div>
                         </div>
                         <label for="callInterfaceProjectDeploymentDiv">项目部署地址</label>
@@ -269,7 +277,7 @@
                             <div class="invalid-feedback">相对路径不超过256个字符</div>
                         </div>
                         <div class="row">
-                            <div class="form-group col-12 col-md-3">
+                            <div class="form-group col-12 col-md-4">
                                 <label for="interfaceMethod">请求方法</label>
                                 <select class="form-control d-inline" th:value="${interface.method}" id="interfaceMethod">
                                     <option>GET</option>
@@ -283,7 +291,7 @@
                                 </select>
                                 <div class="invalid-feedback">无效的请求方法</div>
                             </div>
-                            <div class="form-group col-12 col-md-9">
+                            <div class="form-group col-12 col-md-4">
                                 <label for="interfaceType">请求体类型</label>
                                 <select class="form-control d-inline" th:value="${interface.type}" id="interfaceType">
                                     <option value="FORM_URLENCODED">application/x-www-form-urlencoded</option>
@@ -292,6 +300,14 @@
                                     <option value="NO_BODY">无请求体</option>
                                 </select>
                                 <div class="invalid-feedback">无效的请求体类型</div>
+                            </div>
+                            <div class="form-group col-12 col-md-4">
+                                <label for="interfaceResponseType">响应体类型</label>
+                                <select class="form-control d-inline" th:value="${interface.responseType}" id="interfaceResponseType">
+                                    <option value="TEXT">字符串</option>
+                                    <option value="FILE">文件</option>
+                                </select>
+                                <div class="invalid-feedback">无效的响应体类型</div>
                             </div>
                         </div>
                         <div>
@@ -766,11 +782,14 @@
         }
     }
     var interfaceMethod = $('#interfaceMethod'),
-        interfaceType = $('#interfaceType');
+        interfaceType = $('#interfaceType'),
+        interfaceResponseType = $('#interfaceResponseType');
     var interfaceMethodValue = [[${interface.method}]],
-        interfaceTypeValue = [[${interface.type}]];
+        interfaceTypeValue = [[${interface.type}]],
+        interfaceResponseTypeValue = [[${interface.responseType}]];
     interfaceMethod.val(interfaceMethodValue);
     interfaceType.val(interfaceTypeValue);
+    interfaceResponseType.val(interfaceResponseTypeValue);
     var interfaceName = $('#interfaceName'),
         interfaceDescription = $('#interfaceDescription'),
         interfaceRelativePath = $('#interfaceRelativePath');
@@ -781,7 +800,8 @@
             description: interfaceDescription.val(),
             relativePath: interfaceRelativePath.val(),
             method: interfaceMethod.val(),
-            type: interfaceType.val()
+            type: interfaceType.val(),
+            responseType: interfaceResponseType.val()
         };
         var headerArray = [];
         var trs = interfaceHeaderTable.find('tbody').find('tr');
@@ -855,6 +875,7 @@
         processErrorMsgItem(data.relativePath, interfaceRelativePath);
         processErrorMsgItem(data.method, interfaceMethod);
         processErrorMsgItem(data.type, interfaceType);
+        processErrorMsgItem(data.responseType, interfaceResponseType);
         var headerArray = data.headerList;
         if(headerArray !== null) {
             for(var i=0;i<headerArray.length;i++) {
