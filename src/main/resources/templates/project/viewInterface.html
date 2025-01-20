@@ -214,7 +214,7 @@
                             <div class="invalid-feedback">调用技术栈必选</div>
                         </div>
                         <div>
-                            <label for="callInterfaceOutputDiv">输出</label>
+                            <label for="callInterfaceOutputDiv">输出<button onclick="clearOutput()" class="btn btn-secondary btn-sm ml-1 mt-1" type="button">清屏</button> </label>
                             <div class="text-white bg-dark" id="callInterfaceOutputDiv">
                                 时间：<span id="callInterfaceOutputTime"></span><br>
                                 状态码：<span id="callInterfaceOutputStatus"></span><br>
@@ -451,6 +451,18 @@
             }
         });
     }
+    var callInterfaceOutputTime = $('#callInterfaceOutputTime');
+    var callInterfaceOutputStatus = $('#callInterfaceOutputStatus');
+    var callInterfaceOutputContentType = $('#callInterfaceOutputContentType');
+    var callInterfaceOutputBody = $('#callInterfaceOutputBody');
+    var callInterfaceOutputException = $('#callInterfaceOutputException');
+    function clearOutput() {
+        callInterfaceOutputTime.html('');
+        callInterfaceOutputStatus.html('');
+        callInterfaceOutputContentType.html('');
+        callInterfaceOutputBody.html('');
+        callInterfaceOutputException.html('');
+    }
     function callInterface() {
         var deploymentId = parseInt(projectDeploymentSelect.val());
         if(isNaN(deploymentId)) {
@@ -505,21 +517,21 @@
                 callInterfaceAlertSuccess.removeClass('d-none');
                 callInterfaceAlertWarning.addClass('d-none');
                 callInterfaceAlertSuccess.html("调用成功");
-                $('#callInterfaceOutputTime').html(response.data.time);
-                $('#callInterfaceOutputStatus').html(response.data.status);
-                $('#callInterfaceOutputContentType').html(response.data.contentType);
-                $('#callInterfaceOutputBody').html(response.data.body);
-                $('#callInterfaceOutputException').html('');
+                callInterfaceOutputTime.html(response.data.time);
+                callInterfaceOutputStatus.html(response.data.status);
+                callInterfaceOutputContentType.html(response.data.contentType);
+                callInterfaceOutputBody.html(response.data.body);
+                callInterfaceOutputException.html('');
             } else {
                 callInterfaceAlertWarning.removeClass('d-none');
                 callInterfaceAlertSuccess.addClass('d-none');
                 callInterfaceAlertWarning.html(response.message);
                 if(response.data !== null && response.data.exception !== null) {
-                    $('#callInterfaceOutputTime').html(response.data.time);
-                    $('#callInterfaceOutputStatus').html('');
-                    $('#callInterfaceOutputContentType').html('');
-                    $('#callInterfaceOutputBody').html('');
-                    $('#callInterfaceOutputException').html(response.data.exception);
+                    callInterfaceOutputTime.html(response.data.time);
+                    callInterfaceOutputStatus.html('');
+                    callInterfaceOutputContentType.html('');
+                    callInterfaceOutputBody.html('');
+                    callInterfaceOutputException.html(response.data.exception);
                 }
             }
         };
