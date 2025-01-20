@@ -1,0 +1,14 @@
+archivesBaseName = 'rest-demo-project'
+jar.enabled = false
+bootJar.enabled = true
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}

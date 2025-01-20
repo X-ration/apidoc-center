@@ -7,9 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class ProjectDeploymentDTO {
+    private long id;
     private String environment;
     private String deploymentUrl;
     public ProjectDeploymentDTO(ProjectDeployment projectDeployment) {
+        this.id = projectDeployment.getId();
         this.environment = projectDeployment.getEnvironment();
         this.deploymentUrl = projectDeployment.getDeploymentUrl();
     }

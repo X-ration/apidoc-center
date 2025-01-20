@@ -1,5 +1,6 @@
 package com.adam.apidoc_center.util;
 
+import com.adam.apidoc_center.config.WebConfig;
 import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,10 @@ public class LocalDateTimeUtil {
         } else {
             return (secondsDiff / (24 * 60 * 60)) + "天前";
         }
+    }
+
+    public static String friendlyNowDateTime() {
+        return WebConfig.DATE_TIME_FORMATTER.format(LocalDateTime.now());
     }
 
     public static void main(String[] args) {

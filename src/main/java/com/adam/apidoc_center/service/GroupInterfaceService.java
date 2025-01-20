@@ -1,28 +1,40 @@
 package com.adam.apidoc_center.service;
 
+import com.adam.apidoc_center.common.NameValuePair;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
-import com.adam.apidoc_center.domain.GroupInterface;
-import com.adam.apidoc_center.domain.InterfaceField;
-import com.adam.apidoc_center.domain.InterfaceHeader;
-import com.adam.apidoc_center.domain.User;
+import com.adam.apidoc_center.common.SystemConstants;
+import com.adam.apidoc_center.config.WebConfig;
+import com.adam.apidoc_center.domain.*;
 import com.adam.apidoc_center.dto.*;
 import com.adam.apidoc_center.repository.GroupInterfaceRepository;
 import com.adam.apidoc_center.repository.InterfaceFieldRepository;
 import com.adam.apidoc_center.repository.InterfaceHeaderRepository;
+import com.adam.apidoc_center.util.AssertUtil;
+import com.adam.apidoc_center.util.LocalDateTimeUtil;
 import com.adam.apidoc_center.util.StringUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +51,12 @@ public class GroupInterfaceService {
     private ProjectGroupService projectGroupService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private ProjectService projectService;
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public GroupInterfaceDetailDisplayDTO getInterfaceDetail(long interfaceId) {
         if(interfaceId <= 0) {
@@ -196,6 +214,235 @@ public class GroupInterfaceService {
         return Response.success();
     }
 
+    public Response<CallInterfaceResponseDTO> callInterface(CallInterfaceRequestDTO requestDTO) {
+        Objects.requireNonNull(requestDTO);
+        //check interface id
+        long interfaceId = requestDTO.getInterfaceId();
+        if(interfaceId < 0) {
+            return Response.fail(callInterfaceErrorMsg(StringConstants.GROUP_INTERFACE_ID_INVALID));
+        }
+        Optional<GroupInterface> groupInterfaceOptional = groupInterfaceRepository.findById(interfaceId);
+        if(groupInterfaceOptional.isEmpty()) {
+            return Response.fail(callInterfaceErrorMsg(StringConstants.GROUP_INTERFACE_ID_INVALID));
+        }
+        GroupInterface groupInterface = groupInterfaceOptional.get();
+        GroupInterface.Type interfaceType = groupInterface.getType();
+        //check required header
+        if(groupInterface.getInterfaceHeaderList() != null) {
+            Map<String,String> headerMap;
+            if(CollectionUtils.isEmpty(requestDTO.getHeaderList())) {
+                headerMap = new HashMap<>();
+            } else {
+                headerMap = requestDTO.getHeaderList().stream()
+                        .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
+            }
+            List<String> requiredHeaderNameList = groupInterface.getInterfaceHeaderList().stream()
+                    .filter(InterfaceHeader::isRequired)
+                    .map(InterfaceHeader::getName)
+                    .collect(Collectors.toList());
+            for(String requiredHeaderName: requiredHeaderNameList) {
+                String value = headerMap.get(requiredHeaderName);
+                if(value == null) {
+                    String errorMsg = StringConstants.GROUP_INTERFACE_CALL_HEADER_MISSING.replace("{}", requiredHeaderName);
+                    return Response.fail(callInterfaceErrorMsg(errorMsg));
+                }
+            }
+        }
+        //check required field and field type
+        if(groupInterface.getInterfaceFieldList() != null) {
+            Map<String,Object> fieldMap;
+            if(CollectionUtils.isEmpty(requestDTO.getFieldList())) {
+                fieldMap = new HashMap<>();
+            } else {
+                fieldMap = requestDTO.getFieldList().stream()
+                        .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
+            }
+            Map<String, InterfaceField.Type> requiredFieldNameTypeMap = groupInterface.getInterfaceFieldList().stream()
+                    .filter(InterfaceField::isRequired)
+                    .collect(Collectors.toMap(InterfaceField::getName, InterfaceField::getType));
+            for(Map.Entry<String, InterfaceField.Type> entry: requiredFieldNameTypeMap.entrySet()) {
+                String fieldName = entry.getKey();
+                InterfaceField.Type fieldType = entry.getValue();
+                Object value = fieldMap.get(fieldName);
+                if(value == null) {
+                    String errorMsg = StringConstants.GROUP_INTERFACE_CALL_FIELD_MISSING.replace("{}", fieldName);
+                    return Response.fail(callInterfaceErrorMsg(errorMsg));
+                } else if(fieldType == InterfaceField.Type.TEXT && !(value instanceof String)) {
+                    String errorMsg = StringConstants.GROUP_INTERFACE_CALL_TEXT_PARAM_INVALID.replace("{}", fieldName);
+                    return Response.fail(callInterfaceErrorMsg(errorMsg));
+                } else if(fieldType == InterfaceField.Type.FILE && !(value instanceof MultipartFile)) {
+                    String errorMsg = StringConstants.GROUP_INTERFACE_CALL_FILE_PARAM_INVALID.replace("{}", fieldName);
+                    return Response.fail(callInterfaceErrorMsg(errorMsg));
+                }
+            }
+            if(interfaceType != GroupInterface.Type.FORM_DATA) {
+                for (NameValuePair<String, Object> nameValuePair : requestDTO.getFieldList()) {
+                    if(nameValuePair.getValue() instanceof MultipartFile) {
+                        return Response.fail(callInterfaceErrorMsg(StringConstants.GROUP_INTERFACE_CALL_FILE_PARAM_NOT_ALLOWED));
+                    }
+                }
+            }
+        }
+        //check project deployment id
+        long projectDeploymentId = requestDTO.getDeploymentId();;
+        if(projectDeploymentId <= 0) {
+            return Response.fail(callInterfaceErrorMsg(StringConstants.PROJECT_DEPLOYMENT_ID_INVALID));
+        }
+        ProjectDeployment projectDeployment = projectService.findDeploymentById(projectDeploymentId);
+        if(projectDeployment == null) {
+            return Response.fail(callInterfaceErrorMsg(StringConstants.PROJECT_DEPLOYMENT_ID_INVALID));
+        }
+
+        //准备调用
+        String relativePath = groupInterface.getRelativePath();
+        HttpMethod httpMethod = groupInterface.getMethod();
+        String projectPath = projectDeployment.getDeploymentUrl();
+        while(projectPath.length() > 0 && projectPath.charAt(projectPath.length() - 1) == '/') {
+            projectPath = projectPath.substring(0, projectPath.length() - 1);
+        }
+        String callUrl = projectPath + relativePath;
+        CallInterfaceRequestDTO.CallStack callStack = requestDTO.getCallStack();
+        List<NameValuePair<String,String>> headerList = requestDTO.getHeaderList();
+        if(headerList == null) {
+            headerList = new LinkedList<>();
+        }
+        List<NameValuePair<String,Object>> fieldList = requestDTO.getFieldList();
+        if(fieldList == null) {
+            fieldList = new LinkedList<>();
+        }
+
+        //调用
+        return callInterface(callUrl, httpMethod, interfaceType, callStack, headerList, fieldList);
+    }
+
+    private Response<CallInterfaceResponseDTO> callInterface(String callUrl, HttpMethod httpMethod, GroupInterface.Type interfaceType,
+                                                   CallInterfaceRequestDTO.CallStack callStack,
+                                                   List<NameValuePair<String,String>> headerList,
+                                                   List<NameValuePair<String,Object>> fieldList) {
+        AssertUtil.requireNonNull(callUrl, httpMethod, interfaceType, callStack, headerList, fieldList);
+        String bodyJson = null;
+        if(interfaceType == GroupInterface.Type.FORM_URLENCODED) {
+            StringBuilder stringBuilder = new StringBuilder(callUrl);
+            stringBuilder.append("?");
+            for(NameValuePair<String,Object> nameValuePair: fieldList) {
+                String name = nameValuePair.getName(),
+                        value = (String) nameValuePair.getValue();
+                String encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8),
+                        encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8);
+                stringBuilder.append(encodedName).append("=").append(encodedValue).append("&");
+            }
+            if(fieldList.size() > 0) {
+                stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+            }
+            String originalCallUrl = callUrl;
+            callUrl = stringBuilder.toString();
+            log.debug("form-urlencoded callUrl updated from {} to {}", originalCallUrl, callUrl);
+        } else if(interfaceType == GroupInterface.Type.JSON) {
+            Map<String,String> map = new HashMap<>();
+            for(NameValuePair<String,Object> nameValuePair: fieldList) {
+                String name = nameValuePair.getName(),
+                        value = (String) nameValuePair.getValue();
+                map.put(name, value);
+            }
+            try {
+                bodyJson = objectMapper.writeValueAsString(map);
+            } catch (JsonProcessingException e) {
+                log.error("callInterface JSON stringify error", e);
+                return wrapException(e);
+            }
+        }
+
+        switch (callStack) {
+            case RestTemplate:
+                return callInterfaceByRestTemplate(callUrl, httpMethod, interfaceType, headerList, fieldList, bodyJson);
+            default:
+                return null;
+        }
+    }
+
+    private Response<CallInterfaceResponseDTO> callInterfaceByRestTemplate(String callUrl, HttpMethod httpMethod, GroupInterface.Type interfaceType,
+                                                                 List<NameValuePair<String,String>> headerList,
+                                                                 List<NameValuePair<String,Object>> fieldList,
+                                                                 String bodyJson) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        for(NameValuePair<String,String> nameValuePair: headerList) {
+            httpHeaders.add(nameValuePair.getName(), nameValuePair.getValue());
+        }
+        HttpEntity<?> httpEntity = null;
+        switch (interfaceType) {
+            case FORM_URLENCODED:
+            case NO_BODY:
+                httpEntity = new HttpEntity<>(null, httpHeaders);
+                break;
+            case FORM_DATA:
+                httpHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+                MultiValueMap<String,Object> formData = new LinkedMultiValueMap<>();
+                for(NameValuePair<String,Object> nameValuePair: fieldList) {
+                    if(!(nameValuePair.getValue() instanceof MultipartFile)) {
+                        formData.add(nameValuePair.getName(), nameValuePair.getValue());
+                    } else {
+                        String fieldName = nameValuePair.getName();
+                        MultipartFile multipartFile = (MultipartFile) nameValuePair.getValue();
+                        try {
+                            ByteArrayInputStream in = new ByteArrayInputStream(multipartFile.getBytes());
+                            InputStreamResource resource = new InputStreamResource(in) {
+                                @Override
+                                public long contentLength() throws IOException {
+                                    return in.available();
+                                }
+                                @Override
+                                public String getFilename() {
+                                    return multipartFile.getOriginalFilename();
+                                }
+                            };
+                            formData.add(fieldName, resource);
+                        } catch (IOException e) {
+                            log.error("callInterface multipart-form file {} exception", fieldName, e);
+                            return wrapException(e);
+                        }
+                    }
+                }
+                httpEntity = new HttpEntity<>(formData, httpHeaders);
+                break;
+            case JSON:
+                httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+                httpEntity = new HttpEntity<>(bodyJson, httpHeaders);
+                break;
+        }
+        try {
+            ResponseEntity<String> responseEntity = restTemplate.exchange(callUrl, httpMethod, httpEntity, String.class);
+            String responseBody = responseEntity.getBody();
+            String time = LocalDateTimeUtil.friendlyNowDateTime();
+            int status = responseEntity.getStatusCodeValue();
+            String contentType = null;
+            if(responseEntity.getHeaders().getContentType() != null) {
+                MediaType mediaType = responseEntity.getHeaders().getContentType();
+                contentType = mediaType.getType() + "/" + mediaType.getSubtype();
+            }
+            CallInterfaceResponseDTO responseDTO = new CallInterfaceResponseDTO();
+            responseDTO.setTime(time);
+            responseDTO.setStatus(status);
+            responseDTO.setContentType(contentType);
+            responseDTO.setBody(responseBody);
+            return Response.success(responseDTO);
+        } catch (Exception e) {
+            log.error("callInterface RestTemplate exchange exception", e);
+            return wrapException(e);
+        }
+    }
+
+    private Response<CallInterfaceResponseDTO> wrapException(Exception e) {
+        CallInterfaceResponseDTO responseDTO = new CallInterfaceResponseDTO();
+        responseDTO.setTime(WebConfig.DATE_TIME_FORMATTER.format(LocalDateTime.now()));
+        String exceptionMessage = e.getClass().getName() + ":" + e.getMessage();
+        responseDTO.setException(exceptionMessage);
+        return Response.fail(StringConstants.GROUP_INTERFACE_CALL_EXCEPTION, responseDTO);
+    }
+
+    private String callInterfaceErrorMsg(String errorMsg) {
+        return StringConstants.GROUP_INTERFACE_CALL_PARAM_INVALID + errorMsg;
+    }
+
     private GroupInterfaceErrorMsg checkCreateParams(GroupInterfaceDTO groupInterfaceDTO) {
         GroupInterfaceErrorMsg errorMsg = new GroupInterfaceErrorMsg();
         if(StringUtils.isBlank(groupInterfaceDTO.getName())) {
@@ -253,9 +500,16 @@ public class GroupInterfaceService {
                             interfaceFieldErrorMsg.setName(StringConstants.INTERFACE_FIELD_NAME_BLANK);
                         } else if(interfaceFieldDTO.getName().length() > 32) {
                             interfaceFieldErrorMsg.setName(StringConstants.INTERFACE_FIELD_NAME_LENGTH_EXCEEDED);
+                        } else if(groupInterfaceDTO.getType() == GroupInterface.Type.FORM_DATA
+                                && SystemConstants.FORM_DATA_PROHIBIT_FIELD_NAME_LIST.contains(interfaceFieldDTO.getName())) {
+                            interfaceFieldErrorMsg.setName(StringConstants.INTERFACE_FIELD_NAME_PROHIBITED);
                         }
                         if(interfaceFieldDTO.getType() == null) {
                             interfaceFieldErrorMsg.setType(StringConstants.INTERFACE_FIELD_TYPE_NULL);
+                        } else if(groupInterfaceDTO.getType() == GroupInterface.Type.NO_BODY) {
+                            interfaceFieldErrorMsg.setType(StringConstants.INTERFACE_FIELD_SHOULD_NOT_EXIST);
+                        } else if(groupInterfaceDTO.getType() != GroupInterface.Type.FORM_DATA && interfaceFieldDTO.getType() == InterfaceField.Type.FILE) {
+                            interfaceFieldErrorMsg.setType(StringConstants.INTERFACE_FIELD_TYPE_SHOULD_NOT_BE_FILE);
                         }
                         if(StringUtils.isNotEmpty(interfaceFieldDTO.getDescription())) {
                             if(interfaceFieldDTO.getDescription().length() > 100) {

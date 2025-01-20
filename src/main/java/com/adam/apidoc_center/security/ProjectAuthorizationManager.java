@@ -9,7 +9,9 @@ import com.adam.apidoc_center.service.ProjectGroupService;
 import com.adam.apidoc_center.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationTrustResolver;
+import org.springframework.security.authentication.AuthenticationTrustResolverImpl;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.Authentication;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
+import org.thymeleaf.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -61,7 +64,7 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
         log.info("ProjectAuthorizationManager check starts requestURI={} rememberMe={}", requestURI, trustResolver.isRememberMe(authentication.get()));
         Long projectId = null;
         String action = null;
-        List<String> registeredActionList = Arrays.asList("view","modify","delete");
+        List<String> registeredActionList = Arrays.asList("view","modify","delete","call","callForm");
         //不允许匿名访问
         if(authentication.get() instanceof AnonymousAuthenticationToken) {
             return new AuthorizationDecision(false);
@@ -72,8 +75,10 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
         }
         User user = SecurityUtil.getUser();
         long userId = user == null ? SystemConstants.INVALID_USER_ID : user.getId();
+        String pathPrefix = null;
 
         if(requestURI.startsWith("/project")) {
+            pathPrefix = "/project";
             //任何人都可以创建项目、查看项目
             if(requestURI.equals("/project/create") || requestURI.equals("/project/viewAll")) {
                 return new AuthorizationDecision(true);
@@ -99,6 +104,7 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
                 }
             }
         } else if(requestURI.startsWith("/group")) {
+            pathPrefix = "/group";
             String groupIdString = null;
             if(groupRequestMatcher.matches(object.getRequest())) {
                 groupIdString = resolveVariableValue(groupRequestMatcher, object.getRequest(), GROUP_ID_VARIABLE_NAME);
@@ -121,6 +127,7 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
                 }
             }
         } else if(requestURI.startsWith("/interface")) {
+            pathPrefix = "/interface";
             if(interfaceRequestMatcher.matches(object.getRequest())) {
                 String interfaceIdString = resolveVariableValue(interfaceRequestMatcher, object.getRequest(), INTERFACE_ID_VARIABLE_NAME);
                 action = resolveVariableValue(interfaceRequestMatcher, object.getRequest(), ACTION_VARIABLE_NAME);
@@ -143,8 +150,9 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
         if(project == null) {
             return new AuthorizationDecision(false);
         }
-        //公开项目可自由查看
-        if(action.equals("view") && project.getAccessMode() == Project.AccessMode.PUBLIC) {
+        //公开项目可自由查看、调用接口
+        if((action.equals("view") || (StringUtils.equals(pathPrefix, "/interface") && action.startsWith("call")))
+                && project.getAccessMode() == Project.AccessMode.PUBLIC) {
             return new AuthorizationDecision(true);
         }
         List<Long> shareUserIdList = new LinkedList<>();
@@ -154,7 +162,7 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
                     .map(ProjectSharedUser::getUserId)
                     .collect(Collectors.toList());
         }
-        //修改、删除、创建或查看私有项目都需要管理员用户或创建者或项目分享者权限
+        //修改、删除、创建或查看私有项目或调用私有项目中的接口都需要管理员用户或创建者或项目分享者权限
         if(project.getCreateUserId() == userId || shareUserIdList.contains(userId)) {
             return new AuthorizationDecision(true);
         } else {

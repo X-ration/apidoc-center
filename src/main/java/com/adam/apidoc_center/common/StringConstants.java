@@ -51,6 +51,7 @@ public class StringConstants {
     public static final String PROJECT_DESCRIPTION_LENGTH_EXCEEDED = "项目介绍不超过200个字符";
     public static final String PROJECT_ACCESS_MODE_NULL = "项目访问模式为空";
     public static final String PROJECT_ALLOW_USER_IDS_INVALID = "项目允许访问的用户参数非法";
+    public static final String PROJECT_DEPLOYMENT_ID_INVALID = "项目部署环境id不合法";
     public static final String PROJECT_DEPLOYMENT_ENVIRONMENT_BLANK = "项目部署环境名为空";
     public static final String PROJECT_DEPLOYMENT_ENVIRONMENT_LENGTH_EXCEEDED = "项目部署环境名不超过32个字符";
     public static final String PROJECT_DEPLOYMENT_URL_BLANK = "项目部署地址为空";
@@ -80,13 +81,23 @@ public class StringConstants {
     public static final String GROUP_INTERFACE_RELATIVE_PATH_INVALID = "无效的相对路径";
     public static final String GROUP_INTERFACE_METHOD_NULL = "接口请求方法必填";
     public static final String GROUP_INTERFACE_TYPE_NULL = "接口请求体类型必填";
+    public static final String GROUP_INTERFACE_CALL_PARAM_INVALID = "调用接口参数不合法：";
+    public static final String GROUP_INTERFACE_CALL_HEADER_MISSING = "头部{}为空";
+    public static final String GROUP_INTERFACE_CALL_FIELD_MISSING = "字段{}为空";
+    public static final String GROUP_INTERFACE_CALL_TEXT_PARAM_INVALID = "文本字段{}的值不是文本类型";
+    public static final String GROUP_INTERFACE_CALL_FILE_PARAM_INVALID = "文件字段{}的值不是文件类型";
+    public static final String GROUP_INTERFACE_CALL_FILE_PARAM_NOT_ALLOWED = "请求体类型不允许文件字段";
+    public static final String GROUP_INTERFACE_CALL_EXCEPTION = "调用接口出现异常";
     public static final String INTERFACE_HEADER_NAME_BLANK = "接口头部名称为空";
     public static final String INTERFACE_HEADER_NAME_LENGTH_EXCEEDED = "接口头部长度不超过32个字符";
     public static final String INTERFACE_HEADER_DESCRIPTION_LENGTH_EXCEEDED = "接口头部描述长度不超过100个字符";
     public static final String INTERFACE_HEADER_REQUIRED_NULL = "接口头部是否必填未选择";
     public static final String INTERFACE_FIELD_NAME_BLANK = "接口字段名称为空";
     public static final String INTERFACE_FIELD_NAME_LENGTH_EXCEEDED = "接口字段长度不超过32个字符";
+    public static final String INTERFACE_FIELD_NAME_PROHIBITED = "请求体类型不允许该字段名的出现";
     public static final String INTERFACE_FIELD_TYPE_NULL = "接口字段类型必填";
+    public static final String INTERFACE_FIELD_SHOULD_NOT_EXIST = "无请求体类型接口字段不应出现";
+    public static final String INTERFACE_FIELD_TYPE_SHOULD_NOT_BE_FILE = "请求体类型不允许文件类型字段";
     public static final String INTERFACE_FIELD_DESCRIPTION_LENGTH_EXCEEDED = "接口字段描述长度不超过100个字符";
     public static final String INTERFACE_FIELD_REQUIRED_NULL = "接口字段是否必填未选择";
 

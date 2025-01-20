@@ -4,13 +4,13 @@ import com.adam.apidoc_center.common.PagedData;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.domain.Project;
-import com.adam.apidoc_center.domain.ProjectSharedUser;
 import com.adam.apidoc_center.domain.ProjectDeployment;
+import com.adam.apidoc_center.domain.ProjectSharedUser;
 import com.adam.apidoc_center.domain.User;
 import com.adam.apidoc_center.dto.*;
-import com.adam.apidoc_center.repository.ProjectSharedUserRepository;
 import com.adam.apidoc_center.repository.ProjectDeploymentRepository;
 import com.adam.apidoc_center.repository.ProjectRepository;
+import com.adam.apidoc_center.repository.ProjectSharedUserRepository;
 import com.adam.apidoc_center.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -107,6 +107,12 @@ public class ProjectService {
         }
     }
 
+    public ProjectDeployment findDeploymentById(long projectDeploymentId) {
+        Assert.isTrue(projectDeploymentId > 0, "findDeploymentById projectDeploymentId<=0");
+        Optional<ProjectDeployment> projectDeploymentOptional = projectDeploymentRepository.findById(projectDeploymentId);
+        return projectDeploymentOptional.orElse(null);
+    }
+
     public Response<Void> deleteProject(long projectId) {
         Assert.isTrue(projectId > 0, "deleteProject projectId<=0");
         Optional<Project> projectOptional = projectRepository.findById(projectId);
@@ -157,6 +163,7 @@ public class ProjectService {
             //这个方法会报找不到实体的异常
 //            projectDeploymentRepository.deleteAllById(projectDeploymentIdList);
             projectDeploymentRepository.deleteAll(project.getProjectDeploymentList());
+            project.setProjectDeploymentList(null);
         }
         if(!CollectionUtils.isEmpty(projectUpdateDTO.getDeploymentList())) {
             List<ProjectDeployment> projectDeploymentList = projectUpdateDTO.getDeploymentList().stream()

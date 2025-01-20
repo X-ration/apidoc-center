@@ -11,3 +11,4 @@ pluginManagement {
 }
 
 rootProject.name = 'apidoc-center'
+include(':rest-demo-project')

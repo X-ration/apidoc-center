@@ -6,6 +6,7 @@ plugins {
 
 group = 'com.adam'
 version = '0.0.1-SNAPSHOT'
+archivesBaseName = 'apidoc-center'
 sourceCompatibility = '11'
 
 repositories {
@@ -39,4 +40,31 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    group = 'com.adam'
+    version = '0.0.1-SNAPSHOT'
+    sourceCompatibility = '11'
+
+    repositories {
+        mavenLocal()
+        maven {
+            url 'https://repo.huaweicloud.com/repository/maven/'
+        }
+        maven {
+            url 'https://maven.aliyun.com/nexus/content/groups/public'
+        }
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
 }

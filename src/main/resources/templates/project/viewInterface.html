@@ -4,6 +4,11 @@
       layout:decorate="~{layout/default_with_navbar_and_tagsinput_and_docs}">
 <head>
     <title>查看接口</title>
+    <style>
+        .tooltip.show {
+            z-index: 1073;
+        }
+    </style>
 </head>
 <body>
 <div class="container-fluid" layout:fragment="content">
@@ -77,7 +82,7 @@
                 <tr th:each="header:${interface.headerList}">
                     <td th:text="${header.name}">头部名称</td>
                     <td th:if="${header.required}"><i class="fa fa-check-circle"></i></td>
-                    <td th:if="!${header.required}"><i class="fa fa-times-circle"></td>
+                    <td th:if="!${header.required}"><i class="fa fa-times-circle"></i></td>
                     <td th:text="${header.description}">头部描述</td>
                 </tr>
                 </tbody>
@@ -112,7 +117,120 @@
                 <button type="button" class="btn btn-primary mr-1" data-toggle="modal" data-target="#modifyInterfaceModal">修改接口信息</button>
                 <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#deleteInterfaceModal">删除接口</button>
             </div>
+            <div class="row">
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#callInterfaceModal">模拟调用</button>
+            </div>
         </main>
+        <div class="modal fade" id="callInterfaceModal" tabindex="-1" role="dialog" aria-labelledby="callInterfaceModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document" style="min-width: 800px">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">模拟调用</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="callInterfaceAlertWarning" class="d-none alert alert-warning sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div id="callInterfaceAlertSuccess" class="d-none alert alert-success sticky-top" role="alert">
+                            A simple warning alert—check it out!
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-12 col-md-3">
+                                <label for="callInterfaceMethod">请求方法</label>
+                                <input type="text" id="callInterfaceMethod" readonly class="form-control" th:value="${interface.method}">
+                            </div>
+                            <div class="form-group col-12 col-md-9">
+                                <label for="callInterfaceType">请求体类型</label>
+                                <input type="text" id="callInterfaceType" readonly class="form-control" th:value="${interface.typeDesc}">
+                            </div>
+                        </div>
+                        <label for="callInterfaceProjectDeploymentDiv">项目部署地址</label>
+                        <div id="callInterfaceProjectDeploymentDiv" class="d-flex form-group" th:if="${interface.projectDeploymentList} != null and ${#lists.size(interface.projectDeploymentList)} > 0">
+                            <select class="form-control d-inline mr-1" id="projectDeploymentSelect" style="width: 140px">
+                                <option th:if="${interface.projectDeploymentList}" th:each="deployment:${interface.projectDeploymentList}" th:text="${deployment.environment}" th:value="${deployment.id}">环境</option>
+                            </select>
+                            <input type="text" readonly class="form-control d-inline" id="projectDeploymentUrl" th:value="${interface.projectDeploymentList[0].deploymentUrl}">
+                            <div class="invalid-feedback">项目部署地址不能为null</div>
+                        </div>
+                        <div class="form-group" th:if="${interface.projectDeploymentList} == null or ${#lists.size(interface.projectDeploymentList)} == 0">
+                            <span class="text-warning">警告！项目部署地址未配置！</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="callInterfaceRelativePath">相对路径</label>
+                            <input type="text" id="callInterfaceRelativePath" readonly class="form-control" th:value="${interface.relativePath}">
+                            <div class="invalid-feedback">相对路径不能为null</div>
+                        </div>
+                        <div th:if="${interface.headerList}">
+                            <label for="callInterfaceHeaderTable">接口头部表</label>
+                            <table id="callInterfaceHeaderTable" class="table" >
+                                <thead>
+                                <tr>
+                                    <th>头部名称</th>
+                                    <th>是否必填</th>
+                                    <th>值</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="header:${interface.headerList}">
+                                    <td th:text="${header.name}" data-toggle="tooltip" data-placement="right" th:title="${header.description}">头部名称</td>
+                                    <td th:if="${header.required}"><i class="fa fa-check-circle"></i></td>
+                                    <td th:if="!${header.required}"><i class="fa fa-times-circle"></i></td>
+                                    <td><input type="text" class="form-control"><div class="invalid-feedback">头部值不能为null</div></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div th:if="${interface.fieldList}">
+                            <label for="callInterfaceFieldTable">接口字段表</label>
+                            <table id="callInterfaceFieldTable" class="table" >
+                                <thead>
+                                <tr>
+                                    <th>字段名称</th>
+                                    <th>字段类型</th>
+                                    <th>是否必填</th>
+                                    <th>值</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="field:${interface.fieldList}">
+                                    <td><span th:text="${field.name}" data-toggle="tooltip" data-placement="right" th:title="${field.description}">字段名称</span></td>
+                                    <td th:text="${field.typeDesc}">字段类型</td>
+                                    <td th:if="${field.required}"><i class="fa fa-check-circle"></i></td>
+                                    <td th:if="!${field.required}"><i class="fa fa-times-circle"></i></td>
+                                    <td th:if="${field.type == T(com.adam.apidoc_center.domain.InterfaceField.Type).TEXT}"><input type="text" class="form-control"><div class="invalid-feedback">字段值不能为null</div></td>
+                                    <td th:if="${field.type == T(com.adam.apidoc_center.domain.InterfaceField.Type).FILE}"><input type="file" class="form-control-file"><div class="invalid-feedback">文件字段不能为null</div></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <label for="callStack">调用技术栈</label>
+                            <select class="form-control col-6" id="callStack">
+                                <option>RestTemplate</option>
+                            </select>
+                            <div class="invalid-feedback">调用技术栈必选</div>
+                        </div>
+                        <div>
+                            <label for="callInterfaceOutputDiv">输出</label>
+                            <div class="text-white bg-dark" id="callInterfaceOutputDiv">
+                                时间：<span id="callInterfaceOutputTime"></span><br>
+                                状态码：<span id="callInterfaceOutputStatus"></span><br>
+                                响应体类型：<span id="callInterfaceOutputContentType"></span><br>
+                                响应体：<p id="callInterfaceOutputBody"></p>
+                                异常堆栈：<p id="callInterfaceOutputException"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" onclick="callInterface()">模拟调用</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="modal fade" id="modifyInterfaceModal" tabindex="-1" role="dialog" aria-labelledby="createInterfaceModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document" style="min-width: 800px">
                 <div class="modal-content">
@@ -309,6 +427,115 @@
     const interfaceId = [[${interface.id}]];
     const projectId = [[${interface.projectId}]];
     const groupId = [[${interface.groupId}]];
+
+    var projectDeploymentSelect = $('#projectDeploymentSelect');
+    var projectDeploymentUrl = $('#projectDeploymentUrl');
+    var projectDeploymentArray = [[${interface.projectDeploymentList}]];
+    var callInterfaceAlertSuccess = $('#callInterfaceAlertSuccess'),
+        callInterfaceAlertWarning = $('#callInterfaceAlertWarning');
+    if(projectDeploymentArray !== null && projectDeploymentArray.length > 0) {
+        projectDeploymentSelect.on("change", function () {
+            var id = parseInt(projectDeploymentSelect.val());
+            if(isNaN(id)) {
+                callInterfaceAlertSuccess.addClass('d-none');
+                callInterfaceAlertWarning.removeClass('d-none');
+                callInterfaceAlertWarning.html("页面存在错误，请刷新页面");
+                return;
+            }
+            for(var i=0;i<projectDeploymentArray.length;i++) {
+                var deployment = projectDeploymentArray[i];
+                if(deployment.id === id) {
+                    projectDeploymentUrl.val(deployment.deploymentUrl);
+                    break;
+                }
+            }
+        });
+    }
+    function callInterface() {
+        var deploymentId = parseInt(projectDeploymentSelect.val());
+        if(isNaN(deploymentId)) {
+            callInterfaceAlertSuccess.addClass('d-none');
+            callInterfaceAlertWarning.removeClass('d-none');
+            callInterfaceAlertWarning.html("页面存在错误，请刷新页面");
+            return;
+        }
+        var paramObject = {
+            deploymentId: deploymentId
+        };
+        var formData = new FormData();
+        formData.append('deploymentId', deploymentId+"");
+        var callInterfaceHeaderTable = $('#callInterfaceHeaderTable'),
+            callInterfaceFieldTable = $('#callInterfaceFieldTable');
+        var headerTrs = callInterfaceHeaderTable.find('tbody').find('tr'),
+            fieldTrs = callInterfaceFieldTable.find('tbody').find('tr');
+        var headerArray = [], fieldArray = [];
+        for(var i=0;i<headerTrs.length;i++) {
+            var headerTr = $(headerTrs[i]);
+            var headerName = headerTr.find('td').eq(0).html();
+            var headerValue = headerTr.find('input').eq(0).val();
+            headerArray.push({name:headerName,value:headerValue});
+        }
+        formData.append('headerList', JSON.stringify(headerArray));
+        for(var i=0;i<fieldTrs.length;i++) {
+            var fieldTr = $(fieldTrs[i]);
+            var fieldName = fieldTr.find('span').eq(0).html();
+            var input = fieldTr.find('input').eq(0);
+            var fieldValue = '';
+            var inputType = input.attr('type');
+            if(inputType === 'text') {
+                fieldValue = input.val();
+                fieldArray.push({name:fieldName,value:fieldValue});
+            } else if(inputType === 'file') {
+                fieldValue = input.prop('files')[0];
+            }
+            formData.append(fieldName, fieldValue);
+        }
+        paramObject.headerList = headerArray;
+        paramObject.fieldList = fieldArray;
+        var callStack = $('#callStack').val();
+        paramObject.callStack = callStack;
+        formData.append('callStack', callStack);
+
+        var paramJson = JSON.stringify(paramObject);
+        console.log(paramObject);
+        console.log(paramJson);
+        var successFunction = function (response) {
+            console.log(response);
+            if(response.success) {
+                callInterfaceAlertSuccess.removeClass('d-none');
+                callInterfaceAlertWarning.addClass('d-none');
+                callInterfaceAlertSuccess.html("调用成功");
+                $('#callInterfaceOutputTime').html(response.data.time);
+                $('#callInterfaceOutputStatus').html(response.data.status);
+                $('#callInterfaceOutputContentType').html(response.data.contentType);
+                $('#callInterfaceOutputBody').html(response.data.body);
+                $('#callInterfaceOutputException').html('');
+            } else {
+                callInterfaceAlertWarning.removeClass('d-none');
+                callInterfaceAlertSuccess.addClass('d-none');
+                callInterfaceAlertWarning.html(response.message);
+                if(response.data !== null && response.data.exception !== null) {
+                    $('#callInterfaceOutputTime').html(response.data.time);
+                    $('#callInterfaceOutputStatus').html('');
+                    $('#callInterfaceOutputContentType').html('');
+                    $('#callInterfaceOutputBody').html('');
+                    $('#callInterfaceOutputException').html(response.data.exception);
+                }
+            }
+        };
+        var errorFunction = function (xhr) {
+            callInterfaceAlertWarning.removeClass('d-none');
+            callInterfaceAlertSuccess.addClass('d-none');
+            callInterfaceAlertWarning.html("请求出错，状态码：" + xhr.status);
+        };
+        var interfaceTypeDesc = [[${interface.typeDesc}]];
+        if(interfaceTypeDesc !== 'multipart/form-data') {
+            ajaxPostJsonFull('/interface/'+interfaceId+'/call',paramJson,csrfToken,successFunction,errorFunction);
+        } else {
+            ajaxPostFormFull('/interface/'+interfaceId+'/callForm',formData,csrfToken,successFunction,errorFunction);
+        }
+    }
+
     addActiveClassForNav();
     function addActiveClassForNav() {
         var bdDocsNav = $('#bd-docs-nav');
@@ -475,14 +702,14 @@
         interfaceFieldTable.find("tbody").append(tr);
     }
     var headers = [[${interface.headerList}]];
-    if(headers.length > 0) {
+    if(headers !== null && headers.length > 0) {
         for(var i=0;i<headers.length;i++) {
             var header = headers[i];
             addHeader(header.name,header.required,header.description);
         }
     }
     var fields = [[${interface.fieldList}]];
-    if(fields.length > 0) {
+    if(fields !== null && fields.length > 0) {
         for(var i=0;i<fields.length;i++) {
             var field = fields[i];
             addField(field.name,field.type,field.required,field.description);
@@ -568,7 +795,7 @@
             function (xhr) {
                 modifyInterfaceAlertWarning.removeClass('d-none');
                 modifyInterfaceAlertSuccess.addClass('d-none');
-                modifyInterfaceAlertWarning.html('请求出错，状态码：'+xhr.status)
+                modifyInterfaceAlertWarning.html('请求出错，状态码：'+xhr.status);
             }
         );
     }

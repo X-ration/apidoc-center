@@ -37,6 +37,20 @@ function ajaxPostJsonFull(url,paramObject,csrfToken,successFunction,errorFunctio
         error: errorFunction
     });
 }
+function ajaxPostFormFull(url,formData,csrfToken,successFunction,errorFunction) {
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: formData,
+        processData: false,
+        contentType: false,
+        beforeSend: function (request) {
+            request.setRequestHeader('X-CSRF-TOKEN',csrfToken);
+        },
+        success: successFunction,
+        error: errorFunction
+    });
+}
 function ajax_common_error_function(xhr) {
     console.error("请求出错", xhr.status, xhr.statusText);
 }

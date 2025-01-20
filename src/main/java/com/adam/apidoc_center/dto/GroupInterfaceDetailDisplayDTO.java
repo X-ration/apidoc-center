@@ -1,6 +1,7 @@
 package com.adam.apidoc_center.dto;
 
 import com.adam.apidoc_center.domain.GroupInterface;
+import com.adam.apidoc_center.domain.ProjectDeployment;
 import com.adam.apidoc_center.util.LocalDateTimeUtil;
 import lombok.Data;
 import org.springframework.util.CollectionUtils;
@@ -29,6 +30,7 @@ public class GroupInterfaceDetailDisplayDTO {
     private List<InterfaceHeaderDTO> headerList;
     private List<InterfaceFieldDisplayDTO> fieldList;
     private List<ProjectGroupDisplayDTO> groupList;
+    private List<ProjectDeploymentDTO> projectDeploymentList;
 
     public GroupInterfaceDetailDisplayDTO(GroupInterface groupInterface) {
         this.id = groupInterface.getId();
@@ -57,6 +59,12 @@ public class GroupInterfaceDetailDisplayDTO {
         if(!CollectionUtils.isEmpty(groupInterface.getProjectGroup().getProject().getProjectGroupList())) {
             this.groupList = groupInterface.getProjectGroup().getProject().getProjectGroupList().stream()
                     .map(ProjectGroupDisplayDTO::new)
+                    .collect(Collectors.toList());
+        }
+        if(!CollectionUtils.isEmpty(groupInterface.getProjectGroup().getProject().getProjectDeploymentList())) {
+            this.projectDeploymentList = groupInterface.getProjectGroup().getProject().getProjectDeploymentList().stream()
+                    .filter(ProjectDeployment::isEnabled)
+                    .map(ProjectDeploymentDTO::new)
                     .collect(Collectors.toList());
         }
     }

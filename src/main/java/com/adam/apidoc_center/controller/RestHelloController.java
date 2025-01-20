@@ -2,6 +2,7 @@ package com.adam.apidoc_center.controller;
 
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.domain.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -9,14 +10,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
 @RequestMapping("/restHello")
+@Slf4j
 public class RestHelloController {
 
     @RequestMapping("hello")
@@ -33,6 +36,12 @@ public class RestHelloController {
     @RequestMapping("error403")
     public void error403() {
         throw new AccessDeniedException("error403");
+    }
+
+    @RequestMapping("/paramTest")
+    public Response<?> paramTest(@RequestParam Map<String,Object> paramMap, @RequestParam Map<String, MultipartFile> fileMap) {
+        log.debug("paramTest paramMap={} fileMap={}", paramMap, fileMap);
+        return Response.success(paramMap);
     }
 
     @RequestMapping("/oauth2UserAttributes")
