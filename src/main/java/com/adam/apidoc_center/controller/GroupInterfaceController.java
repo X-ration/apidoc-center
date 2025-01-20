@@ -19,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -61,22 +62,24 @@ public class GroupInterfaceController {
 
     @PostMapping("/call")
     @ResponseBody
-    public Response<CallInterfaceResponseDTO> callInterface(@PathVariable long interfaceId, @RequestBody CallInterfaceRequestDTO requestDTO) {
+    public Response<CallInterfaceResponseDTO> callInterface(@PathVariable long interfaceId, @RequestBody CallInterfaceRequestDTO requestDTO,
+                                                            HttpServletResponse httpServletResponse
+    ) {
         log.debug("callInterface interfaceId={} requestDTO={}", interfaceId, requestDTO);
         requestDTO.setInterfaceId(interfaceId);
-        return groupInterfaceService.callInterface(requestDTO);
+        return groupInterfaceService.callInterface(requestDTO, httpServletResponse);
     }
 
     @PostMapping(value = "/callForm", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseBody
     public Response<CallInterfaceResponseDTO> callFormInterface(@PathVariable long interfaceId, @RequestParam Map<String,String> paramMap,
-                                     @RequestParam Map<String, MultipartFile> fileMap) {
+                                     @RequestParam Map<String, MultipartFile> fileMap, HttpServletResponse httpServletResponse) {
         log.debug("callFormInterface interfaceId={} paramMap={} fileMap={}", interfaceId, paramMap, fileMap);
         CallInterfaceRequestDTO requestDTO = convertRequestDTO(interfaceId, paramMap, fileMap);
         if(requestDTO == null) {
             return Response.fail("参数不完整或格式不正确");
         } else {
-            return groupInterfaceService.callInterface(requestDTO);
+            return groupInterfaceService.callInterface(requestDTO, httpServletResponse);
         }
     }
 

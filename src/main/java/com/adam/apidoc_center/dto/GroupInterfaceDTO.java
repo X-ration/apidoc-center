@@ -13,6 +13,7 @@ public class GroupInterfaceDTO {
     protected String relativePath;
     protected HttpMethod method;
     protected GroupInterface.Type type;
+    protected GroupInterface.ResponseType responseType;
     protected List<InterfaceHeaderDTO> headerList;
     protected List<InterfaceFieldDTO> fieldList;
 }

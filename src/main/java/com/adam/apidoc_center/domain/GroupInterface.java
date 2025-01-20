@@ -28,6 +28,8 @@ public class GroupInterface extends AbstractAuditable {
     private HttpMethod method;
     @Enumerated(EnumType.STRING)
     private Type type;
+    @Enumerated(EnumType.STRING)
+    private ResponseType responseType;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "group_id", insertable = false, updatable = false)
     private ProjectGroup projectGroup;
@@ -47,5 +49,9 @@ public class GroupInterface extends AbstractAuditable {
         NO_BODY("无请求体"),
         ;
         private final String contentType;
+    }
+
+    public enum ResponseType {
+        FILE, TEXT
     }
 }

@@ -22,13 +22,11 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.util.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -214,7 +212,7 @@ public class GroupInterfaceService {
         return Response.success();
     }
 
-    public Response<CallInterfaceResponseDTO> callInterface(CallInterfaceRequestDTO requestDTO) {
+    public Response<CallInterfaceResponseDTO> callInterface(CallInterfaceRequestDTO requestDTO, HttpServletResponse httpServletResponse) {
         Objects.requireNonNull(requestDTO);
         //check interface id
         long interfaceId = requestDTO.getInterfaceId();
@@ -295,6 +293,7 @@ public class GroupInterfaceService {
 
         //准备调用
         String relativePath = groupInterface.getRelativePath();
+        GroupInterface.ResponseType responseType = groupInterface.getResponseType();
         HttpMethod httpMethod = groupInterface.getMethod();
         String projectPath = projectDeployment.getDeploymentUrl();
         while(projectPath.length() > 0 && projectPath.charAt(projectPath.length() - 1) == '/') {
@@ -312,13 +311,16 @@ public class GroupInterfaceService {
         }
 
         //调用
-        return callInterface(callUrl, httpMethod, interfaceType, callStack, headerList, fieldList);
+        return callInterface(callUrl, httpMethod, interfaceType, responseType, callStack, headerList, fieldList, httpServletResponse);
     }
 
     private Response<CallInterfaceResponseDTO> callInterface(String callUrl, HttpMethod httpMethod, GroupInterface.Type interfaceType,
+                                                   GroupInterface.ResponseType responseType,
                                                    CallInterfaceRequestDTO.CallStack callStack,
                                                    List<NameValuePair<String,String>> headerList,
-                                                   List<NameValuePair<String,Object>> fieldList) {
+                                                   List<NameValuePair<String,Object>> fieldList,
+                                                             HttpServletResponse httpServletResponse
+    ) {
         AssertUtil.requireNonNull(callUrl, httpMethod, interfaceType, callStack, headerList, fieldList);
         String bodyJson = null;
         if(interfaceType == GroupInterface.Type.FORM_URLENCODED) {
@@ -354,16 +356,17 @@ public class GroupInterfaceService {
 
         switch (callStack) {
             case RestTemplate:
-                return callInterfaceByRestTemplate(callUrl, httpMethod, interfaceType, headerList, fieldList, bodyJson);
+                return callInterfaceByRestTemplate(callUrl, httpMethod, interfaceType, responseType, headerList, fieldList, bodyJson, httpServletResponse);
             default:
                 return null;
         }
     }
 
     private Response<CallInterfaceResponseDTO> callInterfaceByRestTemplate(String callUrl, HttpMethod httpMethod, GroupInterface.Type interfaceType,
+                                                                 GroupInterface.ResponseType responseType,
                                                                  List<NameValuePair<String,String>> headerList,
                                                                  List<NameValuePair<String,Object>> fieldList,
-                                                                 String bodyJson) {
+                                                                 String bodyJson, HttpServletResponse httpServletResponse) {
         HttpHeaders httpHeaders = new HttpHeaders();
         for(NameValuePair<String,String> nameValuePair: headerList) {
             httpHeaders.add(nameValuePair.getName(), nameValuePair.getValue());
@@ -410,21 +413,34 @@ public class GroupInterfaceService {
                 break;
         }
         try {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(callUrl, httpMethod, httpEntity, String.class);
-            String responseBody = responseEntity.getBody();
-            String time = LocalDateTimeUtil.friendlyNowDateTime();
-            int status = responseEntity.getStatusCodeValue();
-            String contentType = null;
-            if(responseEntity.getHeaders().getContentType() != null) {
-                MediaType mediaType = responseEntity.getHeaders().getContentType();
-                contentType = mediaType.getType() + "/" + mediaType.getSubtype();
+            if(responseType == GroupInterface.ResponseType.TEXT) {
+                ResponseEntity<String> responseEntity = restTemplate.exchange(callUrl, httpMethod, httpEntity, String.class);
+                String responseBody = responseEntity.getBody();
+                String time = LocalDateTimeUtil.friendlyNowDateTime();
+                int status = responseEntity.getStatusCodeValue();
+                String contentType = null;
+                if (responseEntity.getHeaders().getContentType() != null) {
+                    MediaType mediaType = responseEntity.getHeaders().getContentType();
+                    contentType = mediaType.getType() + "/" + mediaType.getSubtype();
+                }
+                CallInterfaceResponseDTO responseDTO = new CallInterfaceResponseDTO();
+                responseDTO.setTime(time);
+                responseDTO.setStatus(status);
+                responseDTO.setContentType(contentType);
+                responseDTO.setBody(responseBody);
+                return Response.success(responseDTO);
+            } else if(responseType == GroupInterface.ResponseType.FILE) {
+                ResponseEntity<byte[]> responseEntity = restTemplate.exchange(callUrl, httpMethod, httpEntity, byte[].class);
+                byte[] bodyBytes = responseEntity.getBody();
+                ContentDisposition contentDisposition = responseEntity.getHeaders().getContentDisposition();
+                httpServletResponse.setHeader("Content-Disposition", contentDisposition.toString());
+                httpServletResponse.setHeader("Content-Type", "application/octet-stream");
+                httpServletResponse.setHeader("ApiDocCenter-FileName", contentDisposition.getFilename());
+                StreamUtils.copy(bodyBytes != null ? bodyBytes : new byte[0], httpServletResponse.getOutputStream());
+                return null;
+            } else {
+                throw new RuntimeException("Invalid state");
             }
-            CallInterfaceResponseDTO responseDTO = new CallInterfaceResponseDTO();
-            responseDTO.setTime(time);
-            responseDTO.setStatus(status);
-            responseDTO.setContentType(contentType);
-            responseDTO.setBody(responseBody);
-            return Response.success(responseDTO);
         } catch (Exception e) {
             log.error("callInterface RestTemplate exchange exception", e);
             return wrapException(e);

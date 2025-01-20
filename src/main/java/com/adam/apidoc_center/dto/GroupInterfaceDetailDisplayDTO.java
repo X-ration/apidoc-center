@@ -20,6 +20,7 @@ public class GroupInterfaceDetailDisplayDTO {
     private String relativePath;
     private String method;
     private GroupInterface.Type type;
+    private GroupInterface.ResponseType responseType;
     private String typeDesc;
     private String createTime;
     private String updateTime;
@@ -42,6 +43,7 @@ public class GroupInterfaceDetailDisplayDTO {
         this.method = groupInterface.getMethod().name();
         this.type = groupInterface.getType();
         this.typeDesc = groupInterface.getType().getContentType();
+        this.responseType = groupInterface.getResponseType();
         this.createTime = LocalDateTimeUtil.timeDiffFriendlyDesc(groupInterface.getCreateTime());
         this.updateTime = LocalDateTimeUtil.timeDiffFriendlyDesc(groupInterface.getUpdateTime());
         this.createUserId = groupInterface.getCreateUserId();

@@ -51,6 +51,26 @@ function ajaxPostFormFull(url,formData,csrfToken,successFunction,errorFunction) 
         error: errorFunction
     });
 }
+function ajaxPostDownloadFile(url,interfaceType,paramObject,csrfToken,func) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.responseType = 'blob';
+    xhr.setRequestHeader('X-CSRF-TOKEN',csrfToken);
+    xhr.onload = func;
+    switch (interfaceType) {
+        case 'application/x-www-form-urlencoded':
+        case 'application/json':
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify(paramObject));
+            break;
+        case 'multipart/form-data':
+            xhr.setRequestHeader('Content-Type', 'multipart/form-data');
+            xhr.send(paramObject);
+            break;
+        case '无请求体':
+            xhr.send();
+    }
+}
 function ajax_common_error_function(xhr) {
     console.error("请求出错", xhr.status, xhr.statusText);
 }

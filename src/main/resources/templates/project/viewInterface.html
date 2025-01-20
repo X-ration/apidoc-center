@@ -223,6 +223,7 @@
                                 异常堆栈：<p id="callInterfaceOutputException"></p>
                             </div>
                         </div>
+                        <a id="hiddenA" class="d-none"></a>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
@@ -540,11 +541,48 @@
             callInterfaceAlertSuccess.addClass('d-none');
             callInterfaceAlertWarning.html("请求出错，状态码：" + xhr.status);
         };
+        var xhrFunction = function (event) {
+            var xhr = event.currentTarget;
+            if(xhr.status === 200) {
+                var contentType = xhr.getResponseHeader('content-type');
+                if (contentType.startsWith('application/octet-stream')) {
+                    var filename = xhr.getResponseHeader('ApiDocCenter-FileName');
+                    var blob = xhr.response;
+                    var fileReader = new FileReader();
+                    fileReader.readAsDataURL(blob);
+                    fileReader.onload = function (e) {
+                        var hiddenA = $('#hiddenA');
+                        hiddenA.attr('download', filename);
+                        hiddenA.attr('href', e.target.result);
+                        hiddenA[0].click();
+                    }
+                } else {
+                    callInterfaceAlertSuccess.addClass('d-none');
+                    callInterfaceAlertWarning.removeClass('d-none');
+                    callInterfaceAlertWarning.html('调用失败，响应体类型不可解析');
+                }
+            } else {
+                callInterfaceAlertSuccess.addClass('d-none');
+                callInterfaceAlertWarning.removeClass('d-none');
+                callInterfaceAlertWarning.html('调用失败，状态码：' + xhr.status);
+            }
+        }
         var interfaceTypeDesc = [[${interface.typeDesc}]];
+        var interfaceResponseType = [[${interface.responseType}]];
+        var url = null;
         if(interfaceTypeDesc !== 'multipart/form-data') {
-            ajaxPostJsonFull('/interface/'+interfaceId+'/call',paramJson,csrfToken,successFunction,errorFunction);
+            url = '/interface/'+interfaceId+'/call';
         } else {
-            ajaxPostFormFull('/interface/'+interfaceId+'/callForm',formData,csrfToken,successFunction,errorFunction);
+            url = '/interface/'+interfaceId+'/callForm';
+        }
+        if(interfaceResponseType === 'FILE') {
+            ajaxPostDownloadFile(url,interfaceTypeDesc,paramObject,csrfToken,xhrFunction);
+        } else {
+            if(interfaceTypeDesc !== 'multipart/form-data') {
+                ajaxPostJsonFull(url, paramJson, csrfToken, successFunction, errorFunction);
+            } else {
+                ajaxPostFormFull(url, formData, csrfToken, successFunction, errorFunction);
+            }
         }
     }
 

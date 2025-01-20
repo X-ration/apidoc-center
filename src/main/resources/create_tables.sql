@@ -129,6 +129,7 @@ CREATE TABLE `group_interface` (
     `relative_path` VARCHAR(256) NOT NULL,
     `method` ENUM('GET','POST','PUT','DELETE','HEAD','OPTIONS','PATCH','TRACE') NOT NULL,
     `type` ENUM('FORM_URLENCODED','FORM_DATA','JSON','NO_BODY') NOT NULL,
+    `response_type` ENUM('FILE','TEXT') NOT NULL,
     `create_user_id` BIGINT(64) NOT NULL,
     `update_user_id` BIGINT(64) NOT NULL,
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
