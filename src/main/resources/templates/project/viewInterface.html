@@ -151,7 +151,7 @@
                                 <input type="text" id="callInterfaceType" readonly class="form-control" th:value="${interface.typeDesc}">
                             </div>
                             <div class="form-group col-12 col-md-4">
-                                <label for="callInterfaceResponseType">请求体类型</label>
+                                <label for="callInterfaceResponseType">响应体类型</label>
                                 <input type="text" id="callInterfaceResponseType" readonly class="form-control" th:value="${interface.responseTypeDesc}">
                             </div>
                         </div>
@@ -592,7 +592,11 @@
             url = '/interface/'+interfaceId+'/callForm';
         }
         if(interfaceResponseType === 'FILE') {
-            ajaxPostDownloadFile(url,interfaceTypeDesc,paramObject,csrfToken,xhrFunction);
+            if(interfaceTypeDesc !== 'multipart/form-data') {
+                ajaxPostDownloadFile(url, interfaceTypeDesc, paramObject, csrfToken, xhrFunction);
+            } else {
+                ajaxPostDownloadFile(url, interfaceTypeDesc, formData, csrfToken, xhrFunction);
+            }
         } else {
             if(interfaceTypeDesc !== 'multipart/form-data') {
                 ajaxPostJsonFull(url, paramJson, csrfToken, successFunction, errorFunction);

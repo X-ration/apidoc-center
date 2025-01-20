@@ -1,8 +1,8 @@
 package com.adam.rest_demo_project;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -72,6 +72,16 @@ public class FileController {
             outputStream.write(b, 0, len);
         }
         inputStream.close();
+    }
+
+    @RequestMapping("/paramTest2")
+    public void paramTest2(@RequestParam Map<String,Object> paramMap, @RequestParam Map<String, MultipartFile> fileMap, HttpServletResponse response) throws IOException {
+        log.debug("paramTest paramMap={} fileMap={}", paramMap, fileMap);
+        response.setContentType("application/octet-stream");
+        MultipartFile file0 = fileMap.values().toArray(new MultipartFile[fileMap.size()])[0];
+        String filename = file0.getOriginalFilename();
+        response.addHeader("Content-Disposition", "attachment; filename=" + URLEncoder.encode(filename, "UTF-8"));
+        StreamUtils.copy(file0.getInputStream(), response.getOutputStream());
     }
 
 }

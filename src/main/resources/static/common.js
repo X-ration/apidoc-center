@@ -64,7 +64,6 @@ function ajaxPostDownloadFile(url,interfaceType,paramObject,csrfToken,func) {
             xhr.send(JSON.stringify(paramObject));
             break;
         case 'multipart/form-data':
-            xhr.setRequestHeader('Content-Type', 'multipart/form-data;boundary=e9d980db-7f4f-4bdb-83db-80a29e0342c3');
             xhr.send(paramObject);
             break;
         case '无请求体':
