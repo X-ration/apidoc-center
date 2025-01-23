@@ -89,6 +89,7 @@ public class StringConstants {
     public static final String GROUP_INTERFACE_CALL_FILE_PARAM_INVALID = "文件字段{}的值不是文件类型";
     public static final String GROUP_INTERFACE_CALL_FILE_PARAM_NOT_ALLOWED = "请求体类型不允许文件字段";
     public static final String GROUP_INTERFACE_CALL_EXCEPTION = "调用接口出现异常";
+    public static final String GROUP_INTERFACE_CALL_DEFAULT_CONTENT_TYPE = "未知类型";
     public static final String INTERFACE_HEADER_NAME_BLANK = "接口头部名称为空";
     public static final String INTERFACE_HEADER_NAME_LENGTH_EXCEEDED = "接口头部长度不超过32个字符";
     public static final String INTERFACE_HEADER_DESCRIPTION_LENGTH_EXCEEDED = "接口头部描述长度不超过100个字符";

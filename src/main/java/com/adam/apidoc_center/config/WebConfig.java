@@ -8,6 +8,8 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 @EnableWebMvc
@@ -47,6 +50,17 @@ public class WebConfig implements WebMvcConfigurer{
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         //将所有/resources/** 访问都映射到classpath:/static/ 目录下
         registry.addResourceHandler("/resources/**").addResourceLocations("classpath:/static/");
+    }
+
+    @Bean
+    public OkHttpClient okHttpClient() {
+        ConnectionPool connectionPool = new ConnectionPool(50, 10, TimeUnit.MINUTES);
+        return new OkHttpClient.Builder()
+                .connectTimeout(3000, TimeUnit.MILLISECONDS)
+                .readTimeout(3000, TimeUnit.MILLISECONDS)
+                .writeTimeout(3000, TimeUnit.MILLISECONDS)
+                .connectionPool(connectionPool)
+                .build();
     }
 
     @Bean

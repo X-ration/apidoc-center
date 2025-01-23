@@ -15,7 +15,7 @@ public class CallInterfaceRequestDTO {
     private List<NameValuePair<String,Object>> fieldList;
 
     public enum CallStack {
-        RestTemplate
+        RestTemplate,OkHttp
         ;
     }
 

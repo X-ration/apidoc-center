@@ -16,10 +16,12 @@ import com.adam.apidoc_center.util.StringUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.*;
@@ -29,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -53,6 +56,8 @@ public class GroupInterfaceService {
     private ProjectService projectService;
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private OkHttpClient okHttpClient;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -359,6 +364,8 @@ public class GroupInterfaceService {
         switch (callStack) {
             case RestTemplate:
                 return callInterfaceByRestTemplate(callUrl, httpMethod, interfaceType, responseType, headerList, fieldList, bodyJson, httpServletResponse);
+            case OkHttp:
+                return callInterfaceByOkHttp(callUrl, httpMethod, interfaceType, responseType, headerList, fieldList, bodyJson, httpServletResponse);
             default:
                 return null;
         }
@@ -402,7 +409,7 @@ public class GroupInterfaceService {
                             };
                             formData.add(fieldName, resource);
                         } catch (IOException e) {
-                            log.error("callInterface multipart-form file {} exception", fieldName, e);
+                            log.error("callInterfaceByRestTemplate multipart-form file {} exception", fieldName, e);
                             return wrapException(e);
                         }
                     }
@@ -419,32 +426,117 @@ public class GroupInterfaceService {
                 ResponseEntity<String> responseEntity = restTemplate.exchange(callUrl, httpMethod, httpEntity, String.class);
                 String responseBody = responseEntity.getBody();
                 String time = LocalDateTimeUtil.friendlyNowDateTime();
-                int status = responseEntity.getStatusCodeValue();
-                String contentType = null;
-                if (responseEntity.getHeaders().getContentType() != null) {
-                    MediaType mediaType = responseEntity.getHeaders().getContentType();
-                    contentType = mediaType.getType() + "/" + mediaType.getSubtype();
+                HttpStatus status = responseEntity.getStatusCode();
+                if(status.is2xxSuccessful()) {
+                    String contentType = StringConstants.GROUP_INTERFACE_CALL_DEFAULT_CONTENT_TYPE;
+                    if (responseEntity.getHeaders().getContentType() != null) {
+                        MediaType mediaType = responseEntity.getHeaders().getContentType();
+                        contentType = mediaType.getType() + "/" + mediaType.getSubtype();
+                    }
+                    CallInterfaceResponseDTO responseDTO = new CallInterfaceResponseDTO();
+                    responseDTO.setTime(time);
+                    responseDTO.setStatus(status.value());
+                    responseDTO.setContentType(contentType);
+                    responseDTO.setBody(responseBody);
+                    return Response.success(responseDTO);
+                } else {
+                    throw new RuntimeException("调用接口异常，状态码：" + status.value());
                 }
-                CallInterfaceResponseDTO responseDTO = new CallInterfaceResponseDTO();
-                responseDTO.setTime(time);
-                responseDTO.setStatus(status);
-                responseDTO.setContentType(contentType);
-                responseDTO.setBody(responseBody);
-                return Response.success(responseDTO);
             } else if(responseType == GroupInterface.ResponseType.FILE) {
                 ResponseEntity<byte[]> responseEntity = restTemplate.exchange(callUrl, httpMethod, httpEntity, byte[].class);
-                byte[] bodyBytes = responseEntity.getBody();
-                ContentDisposition contentDisposition = responseEntity.getHeaders().getContentDisposition();
-                httpServletResponse.setHeader("Content-Disposition", contentDisposition.toString());
-                httpServletResponse.setHeader("Content-Type", "application/octet-stream");
-                httpServletResponse.setHeader("ApiDocCenter-FileName", contentDisposition.getFilename());
-                StreamUtils.copy(bodyBytes != null ? bodyBytes : new byte[0], httpServletResponse.getOutputStream());
-                return null;
+                HttpStatus status = responseEntity.getStatusCode();
+                if(status.is2xxSuccessful()) {
+                    byte[] bodyBytes = responseEntity.getBody();
+                    ContentDisposition contentDisposition = responseEntity.getHeaders().getContentDisposition();
+                    httpServletResponse.setHeader("Content-Disposition", contentDisposition.toString());
+                    httpServletResponse.setHeader("Content-Type", "application/octet-stream");
+                    httpServletResponse.setHeader("ApiDocCenter-FileName", contentDisposition.getFilename());
+                    StreamUtils.copy(bodyBytes != null ? bodyBytes : new byte[0], httpServletResponse.getOutputStream());
+                    return null;
+                } else {
+                    throw new RuntimeException("调用接口异常，状态码：" + status.value());
+                }
             } else {
                 throw new RuntimeException("Invalid state");
             }
         } catch (Exception e) {
             log.error("callInterface RestTemplate exchange exception", e);
+            return wrapException(e);
+        }
+    }
+
+    private Response<CallInterfaceResponseDTO> callInterfaceByOkHttp(String callUrl, HttpMethod httpMethod, GroupInterface.Type interfaceType,
+                                                                           GroupInterface.ResponseType responseType,
+                                                                           List<NameValuePair<String,String>> headerList,
+                                                                           List<NameValuePair<String,Object>> fieldList,
+                                                                           String bodyJson, HttpServletResponse httpServletResponse) {
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(callUrl);
+        for(NameValuePair<String,String> nameValuePair: headerList) {
+            requestBuilder.addHeader(nameValuePair.getName(), nameValuePair.getValue());
+        }
+        RequestBody requestBody = null;
+        switch (interfaceType) {
+            case FORM_URLENCODED:
+            case NO_BODY:
+                break;
+            case FORM_DATA:
+                MultipartBody.Builder requestBodyBuilder = new MultipartBody.Builder();
+                for(NameValuePair<String,Object> nameValuePair: fieldList) {
+                    if (!(nameValuePair.getValue() instanceof MultipartFile)) {
+                        requestBodyBuilder.addFormDataPart(nameValuePair.getName(), nameValuePair.getValue().toString());
+                    } else {
+                        String fieldName = nameValuePair.getName();
+                        MultipartFile multipartFile = (MultipartFile) nameValuePair.getValue();
+                        try {
+                            byte[] multipartFileBytes = multipartFile.getBytes();
+                            requestBodyBuilder.addFormDataPart(fieldName, multipartFile.getOriginalFilename(),
+                                    RequestBody.create(SystemConstants.OKHTTP_MEDIA_TYPE_OCTET_STREAM, multipartFileBytes));
+                        } catch (IOException e) {
+                            log.error("callInterfaceByOkHttp multipart-form file {} exception", fieldName, e);
+                            return wrapException(e);
+                        }
+                    }
+                }
+                requestBody = requestBodyBuilder.build();
+                requestBuilder.method(httpMethod.name(), requestBody);
+                break;
+            case JSON:
+                requestBody = RequestBody.create(SystemConstants.OKHTTP_MEDIA_TYPE_JSON_UTF8, bodyJson);
+                requestBuilder.method(httpMethod.name(), requestBody);
+                break;
+        }
+        Request request = requestBuilder.build();
+        try {
+            okhttp3.Response response = okHttpClient.newCall(request).execute();
+            try(ResponseBody responseBody = response.body()) {
+                if (response.isSuccessful()) {
+                    if (responseType == GroupInterface.ResponseType.TEXT) {
+                        String contentType = response.header("Content-Type", StringConstants.GROUP_INTERFACE_CALL_DEFAULT_CONTENT_TYPE);
+                        CallInterfaceResponseDTO responseDTO = new CallInterfaceResponseDTO();
+                        responseDTO.setTime(LocalDateTimeUtil.friendlyNowDateTime());
+                        responseDTO.setStatus(response.code());
+                        responseDTO.setContentType(contentType);
+                        responseDTO.setBody(responseBody.string());
+                        return Response.success(responseDTO);
+                    } else if(responseType == GroupInterface.ResponseType.FILE) {
+                        String contentDisposition = response.header("Content-Disposition");
+                        ContentDisposition contentDispositionObject = ContentDisposition.parse(contentDisposition);
+                        httpServletResponse.setHeader("Content-Disposition", contentDisposition);
+                        httpServletResponse.setHeader("Content-Type", "application/octet-stream");
+                        httpServletResponse.setHeader("ApiDocCenter-FileName", contentDispositionObject.getFilename());
+                        StreamUtils.copy(responseBody.bytes(), httpServletResponse.getOutputStream());
+                        return null;
+                    } else {
+                        throw new RuntimeException("Invalid state");
+                    }
+                } else {
+                    log.warn("callInterface OkHttp unsuccessful code={} body={}", response.code(), responseBody.string());
+                    throw new RuntimeException("调用接口异常，状态码：" + response.code());
+                }
+            }
+        } catch (Exception e) {
+            log.error("callInterface OkHttp call exception", e);
             return wrapException(e);
         }
     }
