@@ -2,6 +2,7 @@ package com.adam.apidoc_center.controller;
 
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
+import com.adam.apidoc_center.common.SystemConstants;
 import com.adam.apidoc_center.domain.User;
 import com.adam.apidoc_center.dto.*;
 import com.adam.apidoc_center.security.ImprovedSavedRequestAwareAuthenticationSuccessHandler;
@@ -9,6 +10,7 @@ import com.adam.apidoc_center.security.SecurityUtil;
 import com.adam.apidoc_center.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
 @RequestMapping("/user")
@@ -38,6 +41,7 @@ public class UserController {
     private ObjectMapper objectMapper;
     @Autowired
     private ImprovedSavedRequestAwareAuthenticationSuccessHandler authenticationSuccessHandler;
+    private final ConcurrentHashMap<String, RateLimiter> rateLimiterMap = new ConcurrentHashMap<>();
 
     @GetMapping("/login")
     public ModelAndView login(HttpServletRequest request) {
@@ -84,7 +88,16 @@ public class UserController {
     @ResponseBody
     public Response<EmailCodeErrorMsg> sendEmailCode(@RequestBody EmailCodeRequestDTO requestDTO, HttpServletRequest request) {
         log.debug("sendEmailCode ip={} requestDTO={}", request.getRemoteAddr(), requestDTO);
-        return userService.sendEmailCode(requestDTO);
+        RateLimiter rateLimiter = rateLimiterMap.get(request.getRemoteAddr());
+        if(rateLimiter == null) {
+            rateLimiter = RateLimiter.create(SystemConstants.EMAIL_CODE_RATE_LIMIT);
+            rateLimiterMap.put(request.getRemoteAddr(), rateLimiter);
+        }
+        if(rateLimiter.tryAcquire()) {
+            return userService.sendEmailCode(requestDTO);
+        } else {
+            return Response.fail(StringConstants.SEND_EMAIL_CODE_RATE_LIMITED);
+        }
     }
 
     @GetMapping("/modifyProfile")

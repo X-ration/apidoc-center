@@ -22,6 +22,7 @@ public class StringConstants {
     public static final String SEND_EMAIL_CODE_ERROR = "验证码发送异常";
     public static final String SEND_EMAIL_CODE_SUBJECT = "注册为接口文档中心用户";
     public static final String SEND_EMAIL_CODE_TEXT = "【Apidoc-center接口文档中心】验证码：{}";
+    public static final String SEND_EMAIL_CODE_RATE_LIMITED = "发送验证码接口限流";
     public static final String USERNAME_INPUT_BLANK = "用户名输入为空";
     public static final String USERNAME_LENGTH_EXCEEDED = "用户名不能超过32个字符";
     public static final String USERNAME_NUMBER_NOT_ALLOWED = "用户名不允许是纯数字";
