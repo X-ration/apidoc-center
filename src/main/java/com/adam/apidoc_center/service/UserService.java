@@ -1,5 +1,6 @@
 package com.adam.apidoc_center.service;
 
+import com.adam.apidoc_center.common.CacheConstants;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.common.SystemConstants;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
+import javax.mail.MessagingException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -49,6 +51,10 @@ public class UserService {
     //解决循环依赖
     @Lazy
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private MailService mailService;
+    @Autowired
+    private MemoryCacheService memoryCacheService;
 
     @Transactional
     public Response<OAuth2BindSuccessData> oauth2BindLogin(String username, String password) {
@@ -355,6 +361,43 @@ public class UserService {
         }
     }
 
+    public Response<EmailCodeErrorMsg> sendEmailCode(EmailCodeRequestDTO requestDTO) {
+        if(requestDTO == null) {
+            return Response.fail(StringConstants.SEND_EMAIL_CODE_PARAM_INVALID);
+        }
+        EmailCodeErrorMsg errorMsg = checkEmailCodeParam(requestDTO);
+        if(errorMsg.hasError()) {
+            return Response.fail(StringConstants.SEND_EMAIL_CODE_PARAM_INVALID, errorMsg);
+        }
+        String cacheKey = CacheConstants.EMAIL_CODE_PREFIX + requestDTO.getEmail();
+        String code = StringUtil.randomString(SystemConstants.EMAIL_CODE_NUM_OF_DIGITS);
+        memoryCacheService.setValueExpire(cacheKey, code, CacheConstants.EMAIL_CODE_EXPIRE);
+        String mailText = StringConstants.SEND_EMAIL_CODE_TEXT.replace("{}", code);
+        try {
+            mailService.sendTextMail(requestDTO.getEmail(), StringConstants.SEND_EMAIL_CODE_SUBJECT, mailText);
+            return Response.success();
+        } catch (MessagingException e) {
+            log.error("sendEmailCode error email={}", requestDTO.getEmail());
+            errorMsg.setCode(StringConstants.SEND_EMAIL_CODE_ERROR);
+            return Response.fail(StringConstants.SEND_EMAIL_CODE_ERROR, errorMsg);
+        }
+    }
+
+    private EmailCodeErrorMsg checkEmailCodeParam(EmailCodeRequestDTO requestDTO) {
+        String email = requestDTO.getEmail();
+        EmailCodeErrorMsg errorMsg = new EmailCodeErrorMsg();
+        if(StringUtils.isBlank(email)) {
+            errorMsg.setEmail(StringConstants.EMAIL_INPUT_BLANK);
+        } else if(email.length() > 256) {
+            errorMsg.setEmail(StringConstants.EMAIL_LENGTH_EXCEEDED);
+        } else if(!StringUtil.isEmail(email)) {
+            errorMsg.setEmail(StringConstants.EMAIL_INVALID);
+        } else if(userExistsByEmail(email)) {
+            errorMsg.setEmail(StringConstants.EMAIL_ALREADY_IN_USE);
+        }
+        return errorMsg;
+    }
+
     private User createUserAndAuthority(RegisterForm registerForm, List<User.UserType> userTypeList, LocalDateTime now) {
         User user = new User();
         user.setUsername(registerForm.getUsername());
@@ -451,6 +494,7 @@ public class UserService {
         } else if(userExistsByUsername(registerForm.getUsername())) {
             errorMsg.setUsername(StringConstants.USERNAME_ALREADY_IN_USE);
         }
+        String email = null;
         if(StringUtils.isBlank(registerForm.getEmail())) {
             errorMsg.setEmail(StringConstants.EMAIL_INPUT_BLANK);
         } else if(registerForm.getEmail().length() > 256) {
@@ -459,6 +503,19 @@ public class UserService {
             errorMsg.setEmail(StringConstants.EMAIL_INVALID);
         } else if(userExistsByEmail(registerForm.getEmail())) {
             errorMsg.setEmail(StringConstants.EMAIL_ALREADY_IN_USE);
+        } else {
+            email = registerForm.getEmail();
+        }
+        if(StringUtils.isBlank(registerForm.getEmailCode())) {
+            errorMsg.setEmailCode(StringConstants.EMAIL_CODE_INPUT_BLANK);
+        } else {
+            if(email != null) {
+                String cacheKey = CacheConstants.EMAIL_CODE_PREFIX + email;
+                String code = memoryCacheService.getValue(cacheKey);
+                if(!registerForm.getEmailCode().equalsIgnoreCase(code)) {
+                    errorMsg.setEmailCode(StringConstants.EMAIL_CODE_NOT_MATCH);
+                }
+            }
         }
         if(StringUtils.isBlank(registerForm.getPassword())) {
             errorMsg.setPassword(StringConstants.PASSWORD_INPUT_BLANK);

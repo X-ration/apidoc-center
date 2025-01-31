@@ -15,5 +15,6 @@ public class SystemConstants {
     public static final List<String> FORM_DATA_PROHIBIT_FIELD_NAME_LIST = Arrays.asList("deploymentId", "headerList", "callStack");
     public static final MediaType OKHTTP_MEDIA_TYPE_OCTET_STREAM = MediaType.parse("application/octet-stream");
     public static final MediaType OKHTTP_MEDIA_TYPE_JSON_UTF8 = MediaType.parse("application/json; charset=utf-8");
+    public static final int EMAIL_CODE_NUM_OF_DIGITS = 6;
 
 }

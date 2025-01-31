@@ -7,6 +7,7 @@ public class RegisterForm {
 
     private String username;
     private String email;
+    private String emailCode;
     private String password;
     private String verifyPassword;
     private String description;

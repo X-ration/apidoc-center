@@ -18,6 +18,10 @@ public class StringConstants {
     public static final String MODIFY_FAIL_CHECK_INPUTS = "修改失败，请检查输入";
     public static final String REGISTER_FAIL_SERVER_ERROR = "注册服务器出现异常，请稍候再试";
     public static final String MODIFY_FAIL_SERVER_ERROR = "修改过程出现异常，请稍候再试";
+    public static final String SEND_EMAIL_CODE_PARAM_INVALID = "发送验证码失败";
+    public static final String SEND_EMAIL_CODE_ERROR = "验证码发送异常";
+    public static final String SEND_EMAIL_CODE_SUBJECT = "注册为接口文档中心用户";
+    public static final String SEND_EMAIL_CODE_TEXT = "【Apidoc-center接口文档中心】验证码：{}";
     public static final String USERNAME_INPUT_BLANK = "用户名输入为空";
     public static final String USERNAME_LENGTH_EXCEEDED = "用户名不能超过32个字符";
     public static final String USERNAME_NUMBER_NOT_ALLOWED = "用户名不允许是纯数字";
@@ -26,6 +30,8 @@ public class StringConstants {
     public static final String EMAIL_LENGTH_EXCEEDED = "邮箱长度不能超过256个字符";
     public static final String EMAIL_INVALID = "邮箱格式不正确";
     public static final String EMAIL_ALREADY_IN_USE = "邮箱地址已被使用";
+    public static final String EMAIL_CODE_INPUT_BLANK = "邮箱验证码输入为空";
+    public static final String EMAIL_CODE_NOT_MATCH = "邮箱验证码不正确";
     public static final String PASSWORD_INPUT_BLANK = "密码输入为空";
     public static final String PASSWORD_LENGTH_EXCEEDED = "密码长度不能超过32个字符";
     public static final String PASSWORD_INVALID = "密码只能包含字母、数字、英文标点符号";

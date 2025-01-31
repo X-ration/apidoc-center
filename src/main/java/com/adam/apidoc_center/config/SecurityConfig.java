@@ -51,7 +51,7 @@ public class SecurityConfig {
                                                    MyOAuth2UserService oAuth2UserService
     ) throws Exception {
         http.authorizeHttpRequests()
-                .antMatchers("/user/login/**", "/user/logout", "/user/register", "/error/**").permitAll()
+                .antMatchers("/user/login/**", "/user/logout", "/user/register", "/user/sendEmailCode", "/error/**").permitAll()
                 .antMatchers("/resources/**").permitAll()
                 .antMatchers("/restHello/**").permitAll()
                 .antMatchers("/project/**","/group/**","/interface/**").access(projectAuthorizationManager)

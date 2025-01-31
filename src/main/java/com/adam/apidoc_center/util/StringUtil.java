@@ -1,6 +1,7 @@
 package com.adam.apidoc_center.util;
 
 import java.util.Objects;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,6 +46,10 @@ public class StringUtil {
         Objects.requireNonNull(string);
         Matcher matcher = RELATIVE_PATH_PATTERN.matcher(string);
         return matcher.matches();
+    }
+
+    public static String randomString(int numOfDigits) {
+        return UUID.randomUUID().toString().substring(0, numOfDigits);
     }
 
     public static void main(String[] args) {

@@ -80,6 +80,13 @@ public class UserController {
         }
     }
 
+    @PostMapping("/sendEmailCode")
+    @ResponseBody
+    public Response<EmailCodeErrorMsg> sendEmailCode(@RequestBody EmailCodeRequestDTO requestDTO, HttpServletRequest request) {
+        log.debug("sendEmailCode ip={} requestDTO={}", request.getRemoteAddr(), requestDTO);
+        return userService.sendEmailCode(requestDTO);
+    }
+
     @GetMapping("/modifyProfile")
     public String modifyProfilePage(Model model) {
         User user = SecurityUtil.getUser();
