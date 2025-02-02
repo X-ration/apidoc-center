@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default_with_navbar}">
+<head>
+    <title>搜索结果</title>
+</head>
+<body>
+<div class="container-fluid" layout:fragment="content">
+    <br>
+    <h1 class="text-center" th:text="|搜索结果 - ${searchParam} - ${searchTypeDesc}|">搜索结果</h1>
+    <br>
+    <div class="input-group col-8 offset-2">
+        <form class="input-group" method="get" th:action="@{/search}">
+            <input type="search" name="searchParam" th:value="${searchParam}" class="form-control" placeholder="搜索项目和接口">
+            <div class="input-group-append">
+                <select id="searchType" class="form-control" name="searchType">
+                    <option value="ALL">所有类型</option>
+                    <option value="PROJECT">项目</option>
+                    <option value="GROUP">分组</option>
+                    <option value="INTERFACE">接口</option>
+                </select>
+            </div>
+            <div class="input-group-append">
+                <button class="btn btn-outline-primary" type="submit" id="button-addon2">搜索</button>
+            </div>
+        </form>
+    </div>
+    <br>
+    <p class="text-center" th:if="${error}" th:text="${error}"></p>
+    <div th:if="${data}">
+        <div class="jumbotron col-8 offset-2" th:each="searchResult:${data.data}">
+            <h1 class="display-4" th:text="|项目：${searchResult.name}|" th:if="${searchResult.type} == ${T(com.adam.apidoc_center.dto.SearchResultDTO.Type).PROJECT}">name</h1>
+            <h1 class="display-4" th:text="|分组：${searchResult.name}|" th:if="${searchResult.type} == ${T(com.adam.apidoc_center.dto.SearchResultDTO.Type).GROUP}">name</h1>
+            <h1 class="display-4" th:text="|接口：${searchResult.name}|" th:if="${searchResult.type} == ${T(com.adam.apidoc_center.dto.SearchResultDTO.Type).INTERFACE}">name</h1>
+            <p class="lead" th:text="${searchResult.description}">description</p>
+            <a class="btn btn-primary" th:href="${searchResult.link}" role="button">前往</a>
+        </div>
+        <div id="pagination" class="d-flex justify-content-center">
+            <nav aria-label="分页导航">
+                <ul class="pagination">
+                    <li class="page-item"><a id="paginationFirst" class="page-link" th:href="|/search?searchParam=${searchParam}&searchType=${searchType}&pageNum=0&pageSize=20|">首页</a></li>
+                    <li class="page-item"><a id="paginationPrevious" class="page-link" th:href="|/search?searchParam=${searchParam}&searchType=${searchType}&pageNum=|+(${data.pageNum}-1)+|&pageSize=20|">上一页</a></li>
+                    <li class="page-item"><a id="paginationCurrent" class="page-link" th:href="|/search?searchParam=${searchParam}&searchType=${searchType}&pageNum=${data.pageNum}&pageSize=20|" th:text="${data.pageNum}+1">0</a></li>
+                    <li class="page-item"><a id="paginationNext" class="page-link" th:href="|/search?searchParam=${searchParam}&searchType=${searchType}&pageNum=|+(${data.pageNum}+1)+|&pageSize=20|">下一页</a></li>
+                    <li class="page-item"><a id="paginationLast" class="page-link" th:href="|/search?searchParam=${searchParam}&searchType=${searchType}&pageNum=|+(${data.totalPage}-1)+|&pageSize=20|">末页</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div id="pageDescription" class="text-center">
+            <span th:text="|当前第|+(${data.pageNum}+1)+|页，共${data.totalPage}页|">分页信息</span><br>
+            <span th:text="|当前页共${data.curPageSize}条数据，总计${data.totalSize}条数据|">分页数据信息</span>
+        </div>
+    </div>
+</div>
+</body>
+<script layout:fragment="script" th:inline="javascript">
+    var searchTypeValue = [[${searchType}]];
+    var searchType = $('#searchType');
+    searchType.val(searchTypeValue);
+
+    var pageSize = parseInt([[${data.pageSize}]]);
+    const totalPage=[[${data.totalPage}]];
+    if(isNaN(pageSize)) {
+        pageSize = 10;
+    }
+    updatePagination(pageSize, false);
+    function updatePagination(pageSize,refresh) {
+        var allATags = $('#pagination').find("a");
+        for(var i=0;i<allATags.length;i++) {
+            var aTag = $(allATags[i]);
+            var href = aTag.attr("href");
+            var splits0 = href.split("?");
+            var updatedHref = splits0[0];
+            if(splits0.length > 1) {
+                updatedHref = updatedHref + "?";
+                var splits1 = splits0[1].split("&");
+                for(var j=0;j<splits1.length;j++) {
+                    var splits2 = splits1[j];
+                    var splits3 = splits2.split("=");
+                    if(splits3.length > 1) {
+                        var key = splits3[0], value = splits3[1];
+                        if(key === 'pageNum') {
+                            var valueInt = parseInt(value);
+                            if(!isNaN(valueInt)) {
+                                if(valueInt < 0) {
+                                    valueInt = 0;
+                                } else if(valueInt > totalPage - 1) {
+                                    valueInt = totalPage - 1;
+                                    if(valueInt < 0) {
+                                        valueInt = 0;
+                                    }
+                                }
+                                value = "" + valueInt;
+                            }
+                        } else if(key === 'pageSize') {
+                            value = "" + pageSize;
+                        }
+                        updatedHref = updatedHref + key + "=" + value + "&";
+                    } else {
+                        updatedHref = updatedHref + splits2 + "&";
+                    }
+                }
+                updatedHref = updatedHref.substring(0, updatedHref.length - 1);
+            }
+            aTag.attr("href", updatedHref);
+        }
+        if(refresh) {
+            var current = $('#paginationCurrent').attr("href");
+            window.location.href = current;
+        }
+    }
+</script>
+</html>

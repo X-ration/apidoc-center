@@ -322,6 +322,9 @@
                                     valueInt = 0;
                                 } else if(valueInt > totalPage - 1) {
                                     valueInt = totalPage - 1;
+                                    if(valueInt < 0) {
+                                        valueInt = 0;
+                                    }
                                 }
                                 value = "" + valueInt;
                             }

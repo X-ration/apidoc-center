@@ -110,4 +110,8 @@ public class StringConstants {
     public static final String INTERFACE_FIELD_DESCRIPTION_LENGTH_EXCEEDED = "接口字段描述长度不超过100个字符";
     public static final String INTERFACE_FIELD_REQUIRED_NULL = "接口字段是否必填未选择";
 
+    //搜索相关
+    public static final String SEARCH_FAIL_PREFIX = "搜索失败：";
+    public static final String SEARCH_PARAM_BLANK = "搜索字符串为空";
+
 }
