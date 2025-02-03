@@ -47,11 +47,21 @@ public class ProjectService {
         PageRequest pageRequest = PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.DESC, "id"));
         Page<Project> page = projectRepository.findAll(pageRequest);
         PagedData<Project> pagedData = PagedData.convert(page, pageRequest);
+        List<Long> userIdList = new LinkedList<>();
+        pagedData.getData().forEach(project -> {
+            userIdList.add(project.getCreateUserId());
+            userIdList.add(project.getUpdateUserId());
+        });
+        Map<Long,User> userMap = userService.queryUserMap(userIdList);
         return pagedData.map(ProjectListDisplayDTO::convert).map(projectListDisplayDTO -> {
             long userId = SecurityUtil.getUser().getId();
             String key = CacheConstants.PROJECT_FOLLOW_LIST_PREFIX + userId;
             Double score = redisTemplate.opsForZSet().score(key, projectListDisplayDTO.getId());
             projectListDisplayDTO.setFollow(score != null);
+            UserCoreDTO creator = new UserCoreDTO(userMap.get(projectListDisplayDTO.getCreateUserId())),
+                    updater = new UserCoreDTO(userMap.get(projectListDisplayDTO.getUpdateUserId()));
+            projectListDisplayDTO.setCreator(creator);
+            projectListDisplayDTO.setUpdater(updater);
             return projectListDisplayDTO;
         });
     }
@@ -70,6 +80,13 @@ public class ProjectService {
                 .map(value -> ((Number) value).longValue())
                 .collect(Collectors.toList());
         List<Project> projectList = projectRepository.findProjectsByIdIn(sortedProjectIdList);
+        List<Long> userIdList = new LinkedList<>();
+        projectList.forEach(project -> {
+            userIdList.add(project.getCreateUserId());
+            userIdList.add(project.getUpdateUserId());
+        });
+        Map<Long,User> userMap = userService.queryUserMap(userIdList);
+
         Map<Long, Project> projectMap = new HashMap<>();
         for(Project project: projectList) {
             projectMap.put(project.getId(), project);
@@ -79,7 +96,14 @@ public class ProjectService {
                 .collect(Collectors.toList());
         return new PagedData<>(sortedProjectList, pageNum, pageSize, total)
                 .map(ProjectListDisplayDTO::convert)
-                .map(ProjectListDisplayDTO::setFollow);
+                .map(ProjectListDisplayDTO::setFollow)
+                .map(projectListDisplayDTO -> {
+                    UserCoreDTO creator = new UserCoreDTO(userMap.get(projectListDisplayDTO.getCreateUserId())),
+                            updater = new UserCoreDTO(userMap.get(projectListDisplayDTO.getUpdateUserId()));
+                    projectListDisplayDTO.setCreator(creator);
+                    projectListDisplayDTO.setUpdater(updater);
+                    return projectListDisplayDTO;
+                });
     }
 
     public Response<Void> followProject(long projectId) {

@@ -138,6 +138,8 @@
                     <p class="card-text" th:text="${project.description}">项目介绍</p>
                     <small class="card-text text-muted" th:text="|创建于${project.createTime}|">创建时间</small><br>
                     <small class="card-text text-muted" th:text="|更新于${project.updateTime}|">更新时间</small><br>
+                    <small class="text-muted" th:if="${project.creator} != null" th:text="|创建者：${project.creator.username}|" data-toggle="tooltip" data-placement="right" th:title="${project.creator.email}">创建者</small><br>
+                    <small class="text-muted" th:if="${project.updater} != null" th:text="|更新者：${project.updater.username}|" data-toggle="tooltip" data-placement="right" th:title="${project.updater.email}">更新者</small><br>
                 </div>
                 <div class="card-footer">
                     <a th:href="|/project/${project.id}/view|" class="btn btn-primary">查看</a>
@@ -169,6 +171,9 @@
 </body>
 <script layout:fragment="script" th:inline="javascript">
     const csrfToken = [[${_csrf.token}]];
+    $('[data-toggle="tooltip"]').tooltip({
+        delay: { "show": 0, "hide": 2000 }
+    });
     var projectDeploymentSelect = $('#projectDeploymentSelect');
     var projectDeploymentTable = $('#projectDeploymentTable');
     function addProjectDeployment() {

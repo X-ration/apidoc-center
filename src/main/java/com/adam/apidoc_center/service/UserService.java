@@ -194,7 +194,8 @@ public class UserService {
         if(CollectionUtils.isEmpty(userIdList)) {
             return new HashMap<>();
         }
-        List<User> userList = userRepository.findAllById(userIdList);
+        Set<Long> userIdSet = new HashSet<>(userIdList);
+        List<User> userList = userRepository.findAllById(userIdSet);
         if(CollectionUtils.isEmpty(userList)) {
             return new HashMap<>();
         } else {

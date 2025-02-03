@@ -13,6 +13,10 @@ public class ProjectListDisplayDTO {
     private String accessMode;
     private String createTime;
     private String updateTime;
+    private long createUserId;
+    private long updateUserId;
+    private UserCoreDTO creator;
+    private UserCoreDTO updater;
     private boolean follow;
 
     public static ProjectListDisplayDTO convert(Project project) {
@@ -29,6 +33,8 @@ public class ProjectListDisplayDTO {
         dto.setAccessMode(project.getAccessMode().getDesc());
         dto.setCreateTime(LocalDateTimeUtil.timeDiffFriendlyDesc(project.getCreateTime()));
         dto.setUpdateTime(LocalDateTimeUtil.timeDiffFriendlyDesc(project.getUpdateTime()));
+        dto.setCreateUserId(project.getCreateUserId());
+        dto.setUpdateUserId(project.getUpdateUserId());
         return dto;
     }
 
