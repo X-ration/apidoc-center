@@ -3,6 +3,8 @@ package com.adam.apidoc_center.controller;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.domain.User;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -21,6 +24,9 @@ import java.util.*;
 @RequestMapping("/restHello")
 @Slf4j
 public class RestHelloController {
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     @RequestMapping("hello")
     public Response<?> hello() {
@@ -42,6 +48,18 @@ public class RestHelloController {
     public Response<?> paramTest(@RequestParam Map<String,Object> paramMap, @RequestParam Map<String, MultipartFile> fileMap) {
         log.debug("paramTest paramMap={} fileMap={}", paramMap, fileMap);
         return Response.success(paramMap);
+    }
+
+    @RequestMapping("/redisGetTest")
+    public Response<Object> redisGetTest(@RequestParam(defaultValue = "foo") String key) {
+        Object value = redisTemplate.opsForValue().get(key);
+        return Response.success(value);
+    }
+
+    @RequestMapping("/redisSetTest")
+    public Response<Boolean> redisSetTest(@RequestParam(defaultValue = "foo") String key, @RequestParam(defaultValue = "bar") String value) {
+        redisTemplate.opsForValue().set(key, value);
+        return Response.success(true);
     }
 
     @RequestMapping("/oauth2UserAttributes")
