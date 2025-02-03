@@ -279,20 +279,26 @@
         ajaxPostJsonFull('/project/' + projectId + '/group/create',paramJson,csrfToken,
             function (response) {
                 console.log(response);
-                if(response.success) {
-                    createGroupAlertSuccess.removeClass("d-none");
-                    createGroupAlertWarning.addClass("d-none");
-                    createGroupAlertSuccess.html("分组创建成功，3秒后刷新页面");
-                    setTimeout(function () {
-                        location.reload();
-                    }, 3000);
+                if(response instanceof Object) {
+                    if (response.success) {
+                        createGroupAlertSuccess.removeClass("d-none");
+                        createGroupAlertWarning.addClass("d-none");
+                        createGroupAlertSuccess.html("分组创建成功，3秒后刷新页面");
+                        setTimeout(function () {
+                            location.reload();
+                        }, 3000);
+                    } else {
+                        createGroupAlertWarning.removeClass('d-none');
+                        createGroupAlertSuccess.addClass('d-none');
+                        createGroupAlertWarning.html(response.message);
+                        if (response.data !== null) {
+                            processErrorMsgItem(response.data.name, groupName);
+                        }
+                    }
                 } else {
                     createGroupAlertWarning.removeClass('d-none');
                     createGroupAlertSuccess.addClass('d-none');
-                    createGroupAlertWarning.html(response.message);
-                    if(response.data !== null) {
-                        processErrorMsgItem(response.data.name, groupName);
-                    }
+                    createGroupAlertWarning.html('请求失败');
                 }
             },
             function (xhr) {
@@ -423,20 +429,26 @@
         ajaxPostJsonFull('/project/'+projectId+'/modify',paramJson,csrfToken,
             function (response) {
                 console.log(response);
-                if(response.success) {
-                    modifyProjectAlertSuccess.removeClass("d-none");
-                    modifyProjectAlertWarning.addClass("d-none");
-                    modifyProjectAlertSuccess.html("项目修改成功，3秒后刷新页面");
-                    setTimeout(function () {
-                        location.reload();
-                    }, 3000);
+                if(response instanceof Object) {
+                    if (response.success) {
+                        modifyProjectAlertSuccess.removeClass("d-none");
+                        modifyProjectAlertWarning.addClass("d-none");
+                        modifyProjectAlertSuccess.html("项目修改成功，3秒后刷新页面");
+                        setTimeout(function () {
+                            location.reload();
+                        }, 3000);
+                    } else {
+                        modifyProjectAlertWarning.removeClass('d-none');
+                        modifyProjectAlertSuccess.addClass('d-none');
+                        modifyProjectAlertWarning.html(response.message);
+                        if (response.data !== null) {
+                            processModifyProjectErrorMsg(response.data);
+                        }
+                    }
                 } else {
                     modifyProjectAlertWarning.removeClass('d-none');
                     modifyProjectAlertSuccess.addClass('d-none');
-                    modifyProjectAlertWarning.html(response.message);
-                    if(response.data !== null) {
-                        processModifyProjectErrorMsg(response.data);
-                    }
+                    modifyProjectAlertWarning.html('请求失败');
                 }
             },
             function (xhr) {
@@ -478,17 +490,23 @@
         }
         ajaxPostJsonFull('/project/' + projectId + '/delete',null,csrfToken,
             function (response) {
-                if(response.success) {
-                    deleteProjectSuccessAlert.removeClass('d-none');
-                    deleteProjectWarningAlert.addClass('d-none');
-                    deleteProjectSuccessAlert.html("删除成功，3秒后返回所有项目页面");
-                    setTimeout(function () {
-                        location.href = "/project/viewAll";
-                    }, 3000);
+                if(response instanceof Object) {
+                    if (response.success) {
+                        deleteProjectSuccessAlert.removeClass('d-none');
+                        deleteProjectWarningAlert.addClass('d-none');
+                        deleteProjectSuccessAlert.html("删除成功，3秒后返回所有项目页面");
+                        setTimeout(function () {
+                            location.href = "/project/viewAll";
+                        }, 3000);
+                    } else {
+                        deleteProjectSuccessAlert.addClass('d-none');
+                        deleteProjectWarningAlert.removeClass('d-none');
+                        deleteProjectWarningAlert.html("删除失败：" + response.message);
+                    }
                 } else {
                     deleteProjectSuccessAlert.addClass('d-none');
                     deleteProjectWarningAlert.removeClass('d-none');
-                    deleteProjectWarningAlert.html("删除失败：" + response.message);
+                    deleteProjectWarningAlert.html("请求失败");
                 }
             },
             function (xhr) {

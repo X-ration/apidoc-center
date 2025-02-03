@@ -527,26 +527,32 @@
         console.log(paramJson);
         var successFunction = function (response) {
             console.log(response);
-            if(response.success) {
-                callInterfaceAlertSuccess.removeClass('d-none');
-                callInterfaceAlertWarning.addClass('d-none');
-                callInterfaceAlertSuccess.html("调用成功");
-                callInterfaceOutputTime.html(response.data.time);
-                callInterfaceOutputStatus.html(response.data.status);
-                callInterfaceOutputContentType.html(response.data.contentType);
-                callInterfaceOutputBody.html(response.data.body);
-                callInterfaceOutputException.html('');
+            if(response instanceof Object) {
+                if (response.success) {
+                    callInterfaceAlertSuccess.removeClass('d-none');
+                    callInterfaceAlertWarning.addClass('d-none');
+                    callInterfaceAlertSuccess.html("调用成功");
+                    callInterfaceOutputTime.html(response.data.time);
+                    callInterfaceOutputStatus.html(response.data.status);
+                    callInterfaceOutputContentType.html(response.data.contentType);
+                    callInterfaceOutputBody.html(response.data.body);
+                    callInterfaceOutputException.html('');
+                } else {
+                    callInterfaceAlertWarning.removeClass('d-none');
+                    callInterfaceAlertSuccess.addClass('d-none');
+                    callInterfaceAlertWarning.html(response.message);
+                    if (response.data !== null && response.data.exception !== null) {
+                        callInterfaceOutputTime.html(response.data.time);
+                        callInterfaceOutputStatus.html('');
+                        callInterfaceOutputContentType.html('');
+                        callInterfaceOutputBody.html('');
+                        callInterfaceOutputException.html(response.data.exception);
+                    }
+                }
             } else {
                 callInterfaceAlertWarning.removeClass('d-none');
                 callInterfaceAlertSuccess.addClass('d-none');
-                callInterfaceAlertWarning.html(response.message);
-                if(response.data !== null && response.data.exception !== null) {
-                    callInterfaceOutputTime.html(response.data.time);
-                    callInterfaceOutputStatus.html('');
-                    callInterfaceOutputContentType.html('');
-                    callInterfaceOutputBody.html('');
-                    callInterfaceOutputException.html(response.data.exception);
-                }
+                callInterfaceAlertWarning.html('请求失败');
             }
         };
         var errorFunction = function (xhr) {
@@ -847,20 +853,26 @@
         ajaxPostJsonFull('/interface/'+interfaceId+'/modify',paramJson,csrfToken,
             function (response) {
                 console.log(response);
-                if(response.success) {
-                    modifyInterfaceAlertSuccess.removeClass("d-none");
-                    modifyInterfaceAlertWarning.addClass("d-none");
-                    modifyInterfaceAlertSuccess.html("接口修改成功，3秒后刷新页面");
-                    setTimeout(function () {
-                        location.reload();
-                    }, 3000);
+                if(response instanceof Object) {
+                    if (response.success) {
+                        modifyInterfaceAlertSuccess.removeClass("d-none");
+                        modifyInterfaceAlertWarning.addClass("d-none");
+                        modifyInterfaceAlertSuccess.html("接口修改成功，3秒后刷新页面");
+                        setTimeout(function () {
+                            location.reload();
+                        }, 3000);
+                    } else {
+                        modifyInterfaceAlertWarning.removeClass('d-none');
+                        modifyInterfaceAlertSuccess.addClass('d-none');
+                        modifyInterfaceAlertWarning.html(response.message);
+                        if (response.data !== null) {
+                            processModifyInterfaceErrorMsg(response.data);
+                        }
+                    }
                 } else {
                     modifyInterfaceAlertWarning.removeClass('d-none');
                     modifyInterfaceAlertSuccess.addClass('d-none');
-                    modifyInterfaceAlertWarning.html(response.message);
-                    if(response.data !== null) {
-                        processModifyInterfaceErrorMsg(response.data);
-                    }
+                    modifyInterfaceAlertWarning.html('请求失败');
                 }
             },
             function (xhr) {
@@ -918,17 +930,23 @@
         }
         ajaxPostJsonFull('/interface/' + interfaceId + '/delete',null,csrfToken,
             function (response) {
-                if(response.success) {
-                    deleteInterfaceAlertSuccess.removeClass('d-none');
-                    deleteInterfaceAlertWarning.addClass('d-none');
-                    deleteInterfaceAlertSuccess.html("删除成功，3秒后返回分组管理页面");
-                    setTimeout(function () {
-                        location.href = "/group/" + groupId + "/view";
-                    }, 3000);
+                if(response instanceof Object) {
+                    if (response.success) {
+                        deleteInterfaceAlertSuccess.removeClass('d-none');
+                        deleteInterfaceAlertWarning.addClass('d-none');
+                        deleteInterfaceAlertSuccess.html("删除成功，3秒后返回分组管理页面");
+                        setTimeout(function () {
+                            location.href = "/group/" + groupId + "/view";
+                        }, 3000);
+                    } else {
+                        deleteInterfaceAlertSuccess.addClass('d-none');
+                        deleteInterfaceAlertWarning.removeClass('d-none');
+                        deleteInterfaceAlertWarning.html("删除失败：" + response.message);
+                    }
                 } else {
                     deleteInterfaceAlertSuccess.addClass('d-none');
                     deleteInterfaceAlertWarning.removeClass('d-none');
-                    deleteInterfaceAlertWarning.html("删除失败：" + response.message);
+                    deleteInterfaceAlertWarning.html("请求失败");
                 }
             },
             function (xhr) {
