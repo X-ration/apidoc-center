@@ -64,7 +64,7 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
         log.info("ProjectAuthorizationManager check starts requestURI={} rememberMe={}", requestURI, trustResolver.isRememberMe(authentication.get()));
         Long projectId = null;
         String action = null;
-        List<String> registeredActionList = Arrays.asList("view","modify","delete","call","callForm");
+        List<String> registeredActionList = Arrays.asList("view","modify","delete","call","callForm", "follow", "unfollow");
         //不允许匿名访问
         if(authentication.get() instanceof AnonymousAuthenticationToken) {
             return new AuthorizationDecision(false);
@@ -89,6 +89,10 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
                 action = resolveVariableValue(projectRequestMatcher, object.getRequest(), ACTION_VARIABLE_NAME);
                 if(!registeredActionList.contains(action)) {
                     return new AuthorizationDecision(false);
+                }
+                //任何人都可以关注、取消关注项目
+                else if(action.equals("follow") || action.equals("unfollow")) {
+                    return new AuthorizationDecision(true);
                 }
             } else if(projectCreateGroupRequestMatcher.matches(object.getRequest())) {
                 projectIdString = resolveVariableValue(projectCreateGroupRequestMatcher, object.getRequest(), PROJECT_ID_VARIABLE_NAME);

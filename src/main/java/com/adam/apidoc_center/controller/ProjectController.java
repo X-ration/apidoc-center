@@ -76,6 +76,18 @@ public class ProjectController {
         return projectService.checkAndModify(projectDTO, projectId);
     }
 
+    @PostMapping("/{projectId}/follow")
+    @ResponseBody
+    public Response<Void> followProject(@PathVariable long projectId) {
+        return projectService.followProject(projectId);
+    }
+
+    @PostMapping("/{projectId}/unfollow")
+    @ResponseBody
+    public Response<Void> unfollowProject(@PathVariable long projectId) {
+        return projectService.unfollowProject(projectId);
+    }
+
     @PostMapping("/{projectId}/group/create")
     @ResponseBody
     public Response<?> createGroup(@PathVariable long projectId, @RequestBody ProjectGroupDTO projectGroupDTO) {

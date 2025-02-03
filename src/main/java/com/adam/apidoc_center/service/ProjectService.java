@@ -1,8 +1,6 @@
 package com.adam.apidoc_center.service;
 
-import com.adam.apidoc_center.common.PagedData;
-import com.adam.apidoc_center.common.Response;
-import com.adam.apidoc_center.common.StringConstants;
+import com.adam.apidoc_center.common.*;
 import com.adam.apidoc_center.domain.Project;
 import com.adam.apidoc_center.domain.ProjectDeployment;
 import com.adam.apidoc_center.domain.ProjectSharedUser;
@@ -11,6 +9,7 @@ import com.adam.apidoc_center.dto.*;
 import com.adam.apidoc_center.repository.ProjectDeploymentRepository;
 import com.adam.apidoc_center.repository.ProjectRepository;
 import com.adam.apidoc_center.repository.ProjectSharedUserRepository;
+import com.adam.apidoc_center.security.SecurityUtil;
 import com.adam.apidoc_center.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -38,13 +38,64 @@ public class ProjectService {
     private ProjectSharedUserRepository projectSharedUserRepository;
     @Autowired
     private UserService userService;
+    @Autowired
+    private RedisTemplate<String,Object> redisTemplate;
 
     public PagedData<ProjectListDisplayDTO> getProjectsPaged(int pageNum, int pageSize) {
         Assert.isTrue(pageNum >= 0 && pageSize > 0, "getProjectsPaged param invalid");
         PageRequest pageRequest = PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.DESC, "id"));
         Page<Project> page = projectRepository.findAll(pageRequest);
         PagedData<Project> pagedData = PagedData.convert(page, pageRequest);
-        return pagedData.map(ProjectListDisplayDTO::convert);
+        return pagedData.map(ProjectListDisplayDTO::convert).map(projectListDisplayDTO -> {
+            long userId = SecurityUtil.getUser().getId();
+            String key = CacheConstants.PROJECT_FOLLOW_LIST_PREFIX + userId;
+            Double score = redisTemplate.opsForZSet().score(key, projectListDisplayDTO.getId());
+            projectListDisplayDTO.setFollow(score != null);
+            return projectListDisplayDTO;
+        });
+    }
+
+    public Response<Void> followProject(long projectId) {
+        if(projectId <= 0) {
+            return Response.fail(StringConstants.PROJECT_ID_INVALID);
+        }
+        boolean exists = exists(projectId);
+        if(!exists) {
+            return Response.fail(StringConstants.PROJECT_ID_INVALID);
+        }
+        long userId = SecurityUtil.getUser().getId();
+        String key = CacheConstants.PROJECT_FOLLOW_LIST_PREFIX + userId;
+        double score = System.currentTimeMillis() * 1.0;
+        try {
+            Boolean result = redisTemplate.opsForZSet().add(key, projectId, score);
+            if (result != null && result) {
+                return Response.success();
+            }
+        } catch (Exception e) {
+            log.error("followProject fail", e);
+        }
+        return Response.fail(StringConstants.PROJECT_FOLLOW_FAIL);
+    }
+
+    public Response<Void> unfollowProject(long projectId) {
+        if(projectId <= 0) {
+            return Response.fail(StringConstants.PROJECT_ID_INVALID);
+        }
+        boolean exists = exists(projectId);
+        if(!exists) {
+            return Response.fail(StringConstants.PROJECT_ID_INVALID);
+        }
+        long userId = SecurityUtil.getUser().getId();
+        String key = CacheConstants.PROJECT_FOLLOW_LIST_PREFIX + userId;
+        try {
+            Long result = redisTemplate.opsForZSet().remove(key, projectId);
+            if (result != null && result == 1) {
+                return Response.success();
+            }
+        } catch (Exception e) {
+            log.error("unfollowProject fail", e);
+        }
+        return Response.fail(StringConstants.PROJECT_UNFOLLOW_FAIL);
     }
 
     public ProjectDetailDisplayDTO getProjectDetail(long projectId) {

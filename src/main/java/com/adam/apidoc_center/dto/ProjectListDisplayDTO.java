@@ -13,6 +13,7 @@ public class ProjectListDisplayDTO {
     private String accessMode;
     private String createTime;
     private String updateTime;
+    private boolean follow;
 
     public static ProjectListDisplayDTO convert(Project project) {
         ProjectListDisplayDTO dto = new ProjectListDisplayDTO();

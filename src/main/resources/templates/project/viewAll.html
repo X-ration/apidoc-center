@@ -124,8 +124,12 @@
             </div>
         </div>
         <br>
-        <div class="row">
+        <div id="alertWarning" class="d-none alert alert-warning sticky-top" role="alert">
+            A simple warning alert—check it out!
+        </div>
+        <div class="row" id="projectList">
             <div class="card col-6 col-md-4 col-xl-3" style="width: 300px" th:each="project:${pagedData.data}">
+                <span class="d-none" th:text="${project.id}">id</span>
                 <img src="/resources/default_project.jpg" width="200px" height="200px" class="card-img-top" alt="项目图像">
                 <div class="card-body">
                     <h5 class="card-title" th:text="${project.name}">项目名</h5>
@@ -136,7 +140,11 @@
                     <small class="card-text text-muted" th:text="|更新于${project.updateTime}|">更新时间</small><br>
                 </div>
                 <div class="card-footer">
-                    <a th:href="|/project/${project.id}/view|" class="btn btn-primary btn-block">查看</a>
+                    <a th:href="|/project/${project.id}/view|" class="btn btn-primary">查看</a>
+                    <button type="button" class="btn btn-secondary" th:onclick="follow([[${project.id}]])" th:if="!${project.follow}">关注</button>
+                    <button type="button" class="d-none btn btn-secondary" th:onclick="unfollow([[${project.id}]])" th:if="!${project.follow}">取消关注</button>
+                    <button type="button" class="d-none btn btn-secondary" th:onclick="follow([[${project.id}]])" th:if="${project.follow}">关注</button>
+                    <button type="button" class="btn btn-secondary" th:onclick="unfollow([[${project.id}]])" th:if="${project.follow}">取消关注</button>
                 </div>
             </div>
         </div>
@@ -160,6 +168,7 @@
 </div>
 </body>
 <script layout:fragment="script" th:inline="javascript">
+    const csrfToken = [[${_csrf.token}]];
     var projectDeploymentSelect = $('#projectDeploymentSelect');
     var projectDeploymentTable = $('#projectDeploymentTable');
     function addProjectDeployment() {
@@ -240,7 +249,6 @@
         var paramJson = JSON.stringify(paramObject);
         console.log(paramObject);
         console.log(paramJson);
-        const csrfToken = [[${_csrf.token}]];
         ajaxPostJsonFull('/project/create',paramJson,csrfToken,
             function (response) {
                 console.log(response);
@@ -283,6 +291,54 @@
                 processErrorMsgItem(deployment.deploymentUrl, tr.find("input").eq(1));
             }
         }
+    }
+
+    var alertWarning = $('#alertWarning'), projectList = $('#projectList');
+    function follow(projectId) {
+        ajaxPostJson('/project/' + projectId + '/follow',null,csrfToken,function (response) {
+            console.log(response);
+            var cards = projectList.find("div.card");
+            for(var i=0;i<cards.length;i++) {
+                var card = $(cards[i]);
+                var pid = parseInt(card.find('span').eq(0).html());
+                if(pid === projectId) {
+                    var followButton = card.find('button').eq(0),
+                        unfollowButton = card.find('button').eq(1);
+                    if(response.success) {
+                        followButton.addClass('d-none');
+                        unfollowButton.removeClass('d-none');
+                        alertWarning.addClass('d-none');
+                    } else {
+                        alertWarning.removeClass('d-none');
+                        alertWarning.html(response.message);
+                    }
+                    break;
+                }
+            }
+        });
+    }
+    function unfollow(projectId) {
+        ajaxPostJson('/project/' + projectId + '/unfollow',null,csrfToken,function (response) {
+            console.log(response);
+            var cards = projectList.find("div.card");
+            for(var i=0;i<cards.length;i++) {
+                var card = $(cards[i]);
+                var pid = parseInt(card.find('span').eq(0).html());
+                if(pid === projectId) {
+                    var followButton = card.find('button').eq(0),
+                        unfollowButton = card.find('button').eq(1);
+                    if(response.success) {
+                        followButton.removeClass('d-none');
+                        unfollowButton.addClass('d-none');
+                        alertWarning.addClass('d-none');
+                    } else {
+                        alertWarning.removeClass('d-none');
+                        alertWarning.html(response.message);
+                    }
+                    break;
+                }
+            }
+        });
     }
 
     var pageSizeSelect = $('#pageSizeSelect');
