@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default_with_navbar_and_tagsinput}">
+<head>
+    <title>我的关注</title>
+</head>
+<body>
+<div class="container-fluid" layout:fragment="content">
+    <div id="container" class="col-12 col-md-8 offset-md-2">
+        <div id="alert" class="d-none alert alert-warning sticky-top" role="alert">
+            A simple warning alert—check it out!
+        </div>
+        <div class="d-flex justify-content-between">
+            <div></div>
+            <div></div>
+            <div class="row align-items-center" style="width: 200px">
+                <span>每页数量：</span>
+                <select class="form-control" id="pageSizeSelect" style="width: 100px">
+                    <option>5</option>
+                    <option>10</option>
+                    <option>20</option>
+                </select>
+            </div>
+        </div>
+        <br>
+        <div id="alertWarning" class="d-none alert alert-warning sticky-top" role="alert">
+            A simple warning alert—check it out!
+        </div>
+        <div class="row" id="projectList">
+            <div class="card col-6 col-md-4 col-xl-3" style="width: 300px" th:each="project:${pagedData.data}">
+                <span class="d-none" th:text="${project.id}">id</span>
+                <img src="/resources/default_project.jpg" width="200px" height="200px" class="card-img-top" alt="项目图像">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${project.name}">项目名</h5>
+                    <span class="card-text" th:if="${project.accessMode} == '公开'"><i class="fa fa-unlock"></i> 公开</span>
+                    <span class="card-text" th:if="${project.accessMode} == '私有'"><i class="fa fa-lock"></i> 私有</span>
+                    <p class="card-text" th:text="${project.description}">项目介绍</p>
+                    <small class="card-text text-muted" th:text="|创建于${project.createTime}|">创建时间</small><br>
+                    <small class="card-text text-muted" th:text="|更新于${project.updateTime}|">更新时间</small><br>
+                </div>
+                <div class="card-footer">
+                    <a th:href="|/project/${project.id}/view|" class="btn btn-primary">查看</a>
+                    <button type="button" class="btn btn-secondary" th:onclick="follow([[${project.id}]])" th:if="!${project.follow}">关注</button>
+                    <button type="button" class="d-none btn btn-secondary" th:onclick="unfollow([[${project.id}]])" th:if="!${project.follow}">取消关注</button>
+                    <button type="button" class="d-none btn btn-secondary" th:onclick="follow([[${project.id}]])" th:if="${project.follow}">关注</button>
+                    <button type="button" class="btn btn-secondary" th:onclick="unfollow([[${project.id}]])" th:if="${project.follow}">取消关注</button>
+                </div>
+            </div>
+        </div>
+        <br>
+        <div id="pagination" class="d-flex justify-content-center">
+            <nav aria-label="分页导航">
+                <ul class="pagination">
+                    <li class="page-item"><a id="paginationFirst" class="page-link" th:href="|/project/viewFollow?pageNum=0&pageSize=20|">首页</a></li>
+                    <li class="page-item"><a id="paginationPrevious" class="page-link" th:href="|/project/viewFollow?pageNum=|+(${pagedData.pageNum}-1)+|&pageSize=20|">上一页</a></li>
+                    <li class="page-item"><a id="paginationCurrent" class="page-link" th:href="|/project/viewFollow?pageNum=${pagedData.pageNum}&pageSize=20|" th:text="${pagedData.pageNum}+1">0</a></li>
+                    <li class="page-item"><a id="paginationNext" class="page-link" th:href="|/project/viewFollow?pageNum=|+(${pagedData.pageNum}+1)+|&pageSize=20|">下一页</a></li>
+                    <li class="page-item"><a id="paginationLast" class="page-link" th:href="|/project/viewFollow?pageNum=|+(${pagedData.totalPage}-1)+|&pageSize=20|">末页</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div id="pageDescription" class="text-center">
+            <span th:text="|当前第|+(${pagedData.pageNum}+1)+|页，共${pagedData.totalPage}页|">分页信息</span><br>
+            <span th:text="|当前页共${pagedData.curPageSize}条数据，总计${pagedData.totalSize}条数据|">分页数据信息</span>
+        </div>
+    </div>
+</div>
+</body>
+<script layout:fragment="script" th:inline="javascript">
+    const csrfToken = [[${_csrf.token}]];
+
+    var alertWarning = $('#alertWarning'), projectList = $('#projectList');
+    function follow(projectId) {
+        ajaxPostJson('/project/' + projectId + '/follow',null,csrfToken,function (response) {
+            console.log(response);
+            var cards = projectList.find("div.card");
+            for(var i=0;i<cards.length;i++) {
+                var card = $(cards[i]);
+                var pid = parseInt(card.find('span').eq(0).html());
+                if(pid === projectId) {
+                    var followButton = card.find('button').eq(0),
+                        unfollowButton = card.find('button').eq(1);
+                    if(response.success) {
+                        followButton.addClass('d-none');
+                        unfollowButton.removeClass('d-none');
+                        alertWarning.addClass('d-none');
+                    } else {
+                        alertWarning.removeClass('d-none');
+                        alertWarning.html(response.message);
+                    }
+                    break;
+                }
+            }
+        });
+    }
+    function unfollow(projectId) {
+        ajaxPostJson('/project/' + projectId + '/unfollow',null,csrfToken,function (response) {
+            console.log(response);
+            var cards = projectList.find("div.card");
+            for(var i=0;i<cards.length;i++) {
+                var card = $(cards[i]);
+                var pid = parseInt(card.find('span').eq(0).html());
+                if(pid === projectId) {
+                    var followButton = card.find('button').eq(0),
+                        unfollowButton = card.find('button').eq(1);
+                    if(response.success) {
+                        followButton.removeClass('d-none');
+                        unfollowButton.addClass('d-none');
+                        alertWarning.addClass('d-none');
+                    } else {
+                        alertWarning.removeClass('d-none');
+                        alertWarning.html(response.message);
+                    }
+                    break;
+                }
+            }
+        });
+    }
+
+    var pageSizeSelect = $('#pageSizeSelect');
+    var pageSize = parseInt([[${pagedData.pageSize}]]);
+    const totalPage=[[${pagedData.totalPage}]];
+    if(isNaN(pageSize)) {
+        pageSize = 10;
+    }
+    var pageSizeSelectOptions = pageSizeSelect.find("option");
+    for(var i=0;i<pageSizeSelectOptions.length;i++) {
+        var option = $(pageSizeSelectOptions[i]);
+        var optionValue = parseInt(option.html());
+        if(!isNaN(optionValue) && optionValue === pageSize) {
+            option.attr("selected","");
+        }
+    }
+    updatePagination(pageSize, false);
+    function updatePagination(pageSize,refresh) {
+        var allATags = $('#pagination').find("a");
+        for(var i=0;i<allATags.length;i++) {
+            var aTag = $(allATags[i]);
+            var href = aTag.attr("href");
+            var splits0 = href.split("?");
+            var updatedHref = splits0[0];
+            if(splits0.length > 1) {
+                updatedHref = updatedHref + "?";
+                var splits1 = splits0[1].split("&");
+                for(var j=0;j<splits1.length;j++) {
+                    var splits2 = splits1[j];
+                    var splits3 = splits2.split("=");
+                    if(splits3.length > 1) {
+                        var key = splits3[0], value = splits3[1];
+                        if(key === 'pageNum') {
+                            var valueInt = parseInt(value);
+                            if(!isNaN(valueInt)) {
+                                if(valueInt < 0) {
+                                    valueInt = 0;
+                                } else if(valueInt > totalPage - 1) {
+                                    valueInt = totalPage - 1;
+                                    if(valueInt < 0) {
+                                        valueInt = 0;
+                                    }
+                                }
+                                value = "" + valueInt;
+                            }
+                        } else if(key === 'pageSize') {
+                            value = "" + pageSize;
+                        }
+                        updatedHref = updatedHref + key + "=" + value + "&";
+                    } else {
+                        updatedHref = updatedHref + splits2 + "&";
+                    }
+                }
+                updatedHref = updatedHref.substring(0, updatedHref.length - 1);
+            }
+            aTag.attr("href", updatedHref);
+        }
+        if(refresh) {
+            var current = $('#paginationCurrent').attr("href");
+            window.location.href = current;
+        }
+    }
+    pageSizeSelect.on("change", function () {
+        pageSize = parseInt(pageSizeSelect.val());
+        if(!isNaN(pageSize)) {
+            updatePagination(pageSize, true);
+        }
+    });
+</script>
+</html>

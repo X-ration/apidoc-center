@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class PagedData<T> {
 
     private List<T> data;
@@ -22,6 +23,15 @@ public class PagedData<T> {
     private int curPageSize;
     private int totalPage;
     private long totalSize;
+
+    public PagedData(List<T> data, int pageNum, int pageSize, long total) {
+        this.data = data;
+        this.curPageSize = data.size();
+        this.pageNum = pageNum;
+        this.pageSize = pageSize;
+        this.totalSize = total;
+        this.totalPage = (int) Math.ceil(1.0 * total / pageSize);
+    }
 
     public void sort(Comparator<T> comparator) {
         this.data.sort(comparator);

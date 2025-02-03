@@ -79,8 +79,8 @@ public class ProjectAuthorizationManager implements AuthorizationManager<Request
 
         if(requestURI.startsWith("/project")) {
             pathPrefix = "/project";
-            //任何人都可以创建项目、查看项目
-            if(requestURI.equals("/project/create") || requestURI.equals("/project/viewAll")) {
+            //任何人都可以创建项目、查看（关注的）项目
+            if(requestURI.equals("/project/create") || requestURI.equals("/project/viewAll") || requestURI.equals("/project/viewFollow")) {
                 return new AuthorizationDecision(true);
             }
             String projectIdString = null;

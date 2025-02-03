@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -53,6 +54,32 @@ public class ProjectService {
             projectListDisplayDTO.setFollow(score != null);
             return projectListDisplayDTO;
         });
+    }
+
+    public PagedData<ProjectListDisplayDTO> getFollowedProjectsPaged(int pageNum, int pageSize) {
+        Assert.isTrue(pageNum >= 0 && pageSize > 0, "getFollowedProjectsPaged param invalid");
+        long userId = SecurityUtil.getUser().getId();
+        String key = CacheConstants.PROJECT_FOLLOW_LIST_PREFIX + userId;
+        long offset = pageNum == 0 ? 0 : (long) pageNum * pageSize;
+        long total = redisTemplate.opsForZSet().zCard(key);
+        Set<ZSetOperations.TypedTuple<Object>> tupleSet = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, Double.MIN_VALUE, Double.MAX_VALUE, offset, pageSize);
+        List<ZSetOperations.TypedTuple<Object>> tupleList = tupleSet.stream().collect(Collectors.toList());
+        tupleList.sort((t1,t2) -> -1 * Double.compare(t1.getScore(), t2.getScore()));
+        List<Long> sortedProjectIdList = tupleList.stream()
+                .map(ZSetOperations.TypedTuple::getValue)
+                .map(value -> ((Number) value).longValue())
+                .collect(Collectors.toList());
+        List<Project> projectList = projectRepository.findProjectsByIdIn(sortedProjectIdList);
+        Map<Long, Project> projectMap = new HashMap<>();
+        for(Project project: projectList) {
+            projectMap.put(project.getId(), project);
+        }
+        List<Project> sortedProjectList = sortedProjectIdList.stream()
+                .map(projectMap::get)
+                .collect(Collectors.toList());
+        return new PagedData<>(sortedProjectList, pageNum, pageSize, total)
+                .map(ProjectListDisplayDTO::convert)
+                .map(ProjectListDisplayDTO::setFollow);
     }
 
     public Response<Void> followProject(long projectId) {

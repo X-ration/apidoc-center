@@ -32,4 +32,9 @@ public class ProjectListDisplayDTO {
         return dto;
     }
 
+    public ProjectListDisplayDTO setFollow() {
+        this.follow = true;
+        return this;
+    }
+
 }
