@@ -25,14 +25,10 @@
                 <button class="btn btn-outline-primary" type="submit" id="button-addon2">搜索</button>
             </div>
         </form>
-        <div id="searchSuggestionDiv">
+        <div id="searchSuggestionDiv" class="d-none">
             <h5>搜索建议</h5>
-            <ul class="list-group">
-                <li class="list-group-item">Cras justo odio</li>
-                <li class="list-group-item">Dapibus ac facilisis in</li>
-                <li class="list-group-item">Morbi leo risus</li>
-                <li class="list-group-item">Porta ac consectetur ac</li>
-                <li class="list-group-item">Vestibulum at eros</li>
+            <ul class="list-group" id="searchSuggestionUl">
+                <li id="searchSuggestionLiTemplate" class="d-none list-group-item" onmouseover="this.style.background='cyan'" onmouseout="this.style.background='white'" onclick="searchInput.attr('value',this.innerHTML)">Cras justo odio</li>
             </ul>
         </div>
     </div>
@@ -69,7 +65,7 @@
     var searchInput = $('#searchInput'),
         searchSuggestionDiv = $('#searchSuggestionDiv');
     var searchSuggestionUl = searchSuggestionDiv.find('ul');
-    searchSuggestionUl.attr('width', searchInput.attr('width'));
+    searchSuggestionUl.attr('style', 'width:'+searchInput[0].offsetWidth+'px');
 
     var searchTypeValue = [[${searchType}]];
     var searchType = $('#searchType');
