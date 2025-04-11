@@ -17,6 +17,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -31,7 +32,7 @@ import java.nio.file.Paths;
 
 @Service
 @Slf4j
-public class LuceneService implements InitializingBean {
+public class LuceneService implements InitializingBean, DisposableBean {
 
     @Autowired
     private ProjectRepository projectRepository;
@@ -42,6 +43,7 @@ public class LuceneService implements InitializingBean {
 
     private final Path indexPath = Paths.get("indexdir");
     private final Analyzer analyzer = new IKAnalyzer6x();
+    private Directory directory;
     private IndexWriter indexWriter = null;
     private boolean serviceAvailable = true;
 
@@ -58,7 +60,6 @@ public class LuceneService implements InitializingBean {
         }
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        Directory directory = null;
         try {
             directory = FSDirectory.open(indexPath);
         } catch (IOException e) {
@@ -197,4 +198,10 @@ public class LuceneService implements InitializingBean {
         }
     }
 
+    @Override
+    public void destroy() throws Exception {
+        indexWriter.close();
+        directory.close();
+        log.info("优雅关闭服务");
+    }
 }
