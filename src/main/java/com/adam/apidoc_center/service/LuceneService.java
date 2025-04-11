@@ -1,5 +1,6 @@
 package com.adam.apidoc_center.service;
 
+import com.adam.apidoc_center.business.search.SearchType;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.common.SystemConstants;
 import com.adam.apidoc_center.common.ik.IKAnalyzer6x;
@@ -15,8 +16,13 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.*;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +30,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -46,6 +57,97 @@ public class LuceneService implements InitializingBean, DisposableBean {
     private Directory directory;
     private IndexWriter indexWriter = null;
     private boolean serviceAvailable = true;
+
+    public List<String> searchSuggestion(String param, SearchType searchType, int maxSize) {
+        Assert.isTrue(maxSize > 0, "searchSuggestion maxSize:" + maxSize + "<=0!");
+        Assert.notNull(searchType, "searchSugggestion searchType null");
+        if(!serviceAvailable) {
+            return new ArrayList<>();
+        }
+
+        if(param == null) {
+            param = "";
+        }
+        IndexReader indexReader = null;
+
+        try {
+            indexReader = DirectoryReader.open(directory);
+            IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+            String[] fields = {StringConstants.SEARCH_FIELD_NAME, StringConstants.SEARCH_FIELD_DESCRIPTION};
+            MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(fields, analyzer);
+            Query keywordQuery = multiFieldQueryParser.parse(param);
+            TopDocs topDocs;
+            if(searchType == SearchType.ALL) {
+                topDocs = indexSearcher.search(keywordQuery, SystemConstants.SEARCH_SUGGESTION_SEARCH_SIZE);
+            } else {
+                String className = searchTypeToClassName(searchType);
+                QueryParser queryParser = new QueryParser(StringConstants.SEARCH_FIELD_CLASS, analyzer);
+                Query classQuery = queryParser.parse(className);
+                BooleanClause booleanClause1 = new BooleanClause(keywordQuery, BooleanClause.Occur.MUST),
+                        booleanClause2 = new BooleanClause(classQuery, BooleanClause.Occur.MUST);
+                BooleanQuery booleanQuery = new BooleanQuery.Builder()
+                        .add(booleanClause1).add(booleanClause2).build();
+                topDocs = indexSearcher.search(booleanQuery, SystemConstants.SEARCH_SUGGESTION_SEARCH_SIZE);
+            }
+
+            Map<String, Integer> termFreqMap = new HashMap<>();
+            for(ScoreDoc scoreDoc: topDocs.scoreDocs) {
+                Terms terms = indexReader.getTermVector(scoreDoc.doc, StringConstants.SEARCH_FIELD_NAME);
+                countTermFreq(terms, termFreqMap, param);
+                terms = indexReader.getTermVector(scoreDoc.doc, StringConstants.SEARCH_FIELD_DESCRIPTION);
+                countTermFreq(terms, termFreqMap, param);
+            }
+            log.debug("termFreqMap {}", termFreqMap);
+            List<String> termList = new ArrayList<>(termFreqMap.keySet());
+            termList.sort((s1,s2) -> -1 * Integer.compare(termFreqMap.get(s1), termFreqMap.get(s2)));
+            log.debug("termList {}", termList);
+//            return termList.subList(0, maxSize);
+            return termList.size()  > maxSize ? termList.subList(0, maxSize) : termList;
+        } catch (IOException | ParseException e) {
+            log.error("生成搜索建议失败", e);
+            return new ArrayList<>();
+        } finally {
+            if(indexReader != null) {
+                try {
+                    indexReader.close();
+                } catch (IOException e) {
+                    log.error("关闭IndexReader失败", e);
+                }
+            }
+        }
+    }
+
+    private void countTermFreq(Terms terms, Map<String, Integer> termFreqMap, String param) throws IOException {
+        if(terms == null)  {
+            return;
+        }
+        TermsEnum termsEnum = terms.iterator();
+        BytesRef bytesRef = null;
+        while((bytesRef = termsEnum.next()) != null) {
+            String termText = bytesRef.utf8ToString();
+            if(termText.contains(param)) {
+                int termFreq = (int) termsEnum.totalTermFreq();
+                if (termFreqMap.containsKey(termText)) {
+                    termFreqMap.put(termText, termFreqMap.get(termText) + termFreq);
+                } else {
+                    termFreqMap.put(termText, termFreq);
+                }
+            }
+        }
+    }
+
+    private String searchTypeToClassName(SearchType searchType) {
+        switch (searchType) {
+            case PROJECT:
+                return StringConstants.SEARCH_CLASS_PROJECT;
+            case GROUP:
+                return StringConstants.SEARCH_CLASS_GROUP;
+            case INTERFACE:
+                return StringConstants.SEARCH_CLASS_INTERFACE;
+            default:
+                throw new IllegalArgumentException("无效的searchType");
+        }
+    }
 
     @Override
     public void afterPropertiesSet() {

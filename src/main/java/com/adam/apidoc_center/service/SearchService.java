@@ -4,6 +4,7 @@ import com.adam.apidoc_center.business.search.SearchResultPO;
 import com.adam.apidoc_center.business.search.SearchType;
 import com.adam.apidoc_center.common.PagedData;
 import com.adam.apidoc_center.common.Response;
+import com.adam.apidoc_center.common.SystemConstants;
 import com.adam.apidoc_center.domain.GroupInterface;
 import com.adam.apidoc_center.domain.Project;
 import com.adam.apidoc_center.domain.ProjectGroup;
@@ -17,7 +18,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -31,6 +34,11 @@ public class SearchService {
     private GroupInterfaceRepository groupInterfaceRepository;
     @Autowired
     private LuceneService luceneService;
+
+    public List<String> searchSuggestion(String param, SearchType searchType) {
+        AssertUtil.requireNonNull(param, searchType);
+        return luceneService.searchSuggestion(param.toLowerCase(), searchType, SystemConstants.SEARCH_SUGGESTION_MAX_SIZE);
+    }
 
     /**
      * 搜索方法

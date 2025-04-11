@@ -5,13 +5,16 @@ import com.adam.apidoc_center.common.PagedData;
 import com.adam.apidoc_center.common.Response;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.dto.SearchResultDTO;
+import com.adam.apidoc_center.dto.SearchSuggestionRequestDTO;
 import com.adam.apidoc_center.service.SearchService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.util.Assert;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/search")
@@ -40,6 +43,15 @@ public class SearchController {
             }
         }
         return "project/search";
+    }
+
+    @PostMapping("/suggestion")
+    @ResponseBody
+    public List<String> searchSuggestion(@RequestBody SearchSuggestionRequestDTO requestDTO) {
+        Assert.notNull(requestDTO, "searchSuggestion requestDTO null");
+        Assert.notNull(requestDTO.getParam(), "searchSuggestion param null");
+        Assert.notNull(requestDTO.getSearchType(), "searchSuggestion searchType null");
+        return searchService.searchSuggestion(requestDTO.getParam(), requestDTO.getSearchType());
     }
 
 }

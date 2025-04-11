@@ -18,5 +18,7 @@ public class SystemConstants {
     public static final int EMAIL_CODE_NUM_OF_DIGITS = 6;
     public static final double EMAIL_CODE_RATE_LIMIT = 1.0;
     public static final int SEARCH_CREATE_INDEX_PAGESIZE = 50;
+    public static final int SEARCH_SUGGESTION_SEARCH_SIZE = 10;
+    public static final int SEARCH_SUGGESTION_MAX_SIZE = 3;
 
 }
