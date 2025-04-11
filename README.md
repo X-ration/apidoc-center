@@ -1,6 +1,18 @@
 ### 接口文档中心【apidoc-center】
 
 -----------
+#### 接入Lucene搜索版本
+
+分支：br_lucene
+
+接入Lucene，对项目、分组、接口建立索引，在用户搜索时根据输入的关键字给出最多3个搜索建议。
+
+Q：IKAnalyzer jar包在本地Maven仓库不存在，如何安装IKAnalyzer到本地Maven仓库？
+
+A：mvn install:install-file -Dfile=lib\ikanalyzer-2012_u6.jar -DgroupId=org.wltea -DartifactId=ikanalyzer -Dversion=2012_u6 -Dpackaging=jar
+再将ikanalyzer-2012_u6-sources.jar复制到maven仓库对应的路径下。
+
+-----------
 
 一套适用于web的接口文档中心，主要功能：用户登录注册、项目管理、分组管理、接口管理、模拟调用，为企业内部维护接口文档提供便利。 使用jpa作为ORM框架连接MySQL数据库。 支持动态数据源、读写分离。建表语句在[create_tables.sql](src/main/resources/create_tables.sql)。
 

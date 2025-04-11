@@ -13,8 +13,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-
 @Controller
 @RequestMapping("/search")
 public class SearchController {
@@ -34,7 +32,7 @@ public class SearchController {
         if(StringUtils.isBlank(searchParam)) {
             model.addAttribute("error", StringConstants.SEARCH_FAIL_PREFIX + StringConstants.SEARCH_PARAM_BLANK);
         } else {
-            Response<PagedData<SearchResultDTO>> response = searchService.search(searchParam, searchType, pageNum, pageSize);
+            Response<PagedData<SearchResultDTO>> response = searchService.searchDB(searchParam, searchType, pageNum, pageSize);
             if(response.isSuccess()) {
                 model.addAttribute("data", response.getData());
             } else {

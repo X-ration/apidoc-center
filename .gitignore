@@ -1,6 +1,7 @@
 # 自定义配置
 logs/
 application-dev.properties
+indexdir/
 
 HELP.md
 .gradle

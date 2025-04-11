@@ -17,5 +17,6 @@ public class SystemConstants {
     public static final MediaType OKHTTP_MEDIA_TYPE_JSON_UTF8 = MediaType.parse("application/json; charset=utf-8");
     public static final int EMAIL_CODE_NUM_OF_DIGITS = 6;
     public static final double EMAIL_CODE_RATE_LIMIT = 1.0;
+    public static final int SEARCH_CREATE_INDEX_PAGESIZE = 50;
 
 }

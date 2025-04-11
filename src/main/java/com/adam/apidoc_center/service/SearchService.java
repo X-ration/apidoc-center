@@ -18,9 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 public class SearchService {
@@ -31,6 +29,8 @@ public class SearchService {
     private ProjectGroupRepository projectGroupRepository;
     @Autowired
     private GroupInterfaceRepository groupInterfaceRepository;
+    @Autowired
+    private LuceneService luceneService;
 
     /**
      * 搜索方法
@@ -40,7 +40,7 @@ public class SearchService {
      * @param pageSize
      * @return
      */
-    public Response<PagedData<SearchResultDTO>> search(String searchParam, SearchType searchType, int pageNum, int pageSize) {
+    public Response<PagedData<SearchResultDTO>> searchDB(String searchParam, SearchType searchType, int pageNum, int pageSize) {
         AssertUtil.requireNonNull(searchParam, searchType);
         PageRequest pageRequest = PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.DESC, "id"));
         PagedData<SearchResultDTO> searchResultDTOPagedData = null;

@@ -115,5 +115,12 @@ public class StringConstants {
     //搜索相关
     public static final String SEARCH_FAIL_PREFIX = "搜索失败：";
     public static final String SEARCH_PARAM_BLANK = "搜索字符串为空";
+    public static final String SEARCH_CLASS_PROJECT = "Project";
+    public static final String SEARCH_CLASS_GROUP = "Group";
+    public static final String SEARCH_CLASS_INTERFACE = "Interface";
+    public static final String SEARCH_FIELD_ID = "id";
+    public static final String SEARCH_FIELD_CLASS = "class";
+    public static final String SEARCH_FIELD_NAME = "name";
+    public static final String SEARCH_FIELD_DESCRIPTION = "description";
 
 }
