@@ -273,8 +273,8 @@ public class LuceneService implements InitializingBean, DisposableBean {
             if(object instanceof Project) {
                 Project project = (Project) object;
                 if(project.getAccessMode() == Project.AccessMode.PUBLIC) {
-                    id = String.valueOf(project.getId());
                     className = StringConstants.SEARCH_CLASS_PROJECT;
+                    id = className + project.getId();
                     name = project.getName();
                     description = project.getDescription();
                 } else {
@@ -284,8 +284,8 @@ public class LuceneService implements InitializingBean, DisposableBean {
             } else if(object instanceof ProjectGroup) {
                 ProjectGroup projectGroup = (ProjectGroup) object;
                 if(projectGroup.getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
-                    id = String.valueOf(projectGroup.getId());
                     className = StringConstants.SEARCH_CLASS_GROUP;
+                    id = className + projectGroup.getId();
                     name = projectGroup.getName();
                     description = "";
                 } else {
@@ -295,8 +295,8 @@ public class LuceneService implements InitializingBean, DisposableBean {
             } else if(object instanceof GroupInterface) {
                 GroupInterface groupInterface = (GroupInterface) object;
                 if(groupInterface.getProjectGroup().getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
-                    id = String.valueOf(groupInterface.getId());
                     className = StringConstants.SEARCH_CLASS_INTERFACE;
+                    id = className + groupInterface.getId();
                     name = groupInterface.getName();
                     description = groupInterface.getDescription();
                 } else {
