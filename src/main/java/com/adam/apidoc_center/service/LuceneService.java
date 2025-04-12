@@ -36,10 +36,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -74,29 +71,10 @@ public class LuceneService implements InitializingBean, DisposableBean {
             indexReader = DirectoryReader.open(directory);
             IndexSearcher indexSearcher = new IndexSearcher(indexReader);
             String[] fields = {StringConstants.SEARCH_FIELD_NAME, StringConstants.SEARCH_FIELD_DESCRIPTION};
-            MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(fields, analyzer);
-            Query keywordQuery = multiFieldQueryParser.parse(param);
-            TopDocs topDocs;
-            if(searchType == SearchType.ALL) {
-                topDocs = indexSearcher.search(keywordQuery, SystemConstants.SEARCH_SUGGESTION_SEARCH_SIZE);
-            } else {
-                String className = searchTypeToClassName(searchType);
-                QueryParser queryParser = new QueryParser(StringConstants.SEARCH_FIELD_CLASS, analyzer);
-                Query classQuery = queryParser.parse(className);
-                BooleanClause booleanClause1 = new BooleanClause(keywordQuery, BooleanClause.Occur.MUST),
-                        booleanClause2 = new BooleanClause(classQuery, BooleanClause.Occur.MUST);
-                BooleanQuery booleanQuery = new BooleanQuery.Builder()
-                        .add(booleanClause1).add(booleanClause2).build();
-                topDocs = indexSearcher.search(booleanQuery, SystemConstants.SEARCH_SUGGESTION_SEARCH_SIZE);
-            }
-
+//            MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(fields, analyzer);
+//            Query keywordQuery = multiFieldQueryParser.parse(param);
             Map<String, Integer> termFreqMap = new HashMap<>();
-            for(ScoreDoc scoreDoc: topDocs.scoreDocs) {
-                Terms terms = indexReader.getTermVector(scoreDoc.doc, StringConstants.SEARCH_FIELD_NAME);
-                countTermFreq(terms, termFreqMap, param);
-                terms = indexReader.getTermVector(scoreDoc.doc, StringConstants.SEARCH_FIELD_DESCRIPTION);
-                countTermFreq(terms, termFreqMap, param);
-            }
+            prefixQuery(param, searchType, fields, indexReader, indexSearcher, termFreqMap);
             log.debug("termFreqMap {}", termFreqMap);
             List<String> termList = new ArrayList<>(termFreqMap.keySet());
             termList.sort((s1,s2) -> -1 * Integer.compare(termFreqMap.get(s1), termFreqMap.get(s2)));
@@ -115,6 +93,49 @@ public class LuceneService implements InitializingBean, DisposableBean {
                 }
             }
         }
+    }
+
+    private void prefixQuery(String param, SearchType searchType, String[] fields, IndexReader indexReader, IndexSearcher indexSearcher, Map<String, Integer> termFreqMap) throws IOException, ParseException {
+        Query prefixQuery = new PrefixQuery(new Term(fields[0], param));
+        TopDocs topDocs = searchTopDoc(prefixQuery, searchType, indexSearcher);
+
+        Set<Integer> docIdSet = new HashSet<>();
+        for(ScoreDoc scoreDoc: topDocs.scoreDocs) {
+            docIdSet.add(scoreDoc.doc);
+            Terms terms = indexReader.getTermVector(scoreDoc.doc, StringConstants.SEARCH_FIELD_NAME);
+            countTermFreq(terms, termFreqMap, param);
+            terms = indexReader.getTermVector(scoreDoc.doc, StringConstants.SEARCH_FIELD_DESCRIPTION);
+            countTermFreq(terms, termFreqMap, param);
+        }
+
+        prefixQuery = new PrefixQuery(new Term(fields[1], param));
+        topDocs = searchTopDoc(prefixQuery, searchType, indexSearcher);
+
+        for(ScoreDoc scoreDoc: topDocs.scoreDocs) {
+            if(docIdSet.contains(scoreDoc.doc))
+                continue;
+            Terms terms = indexReader.getTermVector(scoreDoc.doc, StringConstants.SEARCH_FIELD_NAME);
+            countTermFreq(terms, termFreqMap, param);
+            terms = indexReader.getTermVector(scoreDoc.doc, StringConstants.SEARCH_FIELD_DESCRIPTION);
+            countTermFreq(terms, termFreqMap, param);
+        }
+    }
+
+    private TopDocs searchTopDoc(Query query, SearchType searchType, IndexSearcher indexSearcher) throws IOException, ParseException {
+        TopDocs topDocs;
+        if(searchType == SearchType.ALL) {
+            topDocs = indexSearcher.search(query, SystemConstants.SEARCH_SUGGESTION_SEARCH_SIZE);
+        } else {
+            String className = searchTypeToClassName(searchType);
+            QueryParser queryParser = new QueryParser(StringConstants.SEARCH_FIELD_CLASS, analyzer);
+            Query classQuery = queryParser.parse(className);
+            BooleanClause booleanClause1 = new BooleanClause(query, BooleanClause.Occur.MUST),
+                    booleanClause2 = new BooleanClause(classQuery, BooleanClause.Occur.MUST);
+            BooleanQuery booleanQuery = new BooleanQuery.Builder()
+                    .add(booleanClause1).add(booleanClause2).build();
+            topDocs = indexSearcher.search(booleanQuery, SystemConstants.SEARCH_SUGGESTION_SEARCH_SIZE);
+        }
+        return topDocs;
     }
 
     private void countTermFreq(Terms terms, Map<String, Integer> termFreqMap, String param) throws IOException {
