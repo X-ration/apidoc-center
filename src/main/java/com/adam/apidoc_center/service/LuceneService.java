@@ -53,7 +53,7 @@ public class LuceneService implements InitializingBean, DisposableBean {
     private GroupInterfaceRepository groupInterfaceRepository;
 
     private final Path indexPath = Paths.get("indexdir");
-    private final Analyzer analyzer = new IKAnalyzer6x();
+    private final Analyzer analyzer = new IKAnalyzer6x(true);
     private Directory directory;
     private IndexWriter indexWriter = null;
     private boolean serviceAvailable = true;
