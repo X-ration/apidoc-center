@@ -27,19 +27,24 @@ public class SearchResultDTO {
     public static SearchResultDTO mapFrom(SearchResultPO searchResultPO) {
         SearchResultDTO.Type type = SearchResultDTO.Type.valueOf(searchResultPO.getType());
         Objects.requireNonNull(type);
+        String link = link(type, searchResultPO.getId());
+        return new SearchResultDTO(type, searchResultPO.getName(), searchResultPO.getDescription(), link);
+    }
+
+    private static String link(Type type, long id) {
         String link = null;
         switch (type) {
             case PROJECT:
-                link = "/project/" + searchResultPO.getId() + "/view";
+                link = "/project/" + id + "/view";
                 break;
             case GROUP:
-                link = "/group/" + searchResultPO.getId() + "/view";
+                link = "/group/" + id + "/view";
                 break;
             case INTERFACE:
-                link = "/interface/" + searchResultPO.getId() + "/view";
+                link = "/interface/" + id + "/view";
                 break;
         }
-        return new SearchResultDTO(type, searchResultPO.getName(), searchResultPO.getDescription(), link);
+        return link;
     }
 
     public static SearchResultDTO mapFrom(Project project) {

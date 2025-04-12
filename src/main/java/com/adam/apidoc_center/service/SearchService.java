@@ -13,6 +13,7 @@ import com.adam.apidoc_center.repository.GroupInterfaceRepository;
 import com.adam.apidoc_center.repository.ProjectGroupRepository;
 import com.adam.apidoc_center.repository.ProjectRepository;
 import com.adam.apidoc_center.util.AssertUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,10 +23,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class SearchService {
 
     @Autowired
@@ -37,6 +40,16 @@ public class SearchService {
     @Autowired
     private LuceneService luceneService;
 
+    private final Comparator<SearchResultPO> searchResultPOComparator = (po1, po2) -> {
+        if(po1.getType().equals(po2.getType())) {
+            return -1 * Long.compare(po1.getId(), po2.getId());
+        } else {
+            SearchResultDTO.Type type1 = SearchResultDTO.Type.valueOf(po1.getType()),
+                    type2 = SearchResultDTO.Type.valueOf(po2.getType());
+            return Integer.compare(type1.ordinal(), type2.ordinal());
+        }
+    };
+
     public List<String> searchSuggestion(String param, SearchType searchType) {
         AssertUtil.requireNonNull(param, searchType);
         if(StringUtils.isBlank(param)) {
@@ -47,7 +60,28 @@ public class SearchService {
     }
 
     /**
-     * 搜索方法
+     * 搜索Lucene索引
+     * @param searchParam
+     * @param searchType
+     * @param pageNum 0-based
+     * @param pageSize
+     * @return
+     */
+    public Response<PagedData<SearchResultDTO>> searchLucene(String searchParam, SearchType searchType, int pageNum, int pageSize) {
+        AssertUtil.requireNonNull(searchParam, searchType);
+        try {
+            PagedData<SearchResultPO> searchResultPOPagedData = luceneService.search(searchParam, searchType, pageNum, pageSize);
+            searchResultPOPagedData.sort(searchResultPOComparator);
+            PagedData<SearchResultDTO> searchResultDTOPagedData = searchResultPOPagedData.map(SearchResultDTO::mapFrom);
+            return Response.success(searchResultDTOPagedData);
+        } catch (Exception e) {
+            log.error("searchLucene异常", e);
+            return Response.fail("搜索失败");
+        }
+    }
+
+    /**
+     * 搜索数据库
      * @param searchParam
      * @param searchType
      * @param pageNum 0-based
@@ -64,15 +98,7 @@ public class SearchService {
                 Page<Map<String,Object>> searchResultPOPage = projectRepository.findAllSearchResult(searchParam, PageRequest.of(pageNum, pageSize));
                 PagedData<SearchResultPO> searchResultPOPagedData = PagedData.convert(searchResultPOPage, pageRequest)
                         .map(SearchResultPO::new);
-                searchResultPOPagedData.sort((po1, po2) -> {
-                    if(po1.getType().equals(po2.getType())) {
-                        return -1 * Long.compare(po1.getId(), po2.getId());
-                    } else {
-                        SearchResultDTO.Type type1 = SearchResultDTO.Type.valueOf(po1.getType()),
-                                type2 = SearchResultDTO.Type.valueOf(po2.getType());
-                        return Integer.compare(type1.ordinal(), type2.ordinal());
-                    }
-                });
+                searchResultPOPagedData.sort(searchResultPOComparator);
                 searchResultDTOPagedData = searchResultPOPagedData.map(SearchResultDTO::mapFrom);
                 return Response.success(searchResultDTOPagedData);
             case PROJECT:

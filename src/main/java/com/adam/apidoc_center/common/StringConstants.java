@@ -120,6 +120,7 @@ public class StringConstants {
     public static final String SEARCH_CLASS_INTERFACE = "Interface";
     public static final String SEARCH_FIELD_ID = "id";
     public static final String SEARCH_FIELD_CLASS = "class";
+    public static final String SEARCH_FIELD_CLASS_ID = "classId";
     public static final String SEARCH_FIELD_NAME = "name";
     public static final String SEARCH_FIELD_DESCRIPTION = "description";
 

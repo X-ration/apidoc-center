@@ -35,7 +35,7 @@ public class SearchController {
         if(StringUtils.isBlank(searchParam)) {
             model.addAttribute("error", StringConstants.SEARCH_FAIL_PREFIX + StringConstants.SEARCH_PARAM_BLANK);
         } else {
-            Response<PagedData<SearchResultDTO>> response = searchService.searchDB(searchParam, searchType, pageNum, pageSize);
+            Response<PagedData<SearchResultDTO>> response = searchService.searchLucene(searchParam, searchType, pageNum, pageSize);
             if(response.isSuccess()) {
                 model.addAttribute("data", response.getData());
             } else {

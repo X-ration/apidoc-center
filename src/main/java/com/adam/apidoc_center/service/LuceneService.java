@@ -1,6 +1,8 @@
 package com.adam.apidoc_center.service;
 
+import com.adam.apidoc_center.business.search.SearchResultPO;
 import com.adam.apidoc_center.business.search.SearchType;
+import com.adam.apidoc_center.common.PagedData;
 import com.adam.apidoc_center.common.StringConstants;
 import com.adam.apidoc_center.common.SystemConstants;
 import com.adam.apidoc_center.common.ik.IKAnalyzer6x;
@@ -10,7 +12,9 @@ import com.adam.apidoc_center.domain.ProjectGroup;
 import com.adam.apidoc_center.repository.GroupInterfaceRepository;
 import com.adam.apidoc_center.repository.ProjectGroupRepository;
 import com.adam.apidoc_center.repository.ProjectRepository;
+import com.adam.apidoc_center.util.AssertUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -55,16 +59,57 @@ public class LuceneService implements InitializingBean, DisposableBean {
     private IndexWriter indexWriter = null;
     private boolean serviceAvailable = true;
 
+    public PagedData<SearchResultPO> search(String searchParam, SearchType searchType, int pageNum, int pageSize) {
+        AssertUtil.requireNonNull(searchParam, searchType);
+        if(!serviceAvailable || StringUtils.isBlank(searchParam)) {
+            return PagedData.emptyPagedData(pageNum, pageSize);
+        }
+
+        try (IndexReader indexReader = DirectoryReader.open(directory)) {
+            IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+            String[] fields = {StringConstants.SEARCH_FIELD_NAME, StringConstants.SEARCH_FIELD_DESCRIPTION};
+            MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(fields, analyzer);
+            Query query = multiFieldQueryParser.parse(searchParam);
+            TopDocs topDocs = indexSearcher.search(query, pageSize);
+            int totalHit = topDocs.totalHits;
+            int totalPage = (int) Math.ceil((double) totalHit / pageSize);
+            List<SearchResultPO> searchResultList = new LinkedList<>();
+            if(pageNum == 0) {
+                for(ScoreDoc scoreDoc: topDocs.scoreDocs) {
+                    Document document = indexSearcher.doc(scoreDoc.doc);
+                    SearchResultPO searchResultPO = new SearchResultPO(document);
+                    searchResultList.add(searchResultPO);
+                }
+                return new PagedData<>(searchResultList, pageNum, pageSize, totalHit);
+            } else if(pageNum >= totalPage) {
+                return PagedData.emptyPagedData(pageNum, pageSize);
+            } else {
+                ScoreDoc lastScoreDoc = topDocs.scoreDocs[topDocs.scoreDocs.length - 1];
+                int pageCounter = pageNum;
+                while(pageCounter-- > 0) {
+                    topDocs = indexSearcher.searchAfter(lastScoreDoc, query, pageSize);
+                    lastScoreDoc = topDocs.scoreDocs[topDocs.scoreDocs.length - 1];
+                }
+                for(ScoreDoc scoreDoc: topDocs.scoreDocs) {
+                    Document document = indexSearcher.doc(scoreDoc.doc);
+                    SearchResultPO searchResultPO = new SearchResultPO(document);
+                    searchResultList.add(searchResultPO);
+                }
+                return new PagedData<>(searchResultList, pageNum, pageSize, totalHit);
+            }
+        } catch (IOException | ParseException e) {
+            log.error("搜索失败", e);
+            return PagedData.emptyPagedData(pageNum, pageSize);
+        }
+    }
+
     public List<String> searchSuggestion(String param, SearchType searchType, int maxSize) {
         Assert.isTrue(maxSize > 0, "searchSuggestion maxSize:" + maxSize + "<=0!");
         Assert.notNull(searchType, "searchSugggestion searchType null");
-        if(!serviceAvailable) {
+        if(!serviceAvailable || StringUtils.isBlank(param)) {
             return new ArrayList<>();
         }
 
-        if(param == null) {
-            param = "";
-        }
         IndexReader indexReader = null;
 
         try {
@@ -253,6 +298,9 @@ public class LuceneService implements InitializingBean, DisposableBean {
         FieldType fieldTypeClass = new FieldType();
         fieldTypeClass.setIndexOptions(IndexOptions.DOCS);
         fieldTypeClass.setStored(true);
+        FieldType fieldTypeClassId = new FieldType();
+        fieldTypeClassId.setIndexOptions(IndexOptions.DOCS);
+        fieldTypeClassId.setStored(true);
         FieldType fieldTypeName = new FieldType();
         fieldTypeName.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
         fieldTypeName.setStored(true);
@@ -269,12 +317,13 @@ public class LuceneService implements InitializingBean, DisposableBean {
         fieldTypeDescription.setStoreTermVectorOffsets(true);
 
         for(T object: page.getContent()) {
-            String id,className,name,description;
+            String id,className,classId,name,description;
             if(object instanceof Project) {
                 Project project = (Project) object;
                 if(project.getAccessMode() == Project.AccessMode.PUBLIC) {
                     className = StringConstants.SEARCH_CLASS_PROJECT;
-                    id = className + project.getId();
+                    id = String.valueOf(project.getId());
+                    classId = className + id;
                     name = project.getName();
                     description = project.getDescription();
                 } else {
@@ -285,7 +334,8 @@ public class LuceneService implements InitializingBean, DisposableBean {
                 ProjectGroup projectGroup = (ProjectGroup) object;
                 if(projectGroup.getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
                     className = StringConstants.SEARCH_CLASS_GROUP;
-                    id = className + projectGroup.getId();
+                    id = String.valueOf(projectGroup.getId());
+                    classId = className + id;
                     name = projectGroup.getName();
                     description = "";
                 } else {
@@ -296,7 +346,8 @@ public class LuceneService implements InitializingBean, DisposableBean {
                 GroupInterface groupInterface = (GroupInterface) object;
                 if(groupInterface.getProjectGroup().getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
                     className = StringConstants.SEARCH_CLASS_INTERFACE;
-                    id = className + groupInterface.getId();
+                    id = String.valueOf(groupInterface.getId());
+                    classId = className + id;
                     name = groupInterface.getName();
                     description = groupInterface.getDescription();
                 } else {
@@ -310,6 +361,7 @@ public class LuceneService implements InitializingBean, DisposableBean {
             Document document = new Document();
             document.add(new Field(StringConstants.SEARCH_FIELD_ID, id, fieldTypeId));
             document.add(new Field(StringConstants.SEARCH_FIELD_CLASS, className, fieldTypeClass));
+            document.add(new Field(StringConstants.SEARCH_FIELD_CLASS_ID, classId, fieldTypeClassId));
             document.add(new Field(StringConstants.SEARCH_FIELD_NAME, name, fieldTypeName));
             document.add(new Field(StringConstants.SEARCH_FIELD_DESCRIPTION, description == null ? "" : description, fieldTypeDescription));
 

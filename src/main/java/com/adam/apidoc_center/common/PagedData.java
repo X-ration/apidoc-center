@@ -33,6 +33,16 @@ public class PagedData<T> {
         this.totalPage = (int) Math.ceil(1.0 * total / pageSize);
     }
 
+    public static <T> PagedData<T> emptyPagedData(int pageNum, int pageSize) {
+        PagedData<T> pagedData = new PagedData<>();
+        pagedData.pageNum = pageNum;
+        pagedData.pageSize = pageSize;
+        pagedData.curPageSize = 0;
+        pagedData.totalSize = 0;
+        pagedData.totalPage = 0;
+        return pagedData;
+    }
+
     public void sort(Comparator<T> comparator) {
         this.data.sort(comparator);
     }
