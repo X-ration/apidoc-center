@@ -10,6 +10,7 @@ import com.adam.apidoc_center.security.oauth2.MyOAuth2UserRequestEntityConverter
 import com.adam.apidoc_center.security.oauth2.MyOAuth2UserService;
 import com.adam.apidoc_center.util.ReflectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,6 +19,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -37,6 +39,8 @@ public class SecurityConfig {
 
     @Autowired
     private ProjectAuthorizationManager projectAuthorizationManager;
+    @Value("${security.csrf.enable:false}")
+    private boolean csrfEnable;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -75,7 +79,11 @@ public class SecurityConfig {
                 exception.accessDeniedPage("/error/403")
         );
 
-        http.csrf(Customizer.withDefaults());
+        if(csrfEnable) {
+            http.csrf(Customizer.withDefaults());
+        } else {
+            http.csrf(AbstractHttpConfigurer::disable);
+        }
         http.rememberMe(rememberMe -> rememberMe
                         .key("privateKey")
                         .tokenRepository(persistentTokenRepository)

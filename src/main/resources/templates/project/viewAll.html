@@ -170,7 +170,11 @@
 </div>
 </body>
 <script layout:fragment="script" th:inline="javascript">
-    const csrfToken = [[${_csrf.token}]];
+    const csrf = [[${_csrf}]];
+    var csrfToken = null;
+    if(csrf !== null) {
+        csrfToken = csrf.token;
+    }
     $('[data-toggle="tooltip"]').tooltip({
         delay: { "show": 0, "hide": 2000 }
     });
