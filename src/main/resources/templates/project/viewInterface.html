@@ -437,7 +437,11 @@
     $('[data-toggle="tooltip"]').tooltip({
         delay: { "show": 0, "hide": 2000 }
     });
-    const csrfToken = [[${_csrf.token}]];
+    const csrf = [[${_csrf}]];
+    var csrfToken = null;
+    if(csrf !== null) {
+        csrfToken = csrf.token;
+    }
     const interfaceId = [[${interface.id}]];
     const projectId = [[${interface.projectId}]];
     const groupId = [[${interface.groupId}]];

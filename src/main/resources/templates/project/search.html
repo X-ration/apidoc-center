@@ -62,6 +62,12 @@
 </div>
 </body>
 <script layout:fragment="script" th:inline="javascript">
+    const csrf = [[${_csrf}]];
+    var csrfToken = null;
+    if(csrf !== null) {
+        csrfToken = csrf.token;
+    }
+
     var searchInput = $('#searchInput'),
         searchSuggestionDiv = $('#searchSuggestionDiv');
     var searchSuggestionUl = searchSuggestionDiv.find('ul');

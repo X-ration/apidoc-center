@@ -258,7 +258,12 @@
 </div>
 </body>
 <script layout:fragment="script" th:inline="javascript">
-    const csrfToken = [[${_csrf.token}]];
+    const csrf = [[${_csrf}]];
+    var csrfToken = null;
+    if(csrf !== null) {
+        csrfToken = csrf.token;
+    }
+
     const projectId = [[${project.id}]];
     var groupName = $('#groupName');
     function createGroup() {
