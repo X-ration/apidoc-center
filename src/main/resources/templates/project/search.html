@@ -28,7 +28,7 @@
         <div id="searchSuggestionDiv" class="d-none">
             <h5>搜索建议</h5>
             <ul class="list-group" id="searchSuggestionUl">
-                <li id="searchSuggestionLiTemplate" class="d-none list-group-item" onmouseover="this.style.background='cyan'" onmouseout="this.style.background='white'" onclick="searchInput.attr('value',this.innerHTML)">Cras justo odio</li>
+                <li id="searchSuggestionLiTemplate" class="d-none list-group-item" onmouseover="this.style.background='cyan'" onmouseout="this.style.background='white'" onclick="setInputAndTrigger(this.innerHTML)">Cras justo odio</li>
             </ul>
         </div>
     </div>
@@ -68,14 +68,62 @@
         csrfToken = csrf.token;
     }
 
+    var searchTypeValue = [[${searchType}]];
+    var searchType = $('#searchType');
+    searchType.val(searchTypeValue);
+
     var searchInput = $('#searchInput'),
         searchSuggestionDiv = $('#searchSuggestionDiv');
     var searchSuggestionUl = searchSuggestionDiv.find('ul');
     searchSuggestionUl.attr('style', 'width:'+searchInput[0].offsetWidth+'px');
+    window.addEventListener('resize', function() {
+        searchSuggestionUl.attr('style', 'width:'+searchInput[0].offsetWidth+'px');
+    });
+    regenerateSuggestion();
 
-    var searchTypeValue = [[${searchType}]];
-    var searchType = $('#searchType');
-    searchType.val(searchTypeValue);
+    function regenerateSuggestion() {
+        var searchParam = searchInput.val();
+        if(searchParam === '') {
+            return;
+        }
+        searchTypeValue = searchType.val();
+        var paramObject = {'param': searchParam, 'searchType': searchTypeValue};
+        var paramJson = JSON.stringify(paramObject);
+        ajaxPostJson('/search/suggestion', paramJson, csrfToken, function (response) {
+            console.log(response);
+            if(searchSuggestionDiv.hasClass('d-none')) {
+                searchSuggestionDiv.removeClass('d-none');
+            }
+
+            var oldLis = searchSuggestionUl.find("li");
+            for(var i=0;i<oldLis.length;i++) {
+                var oldLi = $(oldLis[i]);
+                if(!oldLi.hasClass('d-none')) {
+                    oldLi.remove();
+                }
+            }
+
+            if(response.success) {
+                var suggestionArray = response.data;
+                var searchSuggestionLiTemplate = $('#searchSuggestionLiTemplate');
+                for(var i=0;i<suggestionArray.length;i++) {
+                    var suggestion = suggestionArray[i];
+                    var newLi = searchSuggestionLiTemplate.clone();
+                    newLi.removeClass('d-none');
+                    newLi.html(suggestion);
+                    searchSuggestionUl.append(newLi);
+                }
+            }
+        });
+    }
+
+    function setInputAndTrigger(value) {
+        searchInput.val(value);
+        searchInput.trigger('input');  //val方法不会触发input事件，需要手动触发
+    }
+
+    searchInput.bind('input', regenerateSuggestion);
+    searchType.on('change', regenerateSuggestion);
 
     var dataObject = [[${data}]];
     if(dataObject !== null) {

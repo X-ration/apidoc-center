@@ -13,6 +13,7 @@ import com.adam.apidoc_center.repository.GroupInterfaceRepository;
 import com.adam.apidoc_center.repository.ProjectGroupRepository;
 import com.adam.apidoc_center.repository.ProjectRepository;
 import com.adam.apidoc_center.util.AssertUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +39,11 @@ public class SearchService {
 
     public List<String> searchSuggestion(String param, SearchType searchType) {
         AssertUtil.requireNonNull(param, searchType);
-        return luceneService.searchSuggestion(param.toLowerCase(), searchType, SystemConstants.SEARCH_SUGGESTION_MAX_SIZE);
+        if(StringUtils.isBlank(param)) {
+            return new ArrayList<>();
+        } else {
+            return luceneService.searchSuggestion(param.toLowerCase(), searchType, SystemConstants.SEARCH_SUGGESTION_MAX_SIZE);
+        }
     }
 
     /**

@@ -47,11 +47,12 @@ public class SearchController {
 
     @PostMapping("/suggestion")
     @ResponseBody
-    public List<String> searchSuggestion(@RequestBody SearchSuggestionRequestDTO requestDTO) {
+    public Response<List<String>> searchSuggestion(@RequestBody SearchSuggestionRequestDTO requestDTO) {
         Assert.notNull(requestDTO, "searchSuggestion requestDTO null");
         Assert.notNull(requestDTO.getParam(), "searchSuggestion param null");
         Assert.notNull(requestDTO.getSearchType(), "searchSuggestion searchType null");
-        return searchService.searchSuggestion(requestDTO.getParam(), requestDTO.getSearchType());
+        List<String> suggestionList = searchService.searchSuggestion(requestDTO.getParam(), requestDTO.getSearchType());
+        return Response.success(suggestionList);
     }
 
 }
