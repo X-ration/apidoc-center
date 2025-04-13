@@ -16,6 +16,7 @@ import com.adam.apidoc_center.util.AssertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
@@ -25,6 +26,7 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -80,6 +82,7 @@ public class LuceneService implements InitializingBean, DisposableBean {
                 for(ScoreDoc scoreDoc: topDocs.scoreDocs) {
                     Document document = indexSearcher.doc(scoreDoc.doc);
                     SearchResultPO searchResultPO = new SearchResultPO(document);
+                    highlightTitleDescription(searchResultPO, query, indexSearcher, scoreDoc.doc);
                     searchResultList.add(searchResultPO);
                 }
                 return new PagedData<>(searchResultList, pageNum, pageSize, totalHit);
@@ -95,6 +98,7 @@ public class LuceneService implements InitializingBean, DisposableBean {
                 for(ScoreDoc scoreDoc: topDocs.scoreDocs) {
                     Document document = indexSearcher.doc(scoreDoc.doc);
                     SearchResultPO searchResultPO = new SearchResultPO(document);
+                    highlightTitleDescription(searchResultPO, query, indexSearcher, scoreDoc.doc);
                     searchResultList.add(searchResultPO);
                 }
                 return new PagedData<>(searchResultList, pageNum, pageSize, totalHit);
@@ -102,6 +106,44 @@ public class LuceneService implements InitializingBean, DisposableBean {
         } catch (IOException | ParseException e) {
             log.error("搜索失败", e);
             return PagedData.emptyPagedData(pageNum, pageSize);
+        }
+    }
+
+    private void highlightTitleDescription(SearchResultPO searchResultPO, Query query, IndexSearcher indexSearcher, int docId) {
+        String nameHighlight = getFieldHighlight(query, indexSearcher, docId, StringConstants.SEARCH_FIELD_NAME);
+        if(nameHighlight != null) {
+            searchResultPO.setName(nameHighlight);
+        }
+        String descriptionHighlight = getFieldHighlight(query, indexSearcher, docId, StringConstants.SEARCH_FIELD_DESCRIPTION);
+        if(descriptionHighlight != null) {
+            String oldDescription = searchResultPO.getDescription();
+            String escapedDescriptionHighlight = descriptionHighlight.replaceAll("<span.*?>","").replaceAll("</span>","");
+            char dfc = oldDescription.charAt(0), dlc = oldDescription.charAt(oldDescription.length() - 1);
+            if(!escapedDescriptionHighlight.startsWith(String.valueOf(dfc))) {
+                descriptionHighlight = "..." + descriptionHighlight;
+            }
+            if(!escapedDescriptionHighlight.endsWith(String.valueOf(dlc))) {
+                descriptionHighlight = descriptionHighlight + "...";
+            }
+            searchResultPO.setDescription(descriptionHighlight);
+        }
+    }
+
+    private String getFieldHighlight(Query query, IndexSearcher indexSearcher, int docId, String field) {
+        QueryScorer queryScorer = new QueryScorer(query, field);
+        SimpleHTMLFormatter simpleHTMLFormatter = new SimpleHTMLFormatter("<span style=\"color:red;\">", "</span>");
+        Highlighter highlighter = new Highlighter(simpleHTMLFormatter, queryScorer);
+
+        try {
+            Document document = indexSearcher.doc(docId);
+            String fieldValue = document.get(field);
+            TokenStream tokenStream = TokenSources.getAnyTokenStream(indexSearcher.getIndexReader(), docId, field, analyzer);
+            Fragmenter fragmenter = new SimpleSpanFragmenter(queryScorer);
+            highlighter.setTextFragmenter(fragmenter);
+            return highlighter.getBestFragment(tokenStream, fieldValue);
+        } catch (IOException | InvalidTokenOffsetsException e) {
+            log.error("获取高亮内容失败 docId={} field={}", docId, field, e);
+            return null;
         }
     }
 

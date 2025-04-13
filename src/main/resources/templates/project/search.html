@@ -37,10 +37,10 @@
     <div th:if="${data}">
         <div class="list-group col-8 offset-2">
             <a th:href="${searchResult.link}" class="list-group-item list-group-item-action" th:each="searchResult:${data.data}">
-                <h5 class="mb-1" th:text="|项目：${searchResult.name}|" th:if="${searchResult.type} == ${T(com.adam.apidoc_center.dto.SearchResultDTO.Type).PROJECT}">name</h5>
-                <h5 class="mb-1" th:text="|分组：${searchResult.name}|" th:if="${searchResult.type} == ${T(com.adam.apidoc_center.dto.SearchResultDTO.Type).GROUP}">name</h5>
-                <h5 class="mb-1" th:text="|接口：${searchResult.name}|" th:if="${searchResult.type} == ${T(com.adam.apidoc_center.dto.SearchResultDTO.Type).INTERFACE}">name</h5>
-                <p class="mb-1" th:text="${searchResult.description}">description</p>
+                <h5 class="mb-1" th:utext="|项目：${searchResult.name}|" th:if="${searchResult.type} == ${T(com.adam.apidoc_center.dto.SearchResultDTO.Type).PROJECT}">name</h5>
+                <h5 class="mb-1" th:utext="|分组：${searchResult.name}|" th:if="${searchResult.type} == ${T(com.adam.apidoc_center.dto.SearchResultDTO.Type).GROUP}">name</h5>
+                <h5 class="mb-1" th:utext="|接口：${searchResult.name}|" th:if="${searchResult.type} == ${T(com.adam.apidoc_center.dto.SearchResultDTO.Type).INTERFACE}">name</h5>
+                <p class="mb-1" th:utext="${searchResult.description}">description</p>
             </a>
         </div>
         <div id="pagination" class="d-flex justify-content-center">

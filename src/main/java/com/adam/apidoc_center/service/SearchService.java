@@ -20,7 +20,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,9 +39,19 @@ public class SearchService {
     @Autowired
     private LuceneService luceneService;
 
-    private final Comparator<SearchResultPO> searchResultPOComparator = (po1, po2) -> {
+    private final Comparator<SearchResultPO> searchResultPODBComparator = (po1, po2) -> {
         if(po1.getType().equals(po2.getType())) {
             return -1 * Long.compare(po1.getId(), po2.getId());
+        } else {
+            SearchResultDTO.Type type1 = SearchResultDTO.Type.valueOf(po1.getType()),
+                    type2 = SearchResultDTO.Type.valueOf(po2.getType());
+            return Integer.compare(type1.ordinal(), type2.ordinal());
+        }
+    };
+
+    private final Comparator<SearchResultPO> searchResultPOLuceneComparator = (po1, po2) -> {
+        if(po1.getType().equals(po2.getType())) {
+            return 0;
         } else {
             SearchResultDTO.Type type1 = SearchResultDTO.Type.valueOf(po1.getType()),
                     type2 = SearchResultDTO.Type.valueOf(po2.getType());
@@ -71,7 +80,7 @@ public class SearchService {
         AssertUtil.requireNonNull(searchParam, searchType);
         try {
             PagedData<SearchResultPO> searchResultPOPagedData = luceneService.search(searchParam, searchType, pageNum, pageSize);
-            searchResultPOPagedData.sort(searchResultPOComparator);
+            searchResultPOPagedData.sort(searchResultPOLuceneComparator);
             PagedData<SearchResultDTO> searchResultDTOPagedData = searchResultPOPagedData.map(SearchResultDTO::mapFrom);
             return Response.success(searchResultDTOPagedData);
         } catch (Exception e) {
@@ -98,7 +107,7 @@ public class SearchService {
                 Page<Map<String,Object>> searchResultPOPage = projectRepository.findAllSearchResult(searchParam, PageRequest.of(pageNum, pageSize));
                 PagedData<SearchResultPO> searchResultPOPagedData = PagedData.convert(searchResultPOPage, pageRequest)
                         .map(SearchResultPO::new);
-                searchResultPOPagedData.sort(searchResultPOComparator);
+                searchResultPOPagedData.sort(searchResultPODBComparator);
                 searchResultDTOPagedData = searchResultPOPagedData.map(SearchResultDTO::mapFrom);
                 return Response.success(searchResultDTOPagedData);
             case PROJECT:
