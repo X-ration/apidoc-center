@@ -6,6 +6,7 @@
 分支：br_lucene
 
 接入Lucene，对项目、分组、接口建立索引，在用户搜索时根据输入的关键字给出最多3个搜索建议。
+![search_lucene](pictures/search-lucene.png)
 
 Q：IKAnalyzer jar包在本地Maven仓库不存在，如何安装IKAnalyzer到本地Maven仓库？
 
