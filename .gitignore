@@ -2,6 +2,7 @@
 logs/
 application-dev.properties
 application-prod.properties
+indexdir/
 
 HELP.md
 .gradle

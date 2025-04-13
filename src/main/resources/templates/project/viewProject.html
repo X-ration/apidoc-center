@@ -318,16 +318,18 @@
     var shareUsernames = $('#shareUsernames');
     if(shareUsernames.length === 1) {
         var shareUserDTOs = [[${project.sharedUserList}]];
-        var value = '允许访问的用户：';
-        for(var i=0;i<shareUserDTOs.length;i++) {
-            // value = value + shareUserDTOs[i].username + ",";
-            value = value + "<span data-toggle='tooltip' data-placement='top' title='" + shareUserDTOs[i].email + "'>"
-                + shareUserDTOs[i].username + "</span>,";
+        if(shareUserDTOs !== null) {
+            var value = '允许访问的用户：';
+            for (var i = 0; i < shareUserDTOs.length; i++) {
+                // value = value + shareUserDTOs[i].username + ",";
+                value = value + "<span data-toggle='tooltip' data-placement='top' title='" + shareUserDTOs[i].email + "'>"
+                    + shareUserDTOs[i].username + "</span>,";
+            }
+            if (shareUserDTOs.length > 0) {
+                value = value.substring(0, value.length - 1);
+            }
+            shareUsernames.html(value);
         }
-        if(shareUserDTOs.length > 0) {
-            value = value.substring(0, value.length - 1);
-        }
-        shareUsernames.html(value);
     }
     $('[data-toggle="tooltip"]').tooltip({
         delay: { "show": 0, "hide": 2000 }
