@@ -41,6 +41,8 @@ public class ProjectService {
     private UserService userService;
     @Autowired
     private RedisTemplate<String,Object> redisTemplate;
+    @Autowired
+    private LuceneService luceneService;
 
     public PagedData<ProjectListDisplayDTO> getProjectsPaged(int pageNum, int pageSize) {
         Assert.isTrue(pageNum >= 0 && pageSize > 0, "getProjectsPaged param invalid");
@@ -223,6 +225,7 @@ public class ProjectService {
         }
         try {
             projectRepository.deleteById(projectId);  //关联实体(分组)一并删除
+            luceneService.deleteProject(projectOptional.get());
             return Response.success();
         } catch (Exception e) {
             log.error("deleteProjectError", e);
@@ -240,6 +243,7 @@ public class ProjectService {
             return Response.fail(StringConstants.PROJECT_ID_INVALID);
         }
         Project project = projectOptional.get();
+        Project.AccessMode oldAccessMode = project.getAccessMode();
         ProjectErrorMsg projectErrorMsg = checkCreateParams(projectUpdateDTO);
         if(projectErrorMsg.hasError()) {
             return Response.fail(StringConstants.PROJECT_MODIFY_FAIL_CHECK_INPUT, projectErrorMsg);
@@ -274,6 +278,7 @@ public class ProjectService {
             project.setProjectDeploymentList(projectDeploymentList);
         }
         projectRepository.save(project);
+        luceneService.updateProject(project, oldAccessMode);
         return Response.success();
     }
 
@@ -302,6 +307,7 @@ public class ProjectService {
                     .collect(Collectors.toList());
             projectDeploymentRepository.saveAll(projectDeploymentList);
         }
+        luceneService.createProject(project);
         return Response.success(projectId);
     }
 

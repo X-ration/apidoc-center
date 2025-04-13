@@ -60,6 +60,8 @@ public class GroupInterfaceService {
     private OkHttpClient okHttpClient;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private LuceneService luceneService;
 
     public GroupInterfaceDetailDisplayDTO getInterfaceDetail(long interfaceId) {
         if(interfaceId <= 0) {
@@ -113,6 +115,7 @@ public class GroupInterfaceService {
         GroupInterface groupInterface = groupInterfaceOptional.get();
         try {
             groupInterfaceRepository.delete(groupInterface);
+            luceneService.deleteInterface(groupInterface);
             return Response.success();
         } catch (Exception e) {
             log.error("deleteInterface error", e);
@@ -164,6 +167,7 @@ public class GroupInterfaceService {
             );
         }
         groupInterfaceRepository.save(groupInterface);
+        luceneService.updateInterface(groupInterface);
         return Response.success();
     }
 
@@ -172,7 +176,8 @@ public class GroupInterfaceService {
         if(groupId <= 0) {
             return Response.fail(StringConstants.PROJECT_GROUP_ID_INVALID);
         }
-        if(!projectGroupService.exists(groupId)) {
+        ProjectGroup projectGroup = projectGroupService.findById(groupId);
+        if(projectGroup == null) {
             return Response.fail(StringConstants.PROJECT_GROUP_ID_INVALID);
         }
         GroupInterfaceErrorMsg groupInterfaceErrorMsg = checkCreateParams(groupInterfaceDTO);
@@ -216,6 +221,8 @@ public class GroupInterfaceService {
                     .collect(Collectors.toList());
             interfaceFieldRepository.saveAll(interfaceFieldList);
         }
+        groupInterface.setProjectGroup(projectGroup);
+        luceneService.createInterface(groupInterface);
         return Response.success();
     }
 

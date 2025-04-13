@@ -30,6 +30,8 @@ public class ProjectGroupService {
     private ProjectService projectService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private LuceneService luceneService;
 
     public ProjectGroupDetailDisplayDTO getGroupDetail(long groupId) {
         if(groupId <= 0) {
@@ -48,6 +50,11 @@ public class ProjectGroupService {
     public boolean exists(long groupId) {
         Assert.isTrue(groupId > 0, "exists groupId<=0");
         return projectGroupRepository.existsById(groupId);
+    }
+
+    public ProjectGroup findById(long groupId) {
+        Assert.isTrue(groupId > 0, "findById groupId<=0");
+        return projectGroupRepository.findById(groupId).orElse(null);
     }
 
     public Long getProjectId(long groupId) {
@@ -70,6 +77,7 @@ public class ProjectGroupService {
         }
         ProjectGroup projectGroup = projectGroupOptional.get();
         projectGroupRepository.delete(projectGroup);
+        luceneService.deleteGroup(projectGroup);
         return Response.success();
     }
 
@@ -105,6 +113,7 @@ public class ProjectGroupService {
         }
         projectGroup.setName(projectGroupDTO.getName());
         projectGroupRepository.save(projectGroup);
+        luceneService.updateGroup(projectGroup);
         return Response.success();
     }
 
@@ -113,7 +122,8 @@ public class ProjectGroupService {
         if(projectId <= 0) {
             return Response.fail(StringConstants.PROJECT_ID_INVALID);
         }
-        if(!projectService.exists(projectId)) {
+        Project project = projectService.findById(projectId);
+        if(project == null) {
             return Response.fail(StringConstants.PROJECT_ID_INVALID);
         }
         ProjectGroupErrorMsg projectGroupErrorMsg = checkCreateParams(projectGroupDTO);
@@ -124,6 +134,8 @@ public class ProjectGroupService {
         projectGroup.setProjectId(projectId);
         projectGroup.setName(projectGroupDTO.getName());
         projectGroupRepository.save(projectGroup);
+        projectGroup.setProject(project);   //手动set,避免取不出来关联对象
+        luceneService.createGroup(projectGroup);
         return Response.success();
     }
 

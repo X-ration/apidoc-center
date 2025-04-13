@@ -19,6 +19,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -35,6 +36,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -292,30 +294,6 @@ public class LuceneService implements InitializingBean, DisposableBean {
     }
 
     private <T> void writeIndexByClass(Page<T> page) {
-        FieldType fieldTypeId = new FieldType();
-        fieldTypeId.setIndexOptions(IndexOptions.DOCS);
-        fieldTypeId.setStored(true);
-        FieldType fieldTypeClass = new FieldType();
-        fieldTypeClass.setIndexOptions(IndexOptions.DOCS);
-        fieldTypeClass.setStored(true);
-        FieldType fieldTypeClassId = new FieldType();
-        fieldTypeClassId.setIndexOptions(IndexOptions.DOCS);
-        fieldTypeClassId.setStored(true);
-        FieldType fieldTypeName = new FieldType();
-        fieldTypeName.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        fieldTypeName.setStored(true);
-        fieldTypeName.setTokenized(true);
-        fieldTypeName.setStoreTermVectors(true);
-        fieldTypeName.setStoreTermVectorPositions(true);
-        fieldTypeName.setStoreTermVectorOffsets(true);
-        FieldType fieldTypeDescription = new FieldType();
-        fieldTypeDescription.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        fieldTypeDescription.setStored(true);
-        fieldTypeDescription.setTokenized(true);
-        fieldTypeDescription.setStoreTermVectors(true);
-        fieldTypeDescription.setStoreTermVectorPositions(true);
-        fieldTypeDescription.setStoreTermVectorOffsets(true);
-
         for(T object: page.getContent()) {
             String id,className,classId,name,description;
             if(object instanceof Project) {
@@ -358,19 +336,296 @@ public class LuceneService implements InitializingBean, DisposableBean {
                 log.warn("类型{}不做处理", object.getClass().getName());
                 continue;
             }
-            Document document = new Document();
-            document.add(new Field(StringConstants.SEARCH_FIELD_ID, id, fieldTypeId));
-            document.add(new Field(StringConstants.SEARCH_FIELD_CLASS, className, fieldTypeClass));
-            document.add(new Field(StringConstants.SEARCH_FIELD_CLASS_ID, classId, fieldTypeClassId));
-            document.add(new Field(StringConstants.SEARCH_FIELD_NAME, name, fieldTypeName));
-            document.add(new Field(StringConstants.SEARCH_FIELD_DESCRIPTION, description == null ? "" : description, fieldTypeDescription));
 
+            Document document = newDocument(id, className, classId, name, description);
             try {
                 indexWriter.addDocument(document);
             } catch (IOException e) {
                 log.error("添加文档失败 {} {}", id, className, e);
             }
         }
+    }
+
+    public void createProject(Project project) {
+        if(project.getAccessMode() == Project.AccessMode.PUBLIC) {
+            String id = String.valueOf(project.getId());
+            String className = StringConstants.SEARCH_CLASS_PROJECT;
+            String classId = className + id;
+            Document document = newDocument(id, className, classId, project.getName(), project.getDescription());
+            try {
+                indexWriter.addDocument(document);
+                indexWriter.commit();
+                log.debug("创建项目成功 {}", project.getId());
+            } catch (IOException e) {
+                log.error("创建项目失败 {}", project.getId(), e);
+            }
+        }
+    }
+
+    public void updateProject(Project project, Project.AccessMode oldAccessMode) {
+        Project.AccessMode newAccessMode = project.getAccessMode();
+        if(newAccessMode == Project.AccessMode.PUBLIC) {
+            String id = String.valueOf(project.getId());
+            String className = StringConstants.SEARCH_CLASS_PROJECT;
+            String classId = className + id;
+            Document document = newDocument(id, className, classId, project.getName(), project.getDescription());
+            Term term = new Term(StringConstants.SEARCH_FIELD_CLASS_ID, classId);
+            try {
+                indexWriter.updateDocument(term, document);
+                log.debug("更新项目-updateDocument更新项目{}", project.getId());
+            } catch (IOException e) {
+                log.error("更新项目-更新项目失败 {}", project.getId(), e);
+            }
+        } else if(newAccessMode == Project.AccessMode.PRIVATE){
+            String id = String.valueOf(project.getId());
+            String className = StringConstants.SEARCH_CLASS_PROJECT;
+            String classId = className + id;
+            Term term = new Term(StringConstants.SEARCH_FIELD_CLASS_ID, classId);
+            try {
+                indexWriter.deleteDocuments(term);
+                log.debug("更新项目-deleteDocuments删除项目{}", project.getId());
+            } catch (IOException e) {
+                log.error("更新项目-删除项目失败{}", project.getId(), e);
+            }
+        }
+        if(oldAccessMode == Project.AccessMode.PRIVATE && newAccessMode == Project.AccessMode.PUBLIC) {
+            List<ProjectGroup> projectGroupList = project.getProjectGroupList();
+            if(!CollectionUtils.isEmpty(projectGroupList)) {
+                for(int i=0;i<projectGroupList.size();i++) {
+                    ProjectGroup projectGroup = projectGroupList.get(i);
+                    createGroupInternal(projectGroup, "更新项目-创建分组", false);
+                    List<GroupInterface> groupInterfaceList = projectGroup.getGroupInterfaceList();
+                    if(!CollectionUtils.isEmpty(groupInterfaceList)) {
+                        for(int j=0;j<groupInterfaceList.size();j++) {
+                            GroupInterface groupInterface = groupInterfaceList.get(j);
+                            createInterfaceInternal(groupInterface, "更新项目-创建接口", false);
+                        }
+                    }
+                }
+            }
+        } else if(oldAccessMode == Project.AccessMode.PUBLIC && newAccessMode == Project.AccessMode.PRIVATE) {
+            List<ProjectGroup> projectGroupList = project.getProjectGroupList();
+            if(!CollectionUtils.isEmpty(projectGroupList)) {
+                for(int i=0;i<projectGroupList.size();i++) {
+                    ProjectGroup projectGroup = projectGroupList.get(i);
+                    deleteGroupInternal(projectGroup, "更新项目-删除分组", false);
+                    List<GroupInterface> groupInterfaceList = projectGroup.getGroupInterfaceList();
+                    if(!CollectionUtils.isEmpty(groupInterfaceList)) {
+                        for(int j=0;j<groupInterfaceList.size();j++) {
+                            GroupInterface groupInterface = groupInterfaceList.get(j);
+                            deleteInterfaceInternal(groupInterface, "更新项目-删除接口", false);
+                        }
+                    }
+                }
+            }
+        }
+        try {
+            indexWriter.commit();
+            log.debug("更新项目-提交{}", project.getId());
+        } catch (IOException e) {
+            log.error("更新项目-提交失败 {}", project.getId(), e);
+        }
+    }
+
+    private void createGroupInternal(ProjectGroup projectGroup, String msg, boolean commit) {
+        String id = String.valueOf(projectGroup.getId());
+        String className = StringConstants.SEARCH_CLASS_GROUP;
+        String classId = className + id;
+        Document document = newDocument(id, className, classId, projectGroup.getName(), "");
+        try {
+            indexWriter.addDocument(document);
+            if(commit) {
+                indexWriter.commit();
+            }
+            log.debug(msg + "addDocument分组{} commit={}", projectGroup.getId(), commit);
+        } catch (IOException e) {
+            log.error(msg + "失败{}", projectGroup.getId(), e);
+        }
+    }
+
+    private void createInterfaceInternal(GroupInterface groupInterface, String msg, boolean commit) {
+        String id = String.valueOf(groupInterface.getId());
+        String className = StringConstants.SEARCH_CLASS_INTERFACE;
+        String classId = className + id;
+        Document document = newDocument(id, className, classId, groupInterface.getName(), groupInterface.getDescription());
+        try {
+            indexWriter.addDocument(document);
+            if(commit) {
+                indexWriter.commit();
+            }
+            log.debug(msg + "addDocument接口{} commit={}", groupInterface.getId(), commit);
+        } catch (IOException e) {
+            log.error(msg + "失败{}", groupInterface.getId(), e);
+        }
+    }
+
+    private void deleteGroupInternal(ProjectGroup projectGroup, String msg, boolean commit) {
+        String id = String.valueOf(projectGroup.getId());
+        String className = StringConstants.SEARCH_CLASS_GROUP;
+        String classId = className + id;
+        Term term = new Term(StringConstants.SEARCH_FIELD_CLASS_ID, classId);
+        try {
+            indexWriter.deleteDocuments(term);
+            if(commit) {
+                indexWriter.commit();
+            }
+            log.debug(msg + "deleteDocument分组{} commit={}", projectGroup.getId(), commit);
+        } catch (IOException e) {
+            log.error(msg + "失败{}", projectGroup.getId(), e);
+        }
+    }
+
+    private void deleteInterfaceInternal(GroupInterface groupInterface, String msg, boolean commit) {
+        String id = String.valueOf(groupInterface.getId());
+        String className = StringConstants.SEARCH_CLASS_INTERFACE;
+        String classId = className + id;
+        Term term = new Term(StringConstants.SEARCH_FIELD_CLASS_ID, classId);
+        try {
+            indexWriter.deleteDocuments(term);
+            if(commit) {
+                indexWriter.commit();
+            }
+            log.debug(msg + "deleteDocument接口{} commit={}", groupInterface.getId(), commit);
+        } catch (IOException e) {
+            log.error(msg + "失败{}", groupInterface.getId(), e);
+        }
+    }
+
+    public void deleteProject(Project project) {
+        if(project.getAccessMode() == Project.AccessMode.PUBLIC) {
+            String id = String.valueOf(project.getId());
+            String className = StringConstants.SEARCH_CLASS_PROJECT;
+            String classId = className + id;
+            Term term = new Term(StringConstants.SEARCH_FIELD_CLASS_ID, classId);
+            try {
+                indexWriter.deleteDocuments(term);
+                log.debug("删除项目-deleteDocument项目{}", project.getId());
+            } catch (IOException e) {
+                log.error("删除项目-删除项目失败{}", project.getId(), e);
+            }
+            List<ProjectGroup> projectGroupList = project.getProjectGroupList();
+            if(!CollectionUtils.isEmpty(projectGroupList)) {
+                for(int i=0;i<projectGroupList.size();i++) {
+                    ProjectGroup projectGroup = projectGroupList.get(i);
+                    deleteGroupInternal(projectGroup, "删除项目-删除分组", false);
+                    List<GroupInterface> groupInterfaceList = projectGroup.getGroupInterfaceList();
+                    if(!CollectionUtils.isEmpty(groupInterfaceList)) {
+                        for(int j=0;j<groupInterfaceList.size();j++) {
+                            GroupInterface groupInterface = groupInterfaceList.get(j);
+                            deleteInterfaceInternal(groupInterface, "删除项目-删除接口", false);
+                        }
+                    }
+                }
+            }
+
+            try {
+                indexWriter.commit();
+                log.debug("删除项目-提交{}", project.getId());
+            } catch (IOException e) {
+                log.error("删除项目-提交失败{}", project.getId(), e);
+            }
+        }
+    }
+
+    public void createGroup(ProjectGroup projectGroup) {
+        if(projectGroup.getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
+            createGroupInternal(projectGroup, "创建分组", true);
+        }
+    }
+
+    public void updateGroup(ProjectGroup projectGroup) {
+        if(projectGroup.getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
+            String id = String.valueOf(projectGroup.getId());
+            String className = StringConstants.SEARCH_CLASS_GROUP;
+            String classId = className + id;
+            Document document = newDocument(id, className, classId, projectGroup.getName(), "");
+            Term term = new Term(StringConstants.SEARCH_FIELD_CLASS_ID, classId);
+            try {
+                indexWriter.updateDocument(term, document);
+                indexWriter.commit();
+                log.debug("更新分组成功{}",projectGroup.getId());
+            } catch (IOException e) {
+                log.error("更新分组失败{}", projectGroup.getId(), e);
+            }
+        }
+    }
+
+    public void deleteGroup(ProjectGroup projectGroup) {
+        if(projectGroup.getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
+            deleteGroupInternal(projectGroup, "删除分组-删除分组", false);
+            List<GroupInterface> groupInterfaceList = projectGroup.getGroupInterfaceList();
+            if(!CollectionUtils.isEmpty(groupInterfaceList)) {
+                for(GroupInterface groupInterface: groupInterfaceList) {
+                    deleteInterfaceInternal(groupInterface, "删除分组-删除接口", false);
+                }
+            }
+            try {
+                indexWriter.commit();
+                log.debug("删除分组-提交{}", projectGroup.getId());
+            } catch (IOException e) {
+                log.error("删除分组-提交失败{}", projectGroup.getId(), e);
+            }
+        }
+    }
+
+    public void createInterface(GroupInterface groupInterface) {
+        if(groupInterface.getProjectGroup().getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
+            createInterfaceInternal(groupInterface, "创建接口", true);
+        }
+    }
+
+    public void updateInterface(GroupInterface groupInterface) {
+        if(groupInterface.getProjectGroup().getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
+            String id = String.valueOf(groupInterface.getId());
+            String className = StringConstants.SEARCH_CLASS_INTERFACE;
+            String classId = className + id;
+            Document document = newDocument(id, className, classId, groupInterface.getName(), groupInterface.getDescription());
+            Term term = new Term(StringConstants.SEARCH_FIELD_CLASS_ID, classId);
+            try {
+                indexWriter.updateDocument(term, document);
+                indexWriter.commit();
+                log.debug("更新接口成功{}", groupInterface.getId());
+            } catch (IOException e) {
+                log.error("更新接口失败{}", groupInterface.getId(), e);
+            }
+        }
+    }
+
+    public void deleteInterface(GroupInterface groupInterface) {
+        if(groupInterface.getProjectGroup().getProject().getAccessMode() == Project.AccessMode.PUBLIC) {
+            deleteInterfaceInternal(groupInterface, "删除接口", true);
+        }
+    }
+
+    private Document newDocument(String id, String className, String classId, String name, String description) {
+        FieldType fieldTypeId = new FieldType();
+        fieldTypeId.setIndexOptions(IndexOptions.DOCS);
+        fieldTypeId.setStored(true);
+        FieldType fieldTypeClass = new FieldType();
+        fieldTypeClass.setIndexOptions(IndexOptions.DOCS);
+        fieldTypeClass.setStored(true);
+        FieldType fieldTypeName = new FieldType();
+        fieldTypeName.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        fieldTypeName.setStored(true);
+        fieldTypeName.setTokenized(true);
+        fieldTypeName.setStoreTermVectors(true);
+        fieldTypeName.setStoreTermVectorPositions(true);
+        fieldTypeName.setStoreTermVectorOffsets(true);
+        FieldType fieldTypeDescription = new FieldType();
+        fieldTypeDescription.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        fieldTypeDescription.setStored(true);
+        fieldTypeDescription.setTokenized(true);
+        fieldTypeDescription.setStoreTermVectors(true);
+        fieldTypeDescription.setStoreTermVectorPositions(true);
+        fieldTypeDescription.setStoreTermVectorOffsets(true);
+
+        Document document = new Document();
+        document.add(new Field(StringConstants.SEARCH_FIELD_ID, id, fieldTypeId));
+        document.add(new Field(StringConstants.SEARCH_FIELD_CLASS, className, fieldTypeClass));
+        document.add(new StringField(StringConstants.SEARCH_FIELD_CLASS_ID, classId, Field.Store.YES));
+        document.add(new Field(StringConstants.SEARCH_FIELD_NAME, name, fieldTypeName));
+        document.add(new Field(StringConstants.SEARCH_FIELD_DESCRIPTION, description == null ? "" : description, fieldTypeDescription));
+        return document;
     }
 
     @Override
